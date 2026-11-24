@@ -11,6 +11,8 @@ import {
   ProfileExperience,
   ProfileEducation,
   ProfileCertification,
+  AdditionalContactEmail,
+  AdditionalContactPhone,
   PlanTier,
   KYCDossier,
   KYCStatus,
@@ -442,6 +444,49 @@ export default function ProfilePage() {
   const [editFormattedAddress, setEditFormattedAddress] = useState(user.formattedAddress || formattedAddress || '');
   const [editPostalCode, setEditPostalCode] = useState(user.postalCode || (user as any).postal_code || postalCode || '');
   const [editTimezone, setEditTimezone] = useState(user.timezone || timezone || 'Asia/Kolkata');
+  const [additionalEmails, setAdditionalEmails] = useState<AdditionalContactEmail[]>(user.additionalEmails || []);
+  const [additionalPhones, setAdditionalPhones] = useState<AdditionalContactPhone[]>(user.additionalPhones || []);
+
+  const handleAddEmail = () => {
+    setAdditionalEmails((prev) => [
+      ...prev,
+      {
+        id: `email_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        email: '',
+        label: 'Work',
+        visibility: 'contacts_only',
+      },
+    ]);
+  };
+
+  const handleUpdateEmail = (id: string, updates: Partial<AdditionalContactEmail>) => {
+    setAdditionalEmails((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+  };
+
+  const handleRemoveEmail = (id: string) => {
+    setAdditionalEmails((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const handleAddPhone = () => {
+    setAdditionalPhones((prev) => [
+      ...prev,
+      {
+        id: `phone_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        phone: '',
+        label: 'Direct',
+        visibility: 'contacts_only',
+        isWhatsApp: false,
+      },
+    ]);
+  };
+
+  const handleUpdatePhone = (id: string, updates: Partial<AdditionalContactPhone>) => {
+    setAdditionalPhones((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  };
+
+  const handleRemovePhone = (id: string) => {
+    setAdditionalPhones((prev) => prev.filter((p) => p.id !== id));
+  };
   const [isChangingCompany, setIsChangingCompany] = useState(false);
   const [transferTargetCompany, setTransferTargetCompany] = useState('');
   const [transferTargetEmail, setTransferTargetEmail] = useState('');
@@ -2367,7 +2412,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Direct B2B Contact Details (Email, Mobile, WhatsApp) */}
+              {/* Direct B2B Contact Details (Email, Mobile, WhatsApp, Additional Channels) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px', flexWrap: 'wrap', fontSize: '12px' }}>
                 {(user.email || editEmail) && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
@@ -2386,6 +2431,22 @@ export default function ProfilePage() {
                     )}
                   </span>
                 )}
+                {/* Additional Channels */}
+                {additionalEmails.map((ae) => ae.email && (
+                  <span key={ae.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)', background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
+                    <Mail size={11} color="#64748b" />
+                    <span>{ae.email}</span>
+                    <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 600 }}>({ae.label || 'Alt'})</span>
+                  </span>
+                ))}
+                {additionalPhones.map((ap) => ap.phone && (
+                  <span key={ap.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)', background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
+                    <Phone size={11} color="#64748b" />
+                    <span>{ap.phone}</span>
+                    {ap.isWhatsApp && <span style={{ color: '#15803d', fontWeight: 700, fontSize: '9px' }}>WA</span>}
+                    <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 600 }}>({ap.label || 'Alt'})</span>
+                  </span>
+                ))}
               </div>
 
               {/* Geographic Location & Badges */}
@@ -4122,6 +4183,8 @@ export default function ProfilePage() {
                 experiences,
                 educations,
                 certifications,
+                additionalEmails,
+                additionalPhones,
               };
 
               try {
@@ -4704,6 +4767,147 @@ export default function ProfilePage() {
                       placeholder="Senior Freight Procurement Specialist"
                     />
                   </div>
+                </div>
+
+                {/* Structured Multi-Email & Multi-Phone Contact Channel Manager */}
+                <div style={{ marginTop: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <b style={{ fontSize: '12px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Mail size={13} color="#0284c7" /> Additional Corporate & Branch Emails
+                    </b>
+                    <button
+                      type="button"
+                      className="btn secondary sm"
+                      style={{ padding: '2px 8px', fontSize: '10.5px', fontWeight: 600 }}
+                      onClick={handleAddEmail}
+                    >
+                      + Add Email
+                    </button>
+                  </div>
+                  {additionalEmails.length === 0 ? (
+                    <small style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>
+                      No secondary emails added. Click "+ Add Email" to register operational, finance or branch desk emails.
+                    </small>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {additionalEmails.map((item) => (
+                        <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1.2fr auto', gap: '6px', alignItems: 'center' }}>
+                          <input
+                            className="input"
+                            type="email"
+                            placeholder="e.g. operations@company.com"
+                            value={item.email}
+                            onChange={(e) => handleUpdateEmail(item.id, { email: e.target.value })}
+                            style={{ fontSize: '11.5px', height: '30px' }}
+                          />
+                          <select
+                            className="input"
+                            value={item.label || 'Work'}
+                            onChange={(e) => handleUpdateEmail(item.id, { label: e.target.value })}
+                            style={{ fontSize: '11.5px', height: '30px' }}
+                          >
+                            <option value="Work">Work</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Documentation">Documentation</option>
+                            <option value="Branch">Branch</option>
+                            <option value="Personal">Personal</option>
+                          </select>
+                          <select
+                            className="input"
+                            value={item.visibility || 'contacts_only'}
+                            onChange={(e) => handleUpdateEmail(item.id, { visibility: e.target.value as any })}
+                            style={{ fontSize: '11.5px', height: '30px' }}
+                          >
+                            <option value="contacts_only">Contacts Only</option>
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                          </select>
+                          <button
+                            type="button"
+                            className="btn danger sm icon"
+                            style={{ padding: '4px 6px', height: '30px' }}
+                            onClick={() => handleRemoveEmail(item.id)}
+                            title="Remove Email"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', marginBottom: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                    <b style={{ fontSize: '12px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Phone size={13} color="#16a34a" /> Additional Direct Lines & WhatsApp Numbers
+                    </b>
+                    <button
+                      type="button"
+                      className="btn secondary sm"
+                      style={{ padding: '2px 8px', fontSize: '10.5px', fontWeight: 600 }}
+                      onClick={handleAddPhone}
+                    >
+                      + Add Phone
+                    </button>
+                  </div>
+                  {additionalPhones.length === 0 ? (
+                    <small style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>
+                      No secondary lines added. Click "+ Add Phone" to add alternate mobile, WhatsApp or emergency trade numbers.
+                    </small>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {additionalPhones.map((item) => (
+                        <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr auto 1.2fr auto', gap: '6px', alignItems: 'center' }}>
+                          <input
+                            className="input"
+                            placeholder="e.g. +91 9876543210"
+                            value={item.phone}
+                            onChange={(e) => handleUpdatePhone(item.id, { phone: e.target.value })}
+                            style={{ fontSize: '11.5px', height: '30px' }}
+                          />
+                          <select
+                            className="input"
+                            value={item.label || 'Direct'}
+                            onChange={(e) => handleUpdatePhone(item.id, { label: e.target.value })}
+                            style={{ fontSize: '11.5px', height: '30px' }}
+                          >
+                            <option value="Direct">Direct</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="WhatsApp">WhatsApp</option>
+                            <option value="Office">Office</option>
+                            <option value="24x7 Support">24x7 Support</option>
+                          </select>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(item.isWhatsApp)}
+                              onChange={(e) => handleUpdatePhone(item.id, { isWhatsApp: e.target.checked })}
+                            />
+                            WA
+                          </label>
+                          <select
+                            className="input"
+                            value={item.visibility || 'contacts_only'}
+                            onChange={(e) => handleUpdatePhone(item.id, { visibility: e.target.value as any })}
+                            style={{ fontSize: '11.5px', height: '30px' }}
+                          >
+                            <option value="contacts_only">Contacts Only</option>
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                          </select>
+                          <button
+                            type="button"
+                            className="btn danger sm icon"
+                            style={{ padding: '4px 6px', height: '30px' }}
+                            onClick={() => handleRemovePhone(item.id)}
+                            title="Remove Phone"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -467,7 +467,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } as UserProfile;
 
     setCurrentUser(confirmed);
+    currentUserRef.current = confirmed;
     setUserStatusState('available');
+    setIsLoading(false);
 
     const now = Date.now().toString();
     try {

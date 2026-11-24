@@ -109,6 +109,7 @@ export default function RatesPage() {
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
   const [editorVisible, setEditorVisible] = useState(true);
   const [showRatesEditorModal, setShowRatesEditorModal] = useState(false);
+  const [ratesEditorMode, setRatesEditorMode] = useState<'create' | 'overview' | 'edit'>('create');
 
   // Dynamic Rates Pagination State (Adaptive for low bandwidth / 2G)
   const [ratesPage, setRatesPage] = useState(1);
@@ -1200,6 +1201,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
         isOpen={showRatesEditorModal}
         onClose={() => setShowRatesEditorModal(false)}
         editingRateId={editingRateId}
+        mode={ratesEditorMode}
         initialData={{
           carrier,
           por,
@@ -1415,6 +1417,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                 onClick={() => {
                   setEditingRateId(null);
                   handleClearForm(false);
+                  setRatesEditorMode('create');
                   setShowRatesEditorModal(true);
                 }}
                 title="Create a new rate posting"
@@ -1428,9 +1431,10 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                 className="btn secondary sm"
                 style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '4px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 onClick={() => {
+                  setRatesEditorMode('overview');
                   setShowRatesEditorModal(true);
                 }}
-                title="Open Rates Editor modal to create or edit rates"
+                title="Open Rates Editor modal in overview mode"
               >
                 <span>▶ Show Rates Editor</span>
               </button>
@@ -1826,6 +1830,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                             onClick={() => {
                               setEditingRateId(null);
                               handleClearForm(false);
+                              setRatesEditorMode('create');
                               setShowRatesEditorModal(true);
                             }}
                           >
@@ -1876,6 +1881,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                         className={isCompared ? 'compared-row' : ''}
                         style={{ background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#fff' : '#f7f9fd', cursor: 'pointer' }}
                         onClick={() => {
+                          setRatesEditorMode('edit');
                           setShowRatesEditorModal(true);
                           setCarrier(rate.carrier);
                           setPor(rate.por || '');
@@ -2207,7 +2213,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
             <button
               type="button"
               className="mobile-editor-toggle-btn"
-              onClick={() => { setEditingRateId(null); handleClearForm(false); setShowRatesEditorModal(true); }}><span>+ Open Rates Editor (+ Add New i-Rate)</span>
+              onClick={() => { setEditingRateId(null); handleClearForm(false); setRatesEditorMode('create'); setShowRatesEditorModal(true); }}><span>+ Open Rates Editor (+ Add New i-Rate)</span>
             </button>
           )}
 
@@ -2234,7 +2240,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                   type="button"
                   className="btn primary sm"
                   style={{ fontSize: '11.5px', padding: '6px 14px', borderRadius: '5px' }}
-                  onClick={() => { setEditingRateId(null); handleClearForm(false); setShowRatesEditorModal(true); }}
+                  onClick={() => { setEditingRateId(null); handleClearForm(false); setRatesEditorMode('create'); setShowRatesEditorModal(true); }}
                 >
                   <Plus size={13} /> Open Rates Editor
                 </button>

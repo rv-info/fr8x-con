@@ -212,6 +212,9 @@ export interface UserProfile {
   // Privacy & Contact Visibility Configuration
   privacySettings?: UserPrivacySettings;
   contacts?: string[]; // Array of connected user UIDs
+  // Multi-Contact Channel Management
+  additionalEmails?: AdditionalContactEmail[];
+  additionalPhones?: AdditionalContactPhone[];
   // Account Lifecycle & Deletion Governance
   id?: string;
   status?: string;
@@ -226,6 +229,23 @@ export interface UserProfile {
   createdAt?: string;
   updatedAt?: string;
   lastLoginAt?: string;
+}
+
+export interface AdditionalContactEmail {
+  id: string;
+  email: string;
+  label?: string; // Work, Finance, Operations, Billing, Personal
+  visibility: 'public' | 'contacts_only' | 'private';
+  isPrimary?: boolean;
+}
+
+export interface AdditionalContactPhone {
+  id: string;
+  phone: string;
+  label?: string; // Direct, Mobile, Office, WhatsApp, 24x7 Support
+  visibility: 'public' | 'contacts_only' | 'private';
+  isPrimary?: boolean;
+  isWhatsApp?: boolean;
 }
 
 export interface NestedReply {

@@ -370,10 +370,10 @@ export default function LoginPage() {
           try {
             const { createClient } = await import('@/lib/supabase/client');
             const supabase = createClient();
-            supabase.auth.setSession({
+            await supabase.auth.setSession({
               access_token: json.token,
               refresh_token: json.refreshToken,
-            }).catch(() => {});
+            });
           } catch {}
         }
         // Seamless immediate navigation with server revalidation
@@ -387,7 +387,7 @@ export default function LoginPage() {
           if (typeof window !== 'undefined' && window.location.pathname === '/login') {
             window.location.assign('/feeds');
           }
-        }, 500);
+        }, 2500);
 
         const navigationWatchdog = setTimeout(() => {
           setIsLoading(false);

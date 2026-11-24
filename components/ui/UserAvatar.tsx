@@ -131,10 +131,16 @@ export function UserAvatar({
         null;
       if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
 
-      if (typeof window !== 'undefined' && user.uid) {
+      if (typeof window !== 'undefined') {
         try {
-          const stored = localStorage.getItem(`fr8x_user_logo_${user.uid}`) || localStorage.getItem('fr8x_user_logo');
-          if (stored && stored.trim()) return stored.trim();
+          if (user.uid) {
+            const stored = localStorage.getItem(`fr8x_user_logo_${user.uid}`);
+            if (stored && stored.trim()) return stored.trim();
+          }
+          const storedDefault =
+            localStorage.getItem('fr8x_user_logo') ||
+            localStorage.getItem('fr8x_company_logo');
+          if (storedDefault && storedDefault.trim()) return storedDefault.trim();
         } catch {}
       }
     }
@@ -240,7 +246,8 @@ export function UserAvatar({
       </div>
 
       {/* ── 2. OVERLAPPING SQUARE COMPANY LOGO AT BOTTOM-RIGHT ── */}
-      {showCompanyLogo && diameter >= 24 && (
+      {/* Cleanly omitted when no company logo exists to prevent empty stray square boxes */}
+      {showCompanyLogo && diameter >= 24 && resolvedCompanyLogoUrl && !logoError && (
         <div
           className="fr8x-avatar-company-logo"
           title={companyName ? `Organization: ${companyName}` : 'Associated Organization'}
@@ -251,7 +258,7 @@ export function UserAvatar({
             width: `${logoSize}px`,
             height: `${logoSize}px`,
             borderRadius: `${logoBorderRadius}px`,
-            background: '#FFFFFF',
+            background: 'transparent',
             border: `${logoBorderWidth}px solid #FFFFFF`,
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.22), 0 0 1px rgba(0, 0, 0, 0.15)',
             display: 'flex',
@@ -263,38 +270,18 @@ export function UserAvatar({
             padding: '1px',
           }}
         >
-          {resolvedCompanyLogoUrl && !logoError ? (
-            <img
-              src={resolvedCompanyLogoUrl}
-              alt={companyName || 'Company Logo'}
-              onError={() => setLogoError(true)}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                display: 'block',
-                background: 'transparent',
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#E8F0ED',
-                borderRadius: `${Math.max(1, logoBorderRadius - 1)}px`,
-              }}
-              title={companyName || 'Organization'}
-            >
-              <Building2
-                size={Math.max(7, Math.round(logoSize * 0.65))}
-                style={{ color: '#075B5B' }}
-              />
-            </div>
-          )}
+          <img
+            src={resolvedCompanyLogoUrl}
+            alt={companyName || 'Company Logo'}
+            onError={() => setLogoError(true)}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              display: 'block',
+              background: 'transparent',
+            }}
+          />
         </div>
       )}
 

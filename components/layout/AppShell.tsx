@@ -60,15 +60,19 @@ function ShellLayout({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, isLoading, isPublicPage, isGodfather, router]);
 
-  // Fallback watchdog: if stuck on loading/unauthenticated for > 25 seconds on a protected route, force redirect to /login
+  // Fallback watchdog: if stuck on loading/unauthenticated for > 5 seconds on a protected route, force redirect to /login
   React.useEffect(() => {
     if (isGodfather || isPublicPage) return;
     if (isLoading || !isAuthenticated) {
       const timer = setTimeout(() => {
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          // If cached profile exists, attempt fast fallback before redirecting
+          const cached = localStorage.getItem('fr8x_cached_user_profile');
+          if (!cached) {
+            window.location.href = '/login';
+          }
         }
-      }, 25000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [isLoading, isAuthenticated, isPublicPage, isGodfather]);

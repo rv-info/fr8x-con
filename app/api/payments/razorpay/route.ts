@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 import { saveTransaction } from '@/lib/db/transactions';
 
+export const maxDuration = 10;
+
 const PLAN_CATALOG: Record<string, { amountINR: number; title: string }> = {
   trial: { amountINR: 0, title: 'Trial Plan' },
   professional: { amountINR: 1500, title: 'Professional Plan' },

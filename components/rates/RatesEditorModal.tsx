@@ -83,6 +83,7 @@ interface RatesEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingRateId: string | null;
+  mode?: 'create' | 'overview' | 'edit';
   initialData?: Partial<RateFormData> | null;
   onSave: (data: RateFormData) => Promise<void> | void;
   onUpdate: (rateId: string, data: RateFormData) => Promise<void> | void;
@@ -93,6 +94,7 @@ export function RatesEditorModal({
   isOpen,
   onClose,
   editingRateId,
+  mode = 'create',
   initialData,
   onSave,
   onUpdate,
@@ -453,18 +455,20 @@ export function RatesEditorModal({
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '4px',
-                    backgroundColor: editingRateId ? '#FEF3C7' : '#EEF2F7',
-                    color: editingRateId ? '#92400E' : '#1B2B4B',
-                    border: `1px solid ${editingRateId ? '#F59E0B' : '#CBD5E0'}`,
+                    backgroundColor: editingRateId ? '#FEF3C7' : mode === 'overview' ? '#E0F2FE' : '#EEF2F7',
+                    color: editingRateId ? '#92400E' : mode === 'overview' ? '#0369A1' : '#1B2B4B',
+                    border: `1px solid ${editingRateId ? '#F59E0B' : mode === 'overview' ? '#7DD3FC' : '#CBD5E0'}`,
                   }}
                 >
-                  {editingRateId ? `Editing Rate ${editingRateId}` : 'My i-Rate'}
+                  {editingRateId ? `Editing Rate #${editingRateId}` : mode === 'overview' ? 'Overview Mode' : 'New Rate Creation'}
                 </span>
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748B' }}>
                 {editingRateId
                   ? 'Update existing freight rate parameters or duplicate as a new distinct rate.'
-                  : 'Create a new self-posted rate, or load any row from the rate matrix to update.'}
+                  : mode === 'overview'
+                  ? 'Rates Overview & Natural Language Rate Intelligence. Review or extract rate instructions below.'
+                  : 'Create a new self-posted freight rate quotation with container tariffs and port pairs.'}
               </p>
             </div>
           </div>

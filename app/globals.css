@@ -226,8 +226,8 @@
   --icon-size-header: 16px;
 
   /* Compatibility & Legacy Aliases */
-  --fr8x-canvas: #E4EBE8;
-  --fr8x-background: #E4EBE8;
+  --fr8x-canvas: #F4F6F8;
+  --fr8x-background: #F4F6F8;
   --fr8x-surface: #FFFFFF;
   --fr8x-sidebar: #FFFFFF;
   --fr8x-topbar: #FFFFFF;
@@ -310,7 +310,7 @@ html {
   font-size: 12px !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--fr8x-canvas, #E4EBE8) !important;
+  background-color: var(--fr8x-canvas, #F4F6F8) !important;
   font-family: 'Calibri Light', Calibri, sans-serif !important;
 }
 
@@ -329,8 +329,8 @@ html {
 }
 
 body {
-  background: var(--fr8x-canvas, #E4EBE8) !important;
-  background-color: var(--fr8x-canvas, #E4EBE8) !important;
+  background: var(--fr8x-canvas, #F4F6F8) !important;
+  background-color: var(--fr8x-canvas, #F4F6F8) !important;
   font: 400 12px/1.4 'Calibri Light', Calibri, sans-serif !important;
   font-family: 'Calibri Light', Calibri, sans-serif !important;
   color: var(--fr8x-text-primary, #172B2B) !important;
@@ -383,7 +383,7 @@ main,
 .people-page,
 #root,
 #__next {
-  background-color: var(--fr8x-canvas, #E4EBE8) !important;
+  background-color: var(--fr8x-canvas, #F4F6F8) !important;
   color: #172B2B !important;
 }
 
