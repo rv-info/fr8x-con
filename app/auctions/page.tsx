@@ -210,7 +210,7 @@ export default function AuctionsPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {selectedAuctionModal.containers.map((c, i) => (
-                  <div key={c.id || i} style={{ padding: '8px 10px', background: '#fff', border: '1px solid var(--line)', borderRadius: '6px', fontSize: '11.5px', display: 'flex', justifyContent: 'space-between' }}>
+                  <div key={c.id || i} style={{ padding: '8px 10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line)', borderRadius: '6px', fontSize: '11.5px', display: 'flex', justifyContent: 'space-between' }}>
                     <div>
                       <b>{c.quantity}x {c.equipmentType}</b> ({c.containerType}) · Commodity: {c.commodity}
                       <small style={{ display: 'block', color: 'var(--mut)', marginTop: '2px' }}>
@@ -227,8 +227,8 @@ export default function AuctionsPage() {
 
             {/* Complete Awarded Auction Results Dossier (Requirement 7) */}
             {selectedAuctionModal.status === 'Awarded' && (
-              <div style={{ background: '#f0fdf4', border: '1.5px solid #86efac', borderRadius: '8px', padding: '14px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #bbf7d0', paddingBottom: '6px' }}>
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1.5px solid #86efac', borderRadius: '8px', padding: '14px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(16, 185, 129, 0.35)', paddingBottom: '6px' }}>
                   <b style={{ color: '#15803d', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Award size={16} /> Closed Bidding Awarded Dossier &amp; Contract Docket
                   </b>
@@ -239,8 +239,8 @@ export default function AuctionsPage() {
 
                 <div className="grid g2" style={{ gap: '12px', fontSize: '11.5px' }}>
                   {/* Bid Posting Party (Shipper) */}
-                  <div style={{ background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <small style={{ color: '#0369a1', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
+                  <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)' }}>
+                    <small style={{ color: 'var(--accent-primary, #006B68)', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
                       1. Bid Posting Party (Shipper / Buyer)
                     </small>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: 'var(--ink)' }}>
@@ -252,7 +252,7 @@ export default function AuctionsPage() {
                   </div>
 
                   {/* Bid Winning Party (Forwarder) */}
-                  <div style={{ background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #86efac' }}>
+                  <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '10px 12px', borderRadius: '6px', border: '1px solid #86efac' }}>
                     <small style={{ color: '#15803d', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
                       2. Bid Winning Party (Awarded Forwarder)
                     </small>
@@ -266,7 +266,7 @@ export default function AuctionsPage() {
                   </div>
                 </div>
 
-                <div style={{ background: '#ffffff', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '11px', color: 'var(--ink)' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '11px', color: 'var(--ink)' }}>
                   <b>Settlement Terms:</b> {selectedAuctionModal.awardedDetails?.settlementTerms || 'Net 45 Days against Clean OBL & Verified VGM'} · <b>Equipment Breakdown:</b> {selectedAuctionModal.awardedDetails?.equipmentBreakdown || '1x 40HC All-in Freight & Surcharges'}
                 </div>
               </div>
@@ -281,7 +281,7 @@ export default function AuctionsPage() {
                 <div className="tablewrap flush">
                   <table className="table sub-table" style={{ fontSize: '11.5px' }}>
                     <thead>
-                      <tr style={{ background: '#f1f5f9' }}>
+                      <tr style={{ background: 'var(--surface-secondary, #F9FAFB)' }}>
                         <th>Bidder Ref &amp; Org</th>
                         <th>Equipment</th>
                         <th>All-In Unit USD</th>
@@ -345,7 +345,7 @@ export default function AuctionsPage() {
           maxWidth="520px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '12.5px', color: '#991b1b', lineHeight: 1.5 }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '8px', fontSize: '12.5px', color: '#dc2626', lineHeight: 1.5 }}>
               <b>⚠️ Governance & Inactive Status Notice:</b>
               <p style={{ margin: '6px 0 0' }}>
                 Are you sure you want to cancel reverse auction <b>{cancellingAuction.id}</b> ({cancellingAuction.shipment?.pol?.split('(')[0]} → {cancellingAuction.shipment?.pod?.split('(')[0]})?
@@ -425,7 +425,7 @@ export default function AuctionsPage() {
       </div>
 
       {/* 8-Tab Operational Navigation Bar with Improvised Alignment & Zero Wrap */}
-      <div style={{ marginTop: '14px', marginBottom: '14px', background: '#f8fafc', border: '1px solid var(--fr8x-outline, #cbd5e1)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ marginTop: '14px', marginBottom: '14px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--fr8x-outline, #cbd5e1)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {/* Horizontal Scrollable Tabs */}
         <div className="auctions-tabs-scroll">
           <button
@@ -543,7 +543,7 @@ export default function AuctionsPage() {
 
         {/* Dedicated Search Bar */}
         <div className="search-icon-wrap" style={{ position: 'relative', width: '100%' }}>
-          <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 2 }} />
+          <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary, #64748B)', pointerEvents: 'none', zIndex: 2 }} />
           <input
             type="text"
             className="search-input-field has-leading-icon"
@@ -557,7 +557,7 @@ export default function AuctionsPage() {
               fontSize: '11.5px',
               border: '1px solid var(--fr8x-outline, #cbd5e1)',
               borderRadius: '6px',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               color: 'var(--fr8x-text)',
               outline: 'none',
               boxSizing: 'border-box',
@@ -567,7 +567,7 @@ export default function AuctionsPage() {
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+              style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary, #64748B)', padding: '2px' }}
             >
               ✕
             </button>
@@ -661,7 +661,7 @@ export default function AuctionsPage() {
           {/* Participated Mobile Cards View (< 1024px) */}
           <div className="auctions-mobile-cards">
             {filteredSubmittedBids.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ textAlign: 'center', padding: '24px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
                 <p style={{ color: 'var(--mut)', fontSize: '12px' }}>
                   {searchTerm
                     ? `No submitted bids match "${searchTerm}".`
@@ -679,20 +679,20 @@ export default function AuctionsPage() {
                         {b.status === 'winning' ? 'WINNING OFFER' : b.status.toUpperCase()}
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                       {targetAuction?.shipment?.pol?.split('(')[0] || 'POL'} ➔ {targetAuction?.shipment?.pod?.split('(')[0] || 'POD'}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', background: 'var(--surface-secondary, #F9FAFB)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
                       <div>
-                        <small style={{ display: 'block', fontSize: '9.5px', color: '#64748b' }}>My Total Bid</small>
+                        <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--text-secondary, #64748B)' }}>My Total Bid</small>
                         <b style={{ fontSize: '13px', color: 'var(--brand)' }}>${b.grandTotalUSD.toLocaleString()} {b.currency}</b>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <small style={{ display: 'block', fontSize: '9.5px', color: '#64748b' }}>Current Standing</small>
+                        <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--text-secondary, #64748B)' }}>Current Standing</small>
                         <span className="badge blue" style={{ fontSize: '10px' }}>Rank #{b.rank}</span>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '6px' }}>
                       <span>Submitted: {b.submittedAt}</span>
                       {targetAuction && (
                         <button
@@ -757,14 +757,14 @@ export default function AuctionsPage() {
                   </tr>
                 ) : currentTabAuctions().length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#64748b' }}>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-secondary, #64748B)' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--surface-secondary, #F9FAFB)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: 'var(--text-secondary, #64748B)' }}>
                         <Gavel size={24} />
                       </div>
-                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', marginBottom: '4px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                         No auctions found in this view
                       </div>
-                      <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '16px', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      <div style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', marginBottom: '16px', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
                         {searchTerm ? (
                           `No reverse auctions match "${searchTerm}". Try searching by a different port, ID, or carrier.`
                         ) : activeTab === 'posted' ? (
@@ -898,14 +898,14 @@ export default function AuctionsPage() {
                 <SkeletonScreen type="auction" count={3} label="Loading reverse auctions…" />
               </div>
             ) : currentTabAuctions().length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '36px 16px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '36px 16px', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--surface-secondary, #F9FAFB)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: 'var(--text-secondary, #64748B)' }}>
                   <Gavel size={22} />
                 </div>
-                <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b', marginBottom: '4px' }}>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   No auctions found in this view
                 </div>
-                <p style={{ color: '#64748b', fontSize: '12px', margin: '0 0 14px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
+                <p style={{ color: 'var(--text-secondary, #64748B)', fontSize: '12px', margin: '0 0 14px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
                   Publish your RFQ cargo specifications and invite liners to compete.
                 </p>
                 <Link href="/auctions/create" className="btn primary sm" style={{ fontSize: '11.5px', padding: '6px 14px', borderRadius: '5px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
@@ -953,44 +953,44 @@ export default function AuctionsPage() {
 
                     {/* Auction Title & Company */}
                     <div style={{ marginBottom: '6px' }}>
-                      <b style={{ fontSize: '12.5px', color: '#0f172a', display: 'block', lineHeight: 1.3 }}>
+                      <b style={{ fontSize: '12.5px', color: 'var(--text-primary, #1F2937)', display: 'block', lineHeight: 1.3 }}>
                         {auction.title}
                       </b>
-                      <small style={{ color: '#64748b', fontSize: '11px' }}>{auction.creatorCompany}</small>
+                      <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>{auction.creatorCompany}</small>
                     </div>
 
                     {/* Origin ➔ Destination Corridor Box */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '7px 10px', margin: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '7px 10px', margin: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ minWidth: 0 }}>
-                        <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>POL</small>
-                        <b style={{ fontSize: '11.5px', color: '#0f172a' }}>{auction.shipment.pol.split('(')[0].trim()}</b>
+                        <small style={{ display: 'block', fontSize: '9px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, textTransform: 'uppercase' }}>POL</small>
+                        <b style={{ fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>{auction.shipment.pol.split('(')[0].trim()}</b>
                       </div>
                       <div style={{ color: '#1985a1', padding: '0 8px', textAlign: 'center' }}>
-                        <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#0284c7', display: 'block' }}>DIRECT</span>
+                        <span style={{ fontSize: '8.5px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', display: 'block' }}>DIRECT</span>
                         <span>➔</span>
                       </div>
                       <div style={{ minWidth: 0, textAlign: 'right' }}>
-                        <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>POD</small>
-                        <b style={{ fontSize: '11.5px', color: '#0f172a' }}>{auction.shipment.pod.split('(')[0].trim()}</b>
+                        <small style={{ display: 'block', fontSize: '9px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, textTransform: 'uppercase' }}>POD</small>
+                        <b style={{ fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>{auction.shipment.pod.split('(')[0].trim()}</b>
                       </div>
                     </div>
 
                     {/* Equipment & Bids Info */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#475569', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginBottom: '10px' }}>
                       <div>
-                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{auction.containers.map((c) => `${c.quantity}x ${c.equipmentType}`).join(', ')}</span>
-                        <span style={{ color: '#64748b' }}> · {auction.shipment.commodity}</span>
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{auction.containers.map((c) => `${c.quantity}x ${c.equipmentType}`).join(', ')}</span>
+                        <span style={{ color: 'var(--text-secondary, #64748B)' }}> · {auction.shipment.commodity}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span className="badge grey" style={{ fontSize: '9px', padding: '1px 5px' }}>{auction.shipment.incoterm.split('-')[0].trim()}</span>
-                        <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px' }}>
+                        <span style={{ background: 'var(--surface-secondary, #F9FAFB)', color: 'var(--accent-primary, #006B68)', fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px' }}>
                           {auction.bidsSubmittedCount} {auction.bidsSubmittedCount === 1 ? 'bid' : 'bids'}
                         </span>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', borderTop: '1px solid var(--border-subtle, #E5E7EB)', paddingTop: '8px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         className="btn secondary sm"

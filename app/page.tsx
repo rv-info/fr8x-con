@@ -41,7 +41,7 @@ export default function RootPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
         color: 'var(--fr8x-text, #1e293b)',
       }}
     >
@@ -51,7 +51,7 @@ export default function RootPage() {
           alt="FR8X"
           style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
         />
-        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+        <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary, #006B68)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
           FR8X
         </div>
         <div
@@ -60,20 +60,20 @@ export default function RootPage() {
             width: '24px',
             height: '24px',
             border: '2px solid #cbd5e1',
-            borderTopColor: '#002b66',
+            borderTopColor: 'var(--accent-primary, #006B68)',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
           }}
         />
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--fr8x-muted, #475569)', letterSpacing: '0.02em', marginTop: '4px' }}>
-          Loading <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace…
+          Loading <span style={{ fontWeight: 'bold', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase' }}>FR8X</span> Workspace…
         </span>
         <a
           href="/login"
           style={{
             marginTop: '6px',
             fontSize: '11px',
-            color: '#002b66',
+            color: 'var(--accent-primary, #006B68)',
             textDecoration: 'none',
             fontWeight: 600,
           }}

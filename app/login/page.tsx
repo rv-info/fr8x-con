@@ -11,7 +11,7 @@ import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert,
 // --- Password Strength Scorer (reused in reset modal) ---
 type StrengthLevel = 'empty' | 'too_weak' | 'weak' | 'fair' | 'strong' | 'very_strong';
 function calcPasswordStrength(pwd: string): { level: StrengthLevel; score: number; label: string; color: string } {
-  if (!pwd) return { level: 'empty', score: 0, label: '', color: '#94a3b8' };
+  if (!pwd) return { level: 'empty', score: 0, label: '', color: 'var(--text-secondary, #64748B)' };
   let score = 0;
   if (pwd.length >= 8) score++;
   if (pwd.length >= 12) score++;
@@ -57,7 +57,7 @@ function LiveClockPanel() {
       suppressHydrationWarning
       style={{
         width: '100%', height: '100%',
-        background: 'var(--color-surface, #FFFFFF)',
+        background: 'var(--surface-primary, #FFFFFF)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: '40px 24px', position: 'relative', overflow: 'hidden',
       }}
@@ -68,34 +68,34 @@ function LiveClockPanel() {
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-primary-text, #172B4D)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
           FR8X
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--color-text-secondary, #52657D)', marginTop: '2px' }}>Enterprise Workspace</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>Enterprise Workspace</div>
       </div>
-      <div style={{ background: 'var(--color-bg-app, #F5F8FC)', border: '1px solid var(--color-border, #DFE7F0)', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
+      <div style={{ background: 'var(--app-bg, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '48px', fontWeight: 900, color: 'var(--color-primary-text, #172B4D)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+          <span style={{ fontSize: '48px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
             {mounted ? `${String(h12).padStart(2,'0')}:${mm}` : '--:--'}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary, #147DAB)', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
           </div>
         </div>
-        <div style={{ fontSize: '11px', color: 'var(--color-text-secondary, #52657D)', marginTop: '6px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '6px' }}>
           {days[currentTime.getDay()]} · {months[currentTime.getMonth()]} {currentTime.getDate()}, {currentTime.getFullYear()}
         </div>
       </div>
-      <div style={{ background: 'var(--color-surface, #FFFFFF)', border: '1px solid var(--color-border, #DFE7F0)', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px', boxShadow: '0 1px 3px rgba(23,43,77,0.04)' }}>
+      <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px', boxShadow: '0 1px 3px rgba(23,43,77,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '10px' }}>
-          <Calendar size={13} color="var(--color-primary, #147DAB)" />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary-text, #172B4D)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[currentTime.getMonth()]} {currentTime.getFullYear()}</span>
+          <Calendar size={13} color="var(--accent-primary, #006B68)" />
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[currentTime.getMonth()]} {currentTime.getFullYear()}</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
-          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', padding: '2px 0' }}>{d}</div>)}
+          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', padding: '2px 0' }}>{d}</div>)}
           {calDays.map((d, i) => (
-            <div key={i} style={{ fontSize: '10px', fontWeight: d === currentTime.getDate() ? 800 : 500, color: d === currentTime.getDate() ? '#fff' : d ? 'var(--color-primary-text, #172B4D)' : 'transparent', background: d === currentTime.getDate() ? 'var(--color-primary, #147DAB)' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
+            <div key={i} style={{ fontSize: '10px', fontWeight: d === currentTime.getDate() ? 800 : 500, color: d === currentTime.getDate() ? '#fff' : d ? 'var(--text-primary, #1F2937)' : 'transparent', background: d === currentTime.getDate() ? 'var(--accent-primary, #006B68)' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
           ))}
         </div>
       </div>
@@ -597,10 +597,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg-app, #F5F8FC)', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--app-bg, #FFFFFF)', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', flexDirection: 'row', minHeight: '100vh', position: 'relative' }}>
         {/* LEFT PANEL — Live Clock/Calendar */}
-        <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid var(--color-border, #DFE7F0)', background: 'var(--color-surface, #FFFFFF)' }} className="login-left-panel">
+        <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }} className="login-left-panel">
           <LiveClockPanel />
         </div>
 
@@ -631,12 +631,12 @@ export default function LoginPage() {
                 display: 'block',
               }}
             />
-            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
               FR8X
             </div>
           </div>
-          <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: 0, color: 'var(--fr8x-text)' }}>
-            <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace
+          <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: 0, color: 'var(--text-primary, #1F2937)' }}>
+            <span style={{ fontWeight: 'bold', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase' }}>FR8X</span> Workspace
           </h1>
           <p style={{ fontSize: '11px', color: 'var(--fr8x-muted)', margin: '4px 0 0' }}>
             Enterprise Freight Forwarding &amp; Reverse Auctions Platform
@@ -697,9 +697,9 @@ export default function LoginPage() {
               style={{
                 padding: '10px 14px',
                 borderRadius: '8px',
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                color: '#1e40af',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                border: '1px solid var(--border-default, #D9DEE5)',
+                color: 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
                 marginBottom: '16px',
                 display: 'flex',
@@ -709,14 +709,14 @@ export default function LoginPage() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Mail size={15} style={{ color: '#0284c7', flexShrink: 0 }} />
+                <Mail size={15} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
                 <span>Need a fresh 15-minute verification link?</span>
               </div>
               <Link
                 href={`/verify-email?email=${encodeURIComponent(pendingVerificationEmail)}`}
                 style={{
                   fontWeight: 700,
-                  color: '#0284c7',
+                  color: 'var(--accent-primary, #006B68)',
                   textDecoration: 'underline',
                   whiteSpace: 'nowrap',
                   fontSize: '12px',
@@ -791,7 +791,7 @@ export default function LoginPage() {
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    color: '#64748b',
+                    color: 'var(--text-secondary, #64748B)',
                     display: 'flex',
                     alignItems: 'center',
                     padding: '4px',
@@ -868,13 +868,13 @@ export default function LoginPage() {
                   marginTop: '10px',
                   padding: '8px 12px',
                   borderRadius: '6px',
-                  background: '#F4F6F8',
-                  border: '1px solid #D9E0E8',
+                  background: 'var(--surface-secondary, #F9FAFB)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                   fontSize: '11.5px',
-                  color: '#075B5B',
+                  color: 'var(--accent-primary, #006B68)',
                   fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                 }}
               >
@@ -889,7 +889,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '11px', color: '#64748b', lineHeight: 1.5 }}>
+            <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5 }}>
               By signing in, you confirm compliance with the{' '}
               <Link href="/terms" target="_blank" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'underline' }}>
                 Master Terms of Service
@@ -907,7 +907,7 @@ export default function LoginPage() {
         <div
           style={{
             padding: '14px 24px',
-            background: '#fafbfd',
+            background: 'var(--surface-secondary, #F9FAFB)',
             borderTop: '1px solid var(--line)',
             textAlign: 'center',
             fontSize: '12px',
@@ -974,7 +974,7 @@ export default function LoginPage() {
                     style={{
                       padding: '8px 10px',
                       borderRadius: '6px',
-                      background: '#fff0f1',
+                      background: 'rgba(239, 68, 68, 0.08)',
                       border: '1px solid #f0c8ce',
                       color: 'var(--red)',
                       fontSize: '11px',
@@ -1024,18 +1024,18 @@ export default function LoginPage() {
                 <div
                   style={{
                     padding: '8px 12px',
-                    background: '#f0f9ff',
-                    border: '1px solid #bae6fd',
+                    background: 'var(--surface-secondary, #F9FAFB)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     fontSize: '11.5px',
-                    color: '#0369a1',
+                    color: 'var(--accent-primary, #006B68)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
                     lineHeight: 1.4,
                   }}
                 >
-                  <Mail size={15} style={{ flexShrink: 0, color: '#0284c7' }} />
+                  <Mail size={15} style={{ flexShrink: 0, color: 'var(--accent-primary, #006B68)' }} />
                   <span>
                     A 6-digit OTP was dispatched from the server to <strong>{resetEmail || 'your email'}</strong>. Enter it below to unlock your account.
                   </span>
@@ -1046,7 +1046,7 @@ export default function LoginPage() {
                     style={{
                       padding: '8px 10px',
                       borderRadius: '6px',
-                      background: '#fff0f1',
+                      background: 'rgba(239, 68, 68, 0.08)',
                       border: '1px solid #f0c8ce',
                       color: 'var(--red)',
                       fontSize: '11px',
@@ -1103,7 +1103,7 @@ export default function LoginPage() {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        color: '#64748b',
+                        color: 'var(--text-secondary, #64748B)',
                         padding: '2px',
                       }}
                       aria-label={showResetNewPassword ? 'Hide password' : 'Show password'}
@@ -1114,7 +1114,7 @@ export default function LoginPage() {
                   {/* Password strength bar */}
                   {resetNewPassword.length > 0 && (
                     <div style={{ marginTop: '5px' }}>
-                      <div style={{ height: '4px', borderRadius: '2px', background: '#e2e8f0', overflow: 'hidden' }}>
+                      <div style={{ height: '4px', borderRadius: '2px', background: 'var(--border-subtle, #E5E7EB)', overflow: 'hidden' }}>
                         <div style={{
                           height: '100%',
                           width: `${(calcPasswordStrength(resetNewPassword).score / 5) * 100}%`,
@@ -1152,7 +1152,7 @@ export default function LoginPage() {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        color: '#64748b',
+                        color: 'var(--text-secondary, #64748B)',
                         padding: '2px',
                       }}
                       aria-label={showResetConfirmPassword ? 'Hide password' : 'Show password'}

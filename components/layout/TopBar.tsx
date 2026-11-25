@@ -307,14 +307,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
   // Application Modules definition
   const CORE_MODULES = [
-    { id: 'mod-feeds', name: 'Feeds & Discussions', desc: 'Trade updates, industry news & verified posts', href: '/feeds', icon: <Globe2 size={14} color="#1B2B4B" />, keywords: 'feeds posts discussions community updates' },
+    { id: 'mod-feeds', name: 'Feeds & Discussions', desc: 'Trade updates, industry news & verified posts', href: '/feeds', icon: <Globe2 size={14} color="var(--text-primary, #1F2937)" />, keywords: 'feeds posts discussions community updates' },
     { id: 'mod-rates', name: 'Freight Rates & Rate Intelligence', desc: 'Ocean container spot rates, carriers & routing', href: '/rates', icon: <BarChart3 size={14} color="#0D9488" />, keywords: 'rates freight spot rates ocean intelligence 40hc 20dv shipping carrier pricing' },
-    { id: 'mod-auctions', name: 'Reverse Auctions', desc: 'Live container tender bidding & shipment RFQs', href: '/auctions', icon: <Gavel size={14} color="#1B2B4B" />, keywords: 'auctions reverse auction bidding rfq tender bid live room' },
-    { id: 'mod-create-auction', name: 'Post Reverse Auction', desc: 'Create a new container reverse auction tender', href: '/auctions/create', icon: <Plus size={14} color="#1B2B4B" />, keywords: 'create auction post tender new bid publish' },
+    { id: 'mod-auctions', name: 'Reverse Auctions', desc: 'Live container tender bidding & shipment RFQs', href: '/auctions', icon: <Gavel size={14} color="var(--text-primary, #1F2937)" />, keywords: 'auctions reverse auction bidding rfq tender bid live room' },
+    { id: 'mod-create-auction', name: 'Post Reverse Auction', desc: 'Create a new container reverse auction tender', href: '/auctions/create', icon: <Plus size={14} color="var(--text-primary, #1F2937)" />, keywords: 'create auction post tender new bid publish' },
     { id: 'mod-network', name: 'Enterprise Logistics Directory & CRM', desc: 'Verified freight forwarders, carriers & partners', href: '/network', icon: <Users size={14} color="#2563EB" />, keywords: 'network directory crm contacts partners members people connections logistics directory' },
     { id: 'mod-jobs', name: 'Trade Careers & Jobs', desc: 'Maritime & logistics employment opportunities', href: '/jobs', icon: <Briefcase size={14} color="#0891B2" />, keywords: 'jobs careers hiring vacancies employment logistics recruitment' },
     { id: 'mod-nexus', name: 'Compliance & Blacklist', desc: 'Enterprise credibility, disputes & fraud prevention', href: '/nexus', icon: <ShieldCheck size={14} color="#D97706" />, keywords: 'nexus compliance blacklist credit risk dispute reputation' },
-    { id: 'mod-profile', name: 'Profile & Freight Passport', desc: 'Statutory registrations, licenses & company KYC', href: '/profile', icon: <UserIcon size={14} color="#1B2B4B" />, keywords: 'profile passport company kyc gstn pan identity account credentials my profile' },
+    { id: 'mod-profile', name: 'Profile & Freight Passport', desc: 'Statutory registrations, licenses & company KYC', href: '/profile', icon: <UserIcon size={14} color="var(--text-primary, #1F2937)" />, keywords: 'profile passport company kyc gstn pan identity account credentials my profile' },
   ];
 
   const query = globalSearchQuery.trim().toLowerCase();
@@ -685,14 +685,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   }, [showGlobalSearch, flatResults, selectedIndex]);
 
   const categoryMap: Record<string, { icon: React.ReactNode; color: string }> = {
-    network: { icon: <Users size={13} />, color: '#1B2B4B' },
-    auctions: { icon: <Gavel size={13} />, color: '#1B2B4B' },
-    bids: { icon: <Gavel size={13} />, color: '#1B2B4B' },
-    chat: { icon: <MessageSquare size={13} />, color: '#1B2B4B' },
-    feeds: { icon: <Globe2 size={13} />, color: '#1B2B4B' },
-    jobs: { icon: <Briefcase size={13} />, color: '#1B2B4B' },
-    system: { icon: <Bell size={13} />, color: '#1B2B4B' },
-    subscription: { icon: <Users size={13} />, color: '#1B2B4B' },
+    network: { icon: <Users size={13} />, color: 'var(--text-primary, #1F2937)' },
+    auctions: { icon: <Gavel size={13} />, color: 'var(--text-primary, #1F2937)' },
+    bids: { icon: <Gavel size={13} />, color: 'var(--text-primary, #1F2937)' },
+    chat: { icon: <MessageSquare size={13} />, color: 'var(--text-primary, #1F2937)' },
+    feeds: { icon: <Globe2 size={13} />, color: 'var(--text-primary, #1F2937)' },
+    jobs: { icon: <Briefcase size={13} />, color: 'var(--text-primary, #1F2937)' },
+    system: { icon: <Bell size={13} />, color: 'var(--text-primary, #1F2937)' },
+    subscription: { icon: <Users size={13} />, color: 'var(--text-primary, #1F2937)' },
   };
 
   const categories = ['network', 'auctions', 'bids', 'chat', 'feeds', 'jobs', 'system'] as const;
@@ -713,7 +713,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           <div className="global-search-modal" onClick={(e) => e.stopPropagation()}>
             {/* Search Input Header */}
             <div className="global-search-input-row">
-              <Search size={18} style={{ color: '#47799E', flexShrink: 0 }} />
+              <Search size={18} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <input
                 ref={searchRef}
                 type="text"
@@ -730,7 +730,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     searchRef.current?.focus();
                   }}
                   title="Clear search"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#64748B', display: 'flex', alignItems: 'center' }}
+                  style={{ background: 'none', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '4px', cursor: 'pointer', padding: '4px', color: 'var(--text-secondary, #64748B)', display: 'flex', alignItems: 'center' }}
                 >
                   <X size={15} />
                 </button>
@@ -755,7 +755,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 <div>
                   {/* Recent Searches */}
                   {globalSearchHistory.length > 0 && (
-                    <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9' }}>
+                    <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
                         <span className="gs-section-label" style={{ margin: 0, border: 'none', padding: 0 }}>
                           <Clock size={11} /> Recent Searches
@@ -764,11 +764,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           type="button"
                           onClick={clearAllGlobalHistory}
                           style={{
-                            background: 'none',
-                            border: 'none',
+                            background: 'var(--surface-primary, #FFFFFF)',
+                            border: '1px solid var(--border-subtle, #E5E7EB)',
+                            borderRadius: '4px',
+                            padding: '2px 6px',
                             cursor: 'pointer',
                             fontSize: '11px',
-                            color: '#1B2B4B',
+                            color: 'var(--text-primary, #1F2937)',
                             fontWeight: 700,
                           }}
                         >
@@ -786,11 +788,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               gap: '6px',
                               padding: '4px 9px',
                               borderRadius: '12px',
-                              background: '#F8FAFC',
+                              background: 'var(--surface-elevated, #F8FAFC)',
                               fontSize: '11px',
-                              color: '#1B2B4B',
+                              color: 'var(--text-primary, #1F2937)',
                               cursor: 'pointer',
-                              border: '1px solid #CBD5E1',
+                              border: '1px solid var(--border-default, #D9DEE5)',
                               fontWeight: 600,
                               userSelect: 'none',
                             }}
@@ -800,7 +802,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               type="button"
                               onClick={(e) => removeGlobalHistoryItem(e, item.id)}
                               title="Remove from history"
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#94A3B8', display: 'flex' }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-secondary, #64748B)', display: 'flex' }}
                             >
                               <X size={11} />
                             </button>
@@ -828,25 +830,25 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         >
                           <span className="gs-icon">{mod.icon}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{mod.name}</div>
-                            <small style={{ color: '#64748B', fontSize: '10.5px' }}>{mod.desc}</small>
+                            <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>{mod.name}</div>
+                            <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>{mod.desc}</small>
                           </div>
-                          <ChevronRight size={13} color="#94A3B8" />
+                          <ChevronRight size={13} color="var(--text-secondary, #64748B)" />
                         </Link>
                       ))}
                     </div>
                   </div>
 
-                  <div style={{ padding: '16px 14px 6px', fontSize: '11.5px', color: '#64748B', textAlign: 'center' }}>
+                  <div style={{ padding: '16px 14px 6px', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', textAlign: 'center' }}>
                     Type at least 2 characters to search across People, Companies, Rates, Auctions, Jobs & Discussions
                   </div>
                 </div>
               ) : totalResultsCount === 0 ? (
-                <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748B', fontSize: '12px' }}>
-                  <Search size={26} style={{ display: 'block', margin: '0 auto 10px', opacity: 0.35, color: '#47799E' }} />
-                  <b style={{ color: '#1B2B4B', fontSize: '13px' }}>No records matching &ldquo;{globalSearchQuery}&rdquo;</b>
+                <div style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--text-secondary, #64748B)', fontSize: '12px' }}>
+                  <Search size={26} style={{ display: 'block', margin: '0 auto 10px', opacity: 0.45, color: 'var(--accent-primary, #006B68)' }} />
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '13px' }}>No records matching &ldquo;{globalSearchQuery}&rdquo;</b>
                   <br />
-                  <small style={{ fontSize: '11.5px', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                  <small style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', display: 'block', marginTop: '4px' }}>
                     Try searching by Person Name, Company, Port UN/LOCODE (INNSA, NLRTM), Ocean Carrier, or Job Title.
                   </small>
                 </div>
@@ -873,8 +875,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           >
                             <span className="gs-icon">{m.icon}</span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{m.name}</div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>{m.desc}</small>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>{m.name}</div>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>{m.desc}</small>
                             </div>
                             <span className="gs-action-btn view">
                               Open <ArrowRight size={10} />
@@ -904,16 +906,16 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setShowGlobalSearch(false);
                             }}
                           >
-                            <span className="gs-icon" style={{ background: '#DCFCE7', color: '#15803D' }}>
+                            <span className="gs-icon" style={{ background: 'rgba(21, 128, 61, 0.12)', color: '#15803D' }}>
                               <UserPlus size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span>{pName}</span>
                                 {p.hasGoldenTick && <GoldenTick size={13} />}
-                                <span style={{ color: '#64748B', fontWeight: 500 }}>· {p.company}</span>
+                                <span style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 500 }}>· {p.company}</span>
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 {p.designation} · {p.city}, {p.country}
                               </small>
                             </div>
@@ -951,16 +953,16 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setShowGlobalSearch(false);
                             }}
                           >
-                            <span className="gs-icon" style={{ background: '#E0F2FE', color: '#0284C7' }}>
+                            <span className="gs-icon" style={{ background: 'rgba(2, 132, 199, 0.12)', color: '#0284C7' }}>
                               <UserCheck size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span>{pName}</span>
                                 {p.hasGoldenTick && <GoldenTick size={13} />}
-                                <span style={{ color: '#64748B', fontWeight: 500 }}>· {p.company}</span>
+                                <span style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 500 }}>· {p.company}</span>
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 {p.designation} · {p.city}, {p.country}
                               </small>
                             </div>
@@ -1009,12 +1011,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               size={28}
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span>{pName}</span>
                                 {p.hasGoldenTick && <GoldenTick size={13} />}
-                                <span style={{ color: '#64748B', fontWeight: 500 }}>· {p.company}</span>
+                                <span style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 500 }}>· {p.company}</span>
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 {p.designation} · {p.city}, {p.country}
                               </small>
                             </div>
@@ -1058,12 +1060,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setGlobalSearchQuery('');
                             }}
                           >
-                            <span className="gs-icon" style={{ background: '#F8FAFC', color: '#1B2B4B' }}>
+                            <span className="gs-icon" style={{ background: 'var(--surface-elevated, #F8FAFC)', color: 'var(--text-primary, #1F2937)' }}>
                               <Building2 size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{c.name}</div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>{c.name}</div>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 {c.type} · 📍 {c.location}
                               </small>
                             </div>
@@ -1095,14 +1097,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setGlobalSearchQuery('');
                             }}
                           >
-                            <span className="gs-icon" style={{ color: '#0D9488' }}>
+                            <span className="gs-icon" style={{ color: 'var(--accent-primary, #006B68)' }}>
                               <BarChart3 size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                                 {r.carrier} ({r.sp}) · 40HC: ${r.h40 || (r as any).rate40 || '—'} USD
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 POL: {r.pol} → POD: {r.pod} · Valid till: {r.valid || 'Spot Validity'}
                               </small>
                             </div>
@@ -1132,14 +1134,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setGlobalSearchQuery('');
                             }}
                           >
-                            <span className="gs-icon" style={{ color: '#1B2B4B' }}>
+                            <span className="gs-icon" style={{ color: 'var(--text-primary, #1F2937)' }}>
                               <Gavel size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                                 {a.id} · {a.title}
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 {a.shipment?.pol} → {a.shipment?.pod} · Commodity: {a.shipment?.commodity || 'General Cargo'} · Status: {a.status}
                               </small>
                             </div>
@@ -1173,10 +1175,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               <Briefcase size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                                 {j.title} · {j.company}
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 📍 {j.location} · {j.packageDetails}
                               </small>
                             </div>
@@ -1206,14 +1208,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setGlobalSearchQuery('');
                             }}
                           >
-                            <span className="gs-icon" style={{ color: '#1B2B4B' }}>
+                            <span className="gs-icon" style={{ color: 'var(--text-primary, #1F2937)' }}>
                               <MessageSquare size={14} />
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                                 {p.author} ({p.authorCompany || 'Trade Member'})
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {p.text}
                               </small>
                             </div>
@@ -1247,10 +1249,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               {getLocationTypeIcon(l.type)}
                             </span>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                                 {l.unLocode} · {l.name}
                               </div>
-                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                                 {l.country} ({l.region}) · {l.type}
                               </small>
                             </div>
@@ -1273,7 +1275,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               </div>
               <div>
                 {isSearchingRemote ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#47799E' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--accent-primary, #006B68)' }}>
                     <Loader2 size={11} className="animate-spin" /> Searching network…
                   </span>
                 ) : (
@@ -1287,7 +1289,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </div>
       )}
 
-      <header className="top" style={{ backgroundColor: 'var(--surface-primary, #FFFFFF)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', fontFamily: "'Calibri Light', Calibri, Arial, sans-serif", fontSize: '12px', height: '48px', boxSizing: 'border-box' }}>
+      <header className="top" style={{ backgroundColor: 'var(--surface-primary, #FFFFFF)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', fontFamily: "var(--font-family-primary)", fontSize: '12px', height: '48px', boxSizing: 'border-box' }}>
         {/* Left Section: Logo, Breadcrumbs, Global Search */}
         <div className="top-left-section" style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flexShrink: 1 }}>
           {/* FR8X Application Logo - Visible on Desktop and Mobile */}
@@ -1333,7 +1335,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             onClick={() => { setShowGlobalSearch(true); setTimeout(() => searchRef.current?.focus(), 50); }}
             title="Global Search (Ctrl+K)"
             style={{
-              height: '32px',
+              height: '30px',
               minWidth: '180px',
               padding: '0 10px',
               display: 'inline-flex',
@@ -1370,7 +1372,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    backgroundColor: '#075B5B',
+                    backgroundColor: 'var(--accent-primary, #006B68)',
+                    border: '1px solid var(--accent-primary, #006B68)',
                     color: '#FFFFFF',
                     padding: '4px 9px',
                     borderRadius: '14px',
@@ -1401,13 +1404,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    backgroundColor: '#075B5B',
+                    backgroundColor: 'var(--accent-primary, #006B68)',
+                    border: '1px solid var(--accent-primary, #006B68)',
                     color: '#FFFFFF',
                     padding: '4px 9px',
                     borderRadius: '14px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    border: 'none',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
@@ -1432,13 +1435,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    backgroundColor: '#075B5B',
+                    backgroundColor: 'var(--accent-primary, #006B68)',
+                    border: '1px solid var(--accent-primary, #006B68)',
                     color: '#FFFFFF',
                     padding: '4px 9px',
                     borderRadius: '14px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    border: 'none',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
@@ -1463,13 +1466,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    backgroundColor: '#075B5B',
+                    backgroundColor: 'var(--accent-primary, #006B68)',
+                    border: '1px solid var(--accent-primary, #006B68)',
                     color: '#FFFFFF',
                     padding: '4px 9px',
                     borderRadius: '14px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    border: 'none',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                   }}
@@ -1495,13 +1498,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  backgroundColor: '#075B5B',
+                  backgroundColor: 'var(--accent-primary, #006B68)',
+                  border: '1px solid var(--accent-primary, #006B68)',
                   color: '#FFFFFF',
                   padding: '4px 9px',
                   borderRadius: '14px',
                   fontSize: '11px',
                   fontWeight: 700,
-                  border: 'none',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
@@ -1585,22 +1588,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     right: 0,
                     width: '280px',
                     maxWidth: 'calc(100vw - 20px)',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
+                    backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '8px',
-                    boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                    boxShadow: 'var(--glass-shadow-lg, 0 12px 28px -5px rgba(0, 0, 0, 0.18))',
                     zIndex: 1100,
                     overflow: 'hidden',
-                    color: '#172B45',
-                    fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                    color: 'var(--text-primary, #1F2937)',
+                    fontFamily: 'var(--font-family-primary)',
                     fontSize: '12px',
                     boxSizing: 'border-box',
                   }}
                 >
-                <div style={{ padding: '10px 12px', borderBottom: '1px solid #D9E0E8', background: '#F4F6F8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-elevated, #F8FAFC)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <MapPin size={13} style={{ color: '#075B5B' }} />
-                    <b style={{ fontSize: '12px', color: '#172B45' }}>Trade Gateways & Operating Hubs</b>
+                    <MapPin size={13} style={{ color: 'var(--accent-primary, #006B68)' }} />
+                    <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>Trade Gateways & Operating Hubs</b>
                   </div>
                   <button
                     type="button"
@@ -1611,7 +1614,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     <X size={12} />
                   </button>
                 </div>
-                <div style={{ padding: '8px 12px', background: '#F4F6F8', borderBottom: '1px solid #D9E0E8', fontSize: '11px', color: '#075B5B' }}>
+                <div style={{ padding: '8px 12px', background: 'var(--surface-elevated, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', fontSize: '11px', color: 'var(--accent-primary, #006B68)' }}>
                   Active Hub: <b>{selectedHub || `${user.city}, ${user.country}`}</b>
                 </div>
                 <div style={{ maxHeight: '240px', overflowY: 'auto', padding: '4px 0' }}>
@@ -1644,25 +1647,26 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          background: isCurrent ? '#F4F6F8' : '#FFFFFF',
+                          background: isCurrent ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
                           border: 'none',
+                          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                           cursor: 'pointer',
                           fontSize: '11.5px',
-                          color: '#172B45',
+                          color: 'var(--text-primary, #1F2937)',
                           transition: 'background-color 0.1s ease',
                         }}
                       >
                         <div>
-                          <b style={{ color: '#172B45', display: 'block' }}>{hub.city} · {hub.region}</b>
-                          <span style={{ fontSize: '10.5px', color: '#526174' }}>{hub.country} · Gateway {hub.code}</span>
+                          <b style={{ color: 'var(--text-primary, #1F2937)', display: 'block' }}>{hub.city} · {hub.region}</b>
+                          <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>{hub.country} · Gateway {hub.code}</span>
                         </div>
                         {isCurrent && <Check size={13} style={{ color: '#16834A', flexShrink: 0 }} />}
                       </button>
                     );
                   })}
                 </div>
-                <div style={{ padding: '6px 12px', borderTop: '1px solid #D9E0E8', background: '#F4F6F8', textAlign: 'center' }}>
-                  <span style={{ fontSize: '10.5px', color: '#526174' }}>Auto-synced with user freight passport</span>
+                <div style={{ padding: '6px 12px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-elevated, #F8FAFC)', textAlign: 'center' }}>
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>Auto-synced with user freight passport</span>
                 </div>
               </div>
               </>
@@ -1690,7 +1694,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 borderRadius: '6px',
                 color: 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
-                fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                fontFamily: 'var(--font-family-primary)',
                 fontWeight: 600,
                 cursor: 'pointer',
                 boxSizing: 'border-box',
@@ -1712,7 +1716,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     position: 'fixed',
                     inset: 0,
                     top: '50px',
-                    backgroundColor: 'rgba(23, 43, 43, 0.15)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.2)',
                     backdropFilter: 'blur(1px)',
                     zIndex: 1099,
                   }}
@@ -1725,14 +1729,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     right: 0,
                     width: '340px',
                     maxWidth: 'calc(100vw - 20px)',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
+                    backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '8px',
-                    boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                    boxShadow: 'var(--glass-shadow-lg, 0 12px 28px -5px rgba(0, 0, 0, 0.18))',
                     zIndex: 1100,
                     overflow: 'hidden',
-                    color: '#172B45',
-                    fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                    color: 'var(--text-primary, #1F2937)',
+                    fontFamily: 'var(--font-family-primary)',
                     fontSize: '12px',
                     boxSizing: 'border-box',
                   }}
@@ -1746,27 +1750,28 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                 <div className="conv-body" style={{ padding: '12px' }}>
                   {/* Live Feed Status Bar & Sync Control */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: '#F8FAF9', padding: '6px 8px', borderRadius: '5px', border: '1px solid #F4F6F8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: 'var(--surface-elevated, #F8FAFC)', padding: '6px 8px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <span className="badge green" style={{ fontSize: '10.5px', fontWeight: 700, padding: '2px 6px' }}>
                         🟢 {isLiveRates ? 'LIVE INTERBANK FEED' : 'FOREX SYNCED'}
                       </span>
-                      <span style={{ fontSize: '10.5px', color: '#526174' }}>{lastUpdatedTime}</span>
+                      <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>{lastUpdatedTime}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => refreshLiveRates()}
                       style={{
                         fontSize: '10.5px',
-                        color: '#075B5B',
+                        color: 'var(--accent-primary, #006B68)',
                         fontWeight: 700,
                         cursor: 'pointer',
-                        background: 'none',
-                        border: 'none',
+                        background: 'var(--surface-primary, #FFFFFF)',
+                        border: '1px solid var(--border-subtle, #E5E7EB)',
+                        borderRadius: '4px',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '3px',
-                        padding: 0,
+                        padding: '2px 6px',
                       }}
                       title="Refresh interbank exchange rates"
                     >
@@ -1777,10 +1782,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   {/* Curated Quick Workspace Currency Shortcuts */}
                   <div style={{ marginBottom: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                      <small style={{ color: '#526174', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.03em' }}>
+                      <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.03em' }}>
                         Workspace Currency
                       </small>
-                      <span style={{ fontSize: '10.5px', color: '#075B5B', fontWeight: 700 }}>
+                      <span style={{ fontSize: '10.5px', color: 'var(--accent-primary, #006B68)', fontWeight: 700 }}>
                         Active: {currentCurrency}
                       </span>
                     </div>
@@ -1797,10 +1802,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               padding: '5px 0',
                               fontSize: '11px',
                               fontWeight: isCur ? 800 : 600,
-                              borderRadius: '5px',
-                              border: isCur ? '1.5px solid #075B5B' : '1px solid #D9E0E8',
-                              background: isCur ? '#075B5B' : '#FFFFFF',
-                              color: isCur ? '#FFFFFF' : '#172B45',
+                              borderRadius: '6px',
+                              border: isCur ? '1px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
+                              background: isCur ? 'var(--accent-primary, #006B68)' : 'var(--surface-primary, #FFFFFF)',
+                              color: isCur ? '#FFFFFF' : 'var(--text-primary, #1F2937)',
                               cursor: 'pointer',
                               transition: 'all 0.15s ease',
                               textAlign: 'center',
@@ -1826,9 +1831,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             fontSize: '11px',
                             fontWeight: calcSourceAmount === amt ? 700 : 500,
                             borderRadius: '4px',
-                            border: calcSourceAmount === amt ? '1px solid #B7DCC7' : '1px solid #D6E2DA',
-                            background: calcSourceAmount === amt ? '#E8F7EF' : '#ffffff',
-                            color: calcSourceAmount === amt ? '#12372A' : '#66736D',
+                            border: calcSourceAmount === amt ? '1px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
+                            background: calcSourceAmount === amt ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
+                            color: calcSourceAmount === amt ? 'var(--accent-primary, #006B68)' : 'var(--text-secondary, #64748B)',
                             cursor: 'pointer',
                             whiteSpace: 'nowrap',
                           }}
@@ -1840,7 +1845,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                     <div className="calc-row">
                       <div>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>Amount</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '3px' }}>Amount</label>
                         <input
                           type="number"
                           value={calcSourceAmount}
@@ -1853,14 +1858,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             fontSize: '11px',
                             fontWeight: 600,
                             borderRadius: '6px',
-                            border: '1px solid #D6E2DA',
-                            background: '#ffffff',
-                            color: '#12372A',
+                            border: '1px solid var(--border-default, #D9DEE5)',
+                            background: 'var(--surface-primary, #FFFFFF)',
+                            color: 'var(--text-primary, #1F2937)',
                           }}
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>From</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '3px' }}>From</label>
                         <SearchableDropdown
                           options={Object.entries(availableCurrencies).map(([c, info]) => ({
                             value: c,
@@ -1893,7 +1898,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                     <div className="calc-row">
                       <div>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>Converted Amount</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '3px' }}>Converted Amount</label>
                         <div
                           style={{
                             width: '100%',
@@ -1902,11 +1907,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             height: '38px',
                             display: 'flex',
                             alignItems: 'center',
-                            background: '#ffffff',
-                            border: '1px solid #D6E2DA',
+                            background: 'var(--surface-primary, #FFFFFF)',
+                            border: '1px solid var(--border-default, #D9DEE5)',
                             borderRadius: '6px',
                             fontWeight: 800,
-                            color: '#12372A',
+                            color: 'var(--text-primary, #1F2937)',
                             fontSize: '11px',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -1917,7 +1922,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         </div>
                       </div>
                       <div>
-                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>To</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '3px' }}>To</label>
                         <SearchableDropdown
                           options={Object.entries(availableCurrencies).map(([c, info]) => ({
                             value: c,
@@ -1933,19 +1938,19 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     </div>
 
                     {/* Live Reciprocal & Calculation Options */}
-                    <div style={{ background: '#ffffff', border: '1px solid #D6E2DA', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--fr8x-text)' }}>
+                    <div style={{ background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
                         <span>Direct: <b>1 {calcSourceCurrency} = {directRate.toFixed(4)} {calcTargetCurrency}</b></span>
                         <span>Inverse: <b>1 {calcTargetCurrency} = {(1 / (directRate || 1)).toFixed(4)} {calcSourceCurrency}</b></span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #E3ECE7' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                           Live Forex Rate · Real-time Interbank Feed
                         </span>
                         <button
                           type="button"
                           onClick={() => refreshLiveRates()}
-                          style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                          style={{ fontSize: '11px', color: 'var(--accent-primary, #006B68)', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
                         >
                           Sync Now
                         </button>
@@ -2046,14 +2051,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   right: 0,
                   width: '380px',
                   maxWidth: 'calc(100vw - 20px)',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D9E0E8',
+                  backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '8px',
-                  boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                  boxShadow: 'var(--glass-shadow-lg, 0 12px 28px -5px rgba(0, 0, 0, 0.18))',
                   zIndex: 1100,
                   overflow: 'hidden',
-                  color: '#172B45',
-                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                  color: 'var(--text-primary, #1F2937)',
+                  fontFamily: 'var(--font-family-primary)',
                   fontSize: '12px',
                   boxSizing: 'border-box',
                 }}
@@ -2062,15 +2067,15 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   className="notif-header"
                   style={{
                     padding: '10px 14px',
-                    borderBottom: '1px solid #D9E0E8',
-                    background: '#F4F6F8',
+                    borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
+                    background: 'var(--surface-elevated, #F8FAFC)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <b style={{ fontSize: '13px', color: '#172B45' }}>Notifications</b>
+                    <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)' }}>Notifications</b>
                     <span
                       style={{
                         display: 'inline-flex',
@@ -2078,8 +2083,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         gap: '4px',
                         fontSize: '10px',
                         color: '#16834A',
-                        background: '#FFFFFF',
-                        border: '1px solid #D9E0E8',
+                        background: 'var(--surface-primary, #FFFFFF)',
+                        border: '1px solid var(--border-subtle, #E5E7EB)',
                         padding: '1px 6px',
                         borderRadius: '10px',
                         fontWeight: 700,
@@ -2099,7 +2104,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       Live
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <button
                       type="button"
                       onClick={async () => {
@@ -2116,12 +2121,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         alignItems: 'center',
                         gap: '3px',
                         fontSize: '11px',
-                        color: '#075B5B',
+                        color: 'var(--accent-primary, #006B68)',
                         fontWeight: 600,
-                        background: 'none',
-                        border: 'none',
+                        background: 'var(--surface-primary, #FFFFFF)',
+                        border: '1px solid var(--border-subtle, #E5E7EB)',
                         cursor: 'pointer',
-                        padding: '2px 4px',
+                        padding: '2px 6px',
                         borderRadius: '4px',
                       }}
                     >
@@ -2129,13 +2134,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       {isSyncingNotifs ? 'Syncing…' : 'Sync'}
                     </button>
                     {unreadCount > 0 && (
-                      <span className="badge blue" style={{ fontSize: '11px', background: '#075B5B', color: '#FFFFFF' }}>{unreadCount} Unread</span>
+                      <span className="badge blue" style={{ fontSize: '11px', background: 'var(--accent-primary, #006B68)', color: '#FFFFFF', borderColor: 'var(--accent-primary, #006B68)' }}>{unreadCount} Unread</span>
                     )}
                     {unreadCount > 0 && (
                       <button
                         onClick={() => markAllNotificationsRead()}
                         title="Mark all as read"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#075B5B', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--accent-primary, #006B68)', fontWeight: 600, background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
                       >
                         <CheckCheck size={12} /> All Read
                       </button>
@@ -2144,7 +2149,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <button
                         onClick={() => clearAllNotifications()}
                         title="Clear all notifications"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#526174', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '4px', padding: '2px 6px', cursor: 'pointer' }}
                       >
                         <Trash2 size={12} /> Clear All
                       </button>
@@ -2155,7 +2160,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       className="close-red-box sm"
                       aria-label="Close notifications"
                       title="Close notifications"
-                      style={{ marginLeft: '4px' }}
+                      style={{ marginLeft: '2px' }}
                     >
                       <X size={10} />
                     </button>
@@ -2170,8 +2175,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     gridTemplateColumns: 'repeat(4, 1fr)',
                     gap: '4px',
                     padding: '8px 10px',
-                    borderBottom: '1px solid #D9E0E8',
-                    background: '#FFFFFF',
+                    borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     boxSizing: 'border-box',
                     width: '100%',
                   }}
@@ -2185,10 +2190,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       justifyContent: 'center',
                       gap: '4px',
                       padding: '4px 6px',
-                      borderRadius: '5px',
-                      background: selectedNotifCategory === null ? '#075B5B' : '#F4F6F8',
-                      color: selectedNotifCategory === null ? '#FFFFFF' : '#172B45',
-                      border: selectedNotifCategory === null ? '1px solid #075B5B' : '1px solid #D9E0E8',
+                      borderRadius: '6px',
+                      background: selectedNotifCategory === null ? 'var(--accent-primary, #006B68)' : 'var(--surface-elevated, #F8FAFC)',
+                      color: selectedNotifCategory === null ? '#FFFFFF' : 'var(--text-primary, #1F2937)',
+                      border: selectedNotifCategory === null ? '1px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
                       fontSize: '11px',
                       fontWeight: selectedNotifCategory === null ? 700 : 600,
                       cursor: 'pointer',
@@ -2216,10 +2221,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           justifyContent: 'center',
                           gap: '3px',
                           padding: '4px 6px',
-                          borderRadius: '5px',
-                          background: isSelected ? '#075B5B' : '#F4F6F8',
-                          color: isSelected ? '#FFFFFF' : '#172B45',
-                          border: isSelected ? '1px solid #075B5B' : '1px solid #D9E0E8',
+                          borderRadius: '6px',
+                          background: isSelected ? 'var(--accent-primary, #006B68)' : 'var(--surface-elevated, #F8FAFC)',
+                          color: isSelected ? '#FFFFFF' : 'var(--text-primary, #1F2937)',
+                          border: isSelected ? '1px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
                           fontSize: '11px',
                           fontWeight: isSelected ? 700 : 600,
                           cursor: 'pointer',
@@ -2233,7 +2238,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         }}
                         title={cat.charAt(0).toUpperCase() + cat.slice(1)}
                       >
-                        <span style={{ display: 'flex', alignItems: 'center', color: isSelected ? '#FFFFFF' : '#075B5B', flexShrink: 0 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', color: isSelected ? '#FFFFFF' : 'var(--accent-primary, #006B68)', flexShrink: 0 }}>
                           {categoryMap[cat]?.icon}
                         </span>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat}</span>
@@ -2242,8 +2247,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             style={{
                               fontSize: '9.5px',
                               fontWeight: 800,
-                              background: isSelected ? '#FFFFFF' : '#075B5B',
-                              color: isSelected ? '#075B5B' : '#FFFFFF',
+                              background: isSelected ? '#FFFFFF' : 'var(--accent-primary, #006B68)',
+                              color: isSelected ? 'var(--accent-primary, #006B68)' : '#FFFFFF',
                               borderRadius: '8px',
                               padding: '0 4px',
                               minWidth: '13px',
@@ -2260,7 +2265,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   })}
                 </div>
 
-                <div style={{ maxHeight: '320px', overflowY: 'auto', background: '#FFFFFF' }}>
+                <div style={{ maxHeight: '320px', overflowY: 'auto', background: 'var(--surface-primary, #FFFFFF)' }}>
                   {(() => {
                     const displayed = selectedNotifCategory
                       ? notifications.filter((n) => n.category === selectedNotifCategory)
@@ -2268,12 +2273,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                     if (displayed.length === 0) {
                       return (
-                        <div style={{ padding: '36px 16px', textAlign: 'center', color: '#526174', background: '#FFFFFF' }}>
-                          <Bell size={24} color="#526174" style={{ margin: '0 auto 8px', display: 'block' }} />
-                          <b style={{ color: '#172B45', fontSize: '13px', display: 'block', marginBottom: '2px' }}>
+                        <div style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--text-secondary, #64748B)', background: 'var(--surface-primary, #FFFFFF)' }}>
+                          <Bell size={24} color="var(--text-secondary, #64748B)" style={{ margin: '0 auto 8px', display: 'block' }} />
+                          <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '13px', display: 'block', marginBottom: '2px' }}>
                             {selectedNotifCategory ? `No ${selectedNotifCategory} notifications` : 'No notifications yet'}
                           </b>
-                          <span style={{ fontSize: '11.5px', color: '#526174' }}>
+                          <span style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)' }}>
                             You&apos;re completely up to date with tenders, rates, and messages.
                           </span>
                         </div>
@@ -2285,22 +2290,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         key={n.id}
                         className={`notif-item ${!n.read ? 'unread' : ''}`}
                         onClick={() => markNotificationRead(n.id)}
-                        style={{ cursor: 'pointer', padding: '10px 14px', borderBottom: '1px solid #D9E0E8', background: !n.read ? '#F4F6F8' : '#FFFFFF', transition: 'background-color 0.15s ease' }}
+                        style={{ cursor: 'pointer', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: !n.read ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)', transition: 'background-color 0.15s ease' }}
                       >
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span style={{ color: categoryMap[n.category]?.color, flexShrink: 0, marginTop: '2px' }}>
                             {categoryMap[n.category]?.icon}
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <b style={{ fontSize: '11.5px', display: 'block', color: '#172B45' }}>{n.title}</b>
-                            <p style={{ fontSize: '11px', color: '#526174', margin: '2px 0 0', lineHeight: '1.4' }}>{n.desc}</p>
+                            <b style={{ fontSize: '11.5px', display: 'block', color: 'var(--text-primary, #1F2937)' }}>{n.title}</b>
+                            <p style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', margin: '2px 0 0', lineHeight: '1.4' }}>{n.desc}</p>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                              <small style={{ fontSize: '11px', color: '#526174' }}>{n.time}</small>
+                              <small style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>{n.time}</small>
                               {n.actionLabel && n.targetUrl && (
                                 <Link
                                   href={n.targetUrl.startsWith('/connections') ? n.targetUrl.replace('/connections', '/network') : n.targetUrl.startsWith('/people') ? n.targetUrl.replace('/people', '/network') : n.targetUrl}
                                   className="badge blue"
-                                  style={{ fontSize: '11px', background: '#075B5B', color: '#FFFFFF' }}
+                                  style={{ fontSize: '11px', background: 'var(--accent-primary, #006B68)', color: '#FFFFFF', borderColor: 'var(--accent-primary, #006B68)' }}
                                   onClick={() => setShowNotifications(false)}
                                 >
                                   {n.actionLabel}
@@ -2308,7 +2313,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               )}
                             </div>
                           </div>
-                          {!n.read && <span className="notif-unread-dot" style={{ backgroundColor: '#075B5B' }} />}
+                          {!n.read && <span className="notif-unread-dot" style={{ backgroundColor: 'var(--accent-primary, #006B68)' }} />}
                           <button
                             type="button"
                             onClick={(e) => {
@@ -2316,7 +2321,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               clearNotification(n.id);
                             }}
                             title="Dismiss notification"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#526174', flexShrink: 0, opacity: 0.6 }}
+                            style={{ background: 'none', border: '1px solid transparent', borderRadius: '4px', cursor: 'pointer', padding: '2px', color: 'var(--text-secondary, #64748B)', flexShrink: 0, opacity: 0.7 }}
                             className="hover:opacity-100 hover:text-red-500"
                           >
                             <X size={12} />
@@ -2327,11 +2332,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   })()}
                 </div>
 
-                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #D9E0E8', background: '#F4F6F8' }}>
+                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-elevated, #F8FAFC)' }}>
                   <Link
                     href="/notifications"
                     onClick={() => setShowNotifications(false)}
-                    style={{ fontSize: '11.5px', color: '#075B5B', fontWeight: 700, textDecoration: 'none' }}
+                    style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', fontWeight: 700, textDecoration: 'none' }}
                   >
                     Open Notification Center →
                   </Link>
@@ -2396,33 +2401,33 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     right: 0,
                     width: '260px',
                     maxWidth: 'calc(100vw - 20px)',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
+                    backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '8px',
-                    boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                    boxShadow: 'var(--glass-shadow-lg, 0 12px 28px -5px rgba(0, 0, 0, 0.18))',
                     zIndex: 1100,
                     overflow: 'hidden',
-                    color: '#172B45',
-                    fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                    color: 'var(--text-primary, #1F2937)',
+                    fontFamily: "var(--font-family-primary)",
                     fontSize: '12px',
                     padding: 0,
                     boxSizing: 'border-box',
                   }}
                 >
-                  <div style={{ padding: '12px 14px', borderBottom: '1px solid #D9E0E8', background: '#F4F6F8', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-elevated, #F8FAFC)', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', minWidth: 0, flex: 1 }}>
                       <UserAvatar user={user} size={36} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: '#172B45' }}>
+                        <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-primary, #1F2937)' }}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
                           </span>
                           {user?.hasGoldenTick && <GoldenTick size={12} />}
                         </b>
-                        <small style={{ fontSize: '11px', color: '#526174', display: 'block', fontWeight: 600, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <small style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', display: 'block', fontWeight: 600, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {user.designation}
                         </small>
-                        <small style={{ fontSize: '11px', color: '#526174', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <small style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {user?.companyLogoUrl ? (
                             <img
                               src={user.companyLogoUrl}
@@ -2430,7 +2435,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               style={{ width: '13px', height: '13px', objectFit: 'contain', background: 'transparent', flexShrink: 0 }}
                             />
                           ) : (
-                            <Building2 size={12} style={{ color: '#075B5B', flexShrink: 0 }} />
+                            <Building2 size={12} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
                           )}
                           <span>{user.company || 'Enterprise Logistics'}</span>
                         </small>
@@ -2440,9 +2445,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             style={{
                               fontSize: '10px',
                               fontWeight: 800,
-                              background: '#F4F6F8',
+                              background: 'var(--surface-primary, #FFFFFF)',
                               color: '#075B5B',
-                              border: '1px solid #B8D5C8',
+                              border: '1px solid var(--border-default, #D9DEE5)',
                               padding: '2px 8px',
                               borderRadius: '4px',
                               letterSpacing: '0.04em',
@@ -2457,9 +2462,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             style={{
                               fontSize: '10px',
                               fontWeight: 700,
-                              background: '#E8F5E9',
+                              background: 'rgba(21, 128, 61, 0.1)',
                               color: '#15803D',
-                              border: '1px solid #C8E6C9',
+                              border: '1px solid rgba(21, 128, 61, 0.35)',
                               padding: '2px 6px',
                               borderRadius: '4px',
                               display: 'inline-flex',
@@ -2489,9 +2494,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#172B45', textDecoration: 'none', borderRadius: '4px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: 'var(--text-primary, #1F2937)', textDecoration: 'none', borderRadius: '4px', border: '1px solid transparent' }}
                   >
-                    <UserIcon size={14} style={{ color: '#075B5B' }} />
+                    <UserIcon size={14} style={{ color: 'var(--accent-primary, #006B68)' }} />
                     <span>Freight Passport & Profile</span>
                   </Link>
 
@@ -2499,7 +2504,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#172B45', textDecoration: 'none', borderRadius: '4px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: 'var(--text-primary, #1F2937)', textDecoration: 'none', borderRadius: '4px', border: '1px solid transparent' }}
                   >
                     <ShieldCheck size={14} style={{ color: '#16834A' }} />
                     <span>KYC & Accreditations</span>
@@ -2509,13 +2514,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/dashboard"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#172B45', textDecoration: 'none', borderRadius: '4px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: 'var(--text-primary, #1F2937)', textDecoration: 'none', borderRadius: '4px', border: '1px solid transparent' }}
                   >
-                    <Settings size={14} style={{ color: '#526174' }} />
+                    <Settings size={14} style={{ color: 'var(--text-secondary, #64748B)' }} />
                     <span>Workspace Preferences</span>
                   </Link>
 
-                  <div style={{ borderTop: '1px solid #D9E0E8', margin: '4px 0' }} />
+                  <div style={{ borderTop: '1px solid var(--border-subtle, #E5E7EB)', margin: '4px 0' }} />
 
                   <Link
                     href="/login"
@@ -2524,7 +2529,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       logout();
                     }}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#C0392B', textDecoration: 'none', borderRadius: '4px', fontWeight: 600 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#DC2626', textDecoration: 'none', borderRadius: '4px', fontWeight: 600 }}
                   >
                     <LogOut size={14} />
                     <span>Sign Out</span>

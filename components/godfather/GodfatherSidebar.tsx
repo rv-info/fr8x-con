@@ -104,7 +104,7 @@ export function GodfatherSidebar() {
   return (
     <aside className="gf-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Brand Header */}
-      <div className="gf-sidebar-header" style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+      <div className="gf-sidebar-header" style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
         <Link href="/godfather" className="gf-brand-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
           <div
             style={{
@@ -122,7 +122,7 @@ export function GodfatherSidebar() {
             <ShieldCheck style={{ width: '16px', height: '16px', color: '#38bdf8' }} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <span>GODFATHER</span>
               <span
                 style={{
@@ -139,7 +139,7 @@ export function GodfatherSidebar() {
                 SOVEREIGN
               </span>
             </div>
-            <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               FR8X SUPER ADMIN
             </div>
           </div>
@@ -153,8 +153,8 @@ export function GodfatherSidebar() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '4px 8px',
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
+            background: 'var(--surface-secondary, #F9FAFB)',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
             borderRadius: '6px',
           }}
         >
@@ -180,13 +180,13 @@ export function GodfatherSidebar() {
             value={environment}
             onChange={(e) => setEnvironment(e.target.value as PlatformEnvironment)}
             style={{
-              background: '#ffffff',
-              border: '1px solid #cbd5e1',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-default, #D9DEE5)',
               borderRadius: '4px',
               padding: '2px 4px',
               fontSize: '10.5px',
               fontWeight: 700,
-              color: '#0f172a',
+              color: 'var(--text-primary, #1F2937)',
               outline: 'none',
               cursor: 'pointer',
             }}
@@ -200,7 +200,7 @@ export function GodfatherSidebar() {
 
       {/* Navigation */}
       <nav className="gf-sidebar-nav custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingBottom: '6px', borderBottom: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingBottom: '6px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
           <Link href="/godfather" className={`gf-nav-link ${pathname === '/godfather' ? 'active' : ''}`}>
             <LayoutDashboard className="lucide" />
             <span>Overview Dashboard</span>
@@ -229,7 +229,7 @@ export function GodfatherSidebar() {
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
-                  color: '#64748b',
+                  color: 'var(--text-secondary, #64748B)',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -274,7 +274,7 @@ export function GodfatherSidebar() {
       </nav>
 
       {/* Operator Footer */}
-      <div className="gf-sidebar-footer" style={{ padding: '8px 10px', borderTop: '1px solid #e2e8f0', background: '#ffffff' }}>
+      <div className="gf-sidebar-footer" style={{ padding: '8px 10px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
         <div style={{ position: 'relative' }}>
           <button
             type="button"
@@ -286,8 +286,8 @@ export function GodfatherSidebar() {
               justifyContent: 'space-between',
               padding: '6px 8px',
               borderRadius: '6px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--surface-secondary, #F9FAFB)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               cursor: 'pointer',
               textAlign: 'left',
             }}
@@ -311,15 +311,15 @@ export function GodfatherSidebar() {
                 {operator.displayName.charAt(0)}
               </div>
               <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {operator.displayName}
                 </div>
-                <div style={{ fontSize: '9.5px', color: '#0284c7', fontFamily: 'Consolas, monospace', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontSize: '9.5px', color: 'var(--accent-primary, #006B68)', fontFamily: 'Consolas, monospace', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {operator.roleTitle}
                 </div>
               </div>
             </div>
-            <ChevronDown style={{ width: '13px', height: '13px', color: '#94a3b8', flexShrink: 0 }} />
+            <ChevronDown style={{ width: '13px', height: '13px', color: 'var(--text-secondary, #64748B)', flexShrink: 0 }} />
           </button>
 
           {isRoleDropdownOpen && (
@@ -329,8 +329,8 @@ export function GodfatherSidebar() {
                 bottom: 'calc(100% + 4px)',
                 left: 0,
                 width: '100%',
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
+                background: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
                 padding: '6px',
@@ -340,7 +340,7 @@ export function GodfatherSidebar() {
                 fontSize: '11px',
               }}
             >
-              <div style={{ padding: '4px 6px', fontSize: '9.5px', fontFamily: 'Consolas, monospace', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
+              <div style={{ padding: '4px 6px', fontSize: '9.5px', fontFamily: 'Consolas, monospace', fontWeight: 800, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>
                 Switch Authorized Persona
               </div>
               {operatorsList.map((op) => (
@@ -369,7 +369,7 @@ export function GodfatherSidebar() {
                 >
                   <div style={{ overflow: 'hidden' }}>
                     <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{op.displayName}</div>
-                    <div style={{ fontSize: '9.5px', color: '#94a3b8', fontFamily: 'Consolas, monospace' }}>{op.roleTitle}</div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--text-secondary, #64748B)', fontFamily: 'Consolas, monospace' }}>{op.roleTitle}</div>
                   </div>
                   {op.uid === operator.uid && (
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7', flexShrink: 0 }} />

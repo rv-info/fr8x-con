@@ -176,7 +176,7 @@ export default function GodfatherPromotionsPage() {
         {/* Sovereign Indicator Card */}
         <div
           style={{
-            background: '#ffffff',
+            background: 'var(--surface-primary, #FFFFFF)',
             border: '1px solid var(--fr8x-outline)',
             borderRadius: '6px',
             padding: '8px 14px',
@@ -249,7 +249,7 @@ export default function GodfatherPromotionsPage() {
             <div
               key={feature.key}
               style={{
-                background: '#ffffff',
+                background: 'var(--surface-primary, #FFFFFF)',
                 border: '1px solid var(--fr8x-outline)',
                 borderRadius: '6px',
                 display: 'flex',
@@ -480,7 +480,7 @@ export default function GodfatherPromotionsPage() {
               <h2 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: 'var(--fr8x-text)' }}>
                 Promotional Free Login &amp; Validity Enforcement
               </h2>
-              <span style={{ fontSize: '10px', fontWeight: 800, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '1px 6px', borderRadius: '4px' }}>
+              <span style={{ fontSize: '10px', fontWeight: 800, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '1px 6px', borderRadius: '4px' }}>
                 Auto-Block on Expiration Active
               </span>
             </div>
@@ -508,13 +508,13 @@ export default function GodfatherPromotionsPage() {
             <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL REGISTERED USERS</span>
             <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>{users.length}</b>
           </div>
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '5px', padding: '8px 12px' }}>
+          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: '5px', padding: '8px 12px' }}>
             <span style={{ fontSize: '10px', color: '#166534', display: 'block' }}>ACTIVE PROMOTIONAL ACCESS</span>
             <b style={{ fontSize: '15px', color: '#15803d' }}>
               {users.filter((u) => u.plan === 'trial' && !u.isPlanExpired).length}
             </b>
           </div>
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '5px', padding: '8px 12px' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '5px', padding: '8px 12px' }}>
             <span style={{ fontSize: '10px', color: '#991b1b', display: 'block' }}>EXPIRED / ACCESS BLOCKED</span>
             <b style={{ fontSize: '15px', color: '#b91c1c' }}>
               {
@@ -861,7 +861,7 @@ export default function GodfatherPromotionsPage() {
               padding: '20px',
               borderRadius: '8px',
               border: '1px solid var(--fr8x-outline)',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               boxShadow: 'var(--sh-md)',
             }}
           >
@@ -934,7 +934,7 @@ export default function GodfatherPromotionsPage() {
               padding: '20px',
               borderRadius: '8px',
               border: '1px solid var(--fr8x-outline)',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               boxShadow: 'var(--sh-md)',
             }}
           >
@@ -1063,7 +1063,7 @@ export default function GodfatherPromotionsPage() {
             style={{
               width: '100%',
               maxWidth: '460px',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               borderRadius: '8px',
               border: '1px solid var(--fr8x-outline)',
               boxShadow: 'var(--sh-lg)',
@@ -1108,7 +1108,7 @@ export default function GodfatherPromotionsPage() {
               }}
               style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}
             >
-              <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
+              <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
                 <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', display: 'block' }}>TARGET MEMBER</span>
                 <b style={{ fontSize: '13px', color: 'var(--fr8x-text)', display: 'block' }}>
                   {selectedUserForPromo.displayName}

@@ -53,8 +53,8 @@ export function RecommendedSection() {
   return (
     <section className="people-recommended-section" aria-label="Recommended professionals">
       <div className="people-recommended-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <Sparkles size={16} style={{ color: '#1B2B4B' }} aria-hidden="true" />
-        <h2 style={{ fontSize: '12px', fontWeight: 700, margin: 0, color: '#1B2B4B' }}>People You May Know</h2>
+        <Sparkles size={16} style={{ color: 'var(--accent-primary, #006B68)' }} aria-hidden="true" />
+        <h2 style={{ fontSize: '13px', fontWeight: 700, margin: 0, color: 'var(--text-primary, #1F2937)' }}>People You May Know</h2>
       </div>
 
       <div
@@ -76,9 +76,9 @@ export function RecommendedSection() {
               flexDirection: 'column',
               justifyContent: 'space-between',
               position: 'relative',
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: '6px',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
+              borderRadius: '8px',
             }}
           >
             <div>
@@ -93,24 +93,24 @@ export function RecommendedSection() {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link
                     href={`/network/${person.id}`}
-                    style={{ fontWeight: 600, fontSize: '12px', color: '#1B2B4B', textDecoration: 'none', lineHeight: 1.35, letterSpacing: '-0.005em' }}
+                    style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-primary, #1F2937)', textDecoration: 'none', lineHeight: 1.35, letterSpacing: '-0.005em' }}
                   >
                     {person.full_name}
                     {person.has_golden_tick && (
-                      <span className="golden-tick-badge" title="Golden Tick" style={{ marginLeft: 4, color: '#1B2B4B' }}>★</span>
+                      <span className="golden-tick-badge" title="Golden Tick" style={{ marginLeft: 4, color: 'var(--text-primary, #1F2937)' }}>★</span>
                     )}
                     {person.is_verified && !person.has_golden_tick && (
-                      <span className="verified-badge" title="Verified" style={{ marginLeft: 4, color: '#1B2B4B' }}>✓</span>
+                      <span className="verified-badge" title="Verified" style={{ marginLeft: 4, color: 'var(--accent-primary, #006B68)' }}>✓</span>
                     )}
                   </Link>
                   {person.headline && (
-                    <p style={{ fontSize: '12px', color: '#1B2B4B', margin: '2px 0 4px', lineHeight: 1.4 }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: '2px 0 4px', lineHeight: 1.4 }}>
                       {person.headline}
                     </p>
                   )}
                   {person.location && (
-                    <p style={{ fontSize: '12px', color: '#1B2B4B', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem', lineHeight: 1.3 }}>
-                      <MapPin size={11} aria-hidden="true" style={{ color: '#1B2B4B' }} /> {person.location}
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem', lineHeight: 1.3 }}>
+                      <MapPin size={11} aria-hidden="true" style={{ color: 'var(--text-secondary, #64748B)' }} /> {person.location}
                     </p>
                   )}
                 </div>
@@ -126,14 +126,14 @@ export function RecommendedSection() {
                   fontWeight: 500,
                   padding: '3px 8px',
                   borderRadius: '4px',
-                  backgroundColor: '#FFFFFF',
-                  color: '#1B2B4B',
-                  border: '1px solid #E2E8F0',
+                  backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                  color: 'var(--text-primary, #1F2937)',
+                  border: '1px solid var(--border-subtle, #E5E7EB)',
                   marginBottom: '0.75rem',
                   lineHeight: 1,
                 }}
               >
-                <Users size={11} aria-hidden="true" style={{ color: '#1B2B4B' }} />
+                <Users size={11} aria-hidden="true" style={{ color: 'var(--accent-primary, #006B68)' }} />
                 <span>{person.primary_reason}</span>
               </div>
             </div>

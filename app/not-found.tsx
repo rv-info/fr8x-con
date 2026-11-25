@@ -57,7 +57,7 @@ export default function NotFoundPage() {
         style={{
           width: '100%',
           maxWidth: '440px',
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '16px',
           boxShadow: '0 20px 45px rgba(0,0,0,0.3)',
           overflow: 'hidden',
@@ -77,13 +77,13 @@ export default function NotFoundPage() {
               display: 'block',
             }}
           />
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--accent-primary, #006B68)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
             FR8X
           </div>
-          <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '6px 0 2px', color: '#002b66' }}>
-            <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace
+          <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '6px 0 2px', color: 'var(--accent-primary, #006B68)' }}>
+            <span style={{ fontWeight: 'bold', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase' }}>FR8X</span> Workspace
           </h2>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', margin: 0, lineHeight: 1.5 }}>
             {isLoading
               ? 'Verifying session and security credentials…'
               : isAuthenticated
@@ -141,8 +141,8 @@ export default function NotFoundPage() {
                 width: '100%',
                 padding: '9px 16px',
                 borderRadius: '8px',
-                background: '#f1f5f9',
-                color: '#334155',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                color: 'var(--text-primary, #1F2937)',
                 fontSize: '12.5px',
                 fontWeight: 600,
                 textDecoration: 'none',

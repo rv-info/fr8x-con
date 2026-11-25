@@ -603,7 +603,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Header Strip */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'var(--surface-secondary, #F9FAFB)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)', flexWrap: 'wrap', gap: '8px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <b style={{ fontSize: '15px', color: 'var(--ink)' }}>{selectedRateDetail.carrier}</b>
@@ -627,21 +627,21 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
             {/* Container Pricing & Multi-Currency Grid */}
             <div className="grid g2" style={{ gap: '10px' }}>
               {/* 20DV Card */}
-              <div style={{ background: '#f0f7ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <small style={{ color: '#0369a1', fontSize: '11px', textTransform: 'uppercase', fontWeight: 800 }}>20DV</small>
+                  <small style={{ color: 'var(--accent-primary, #006B68)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 800 }}>20DV</small>
                   <span className="badge blue" style={{ fontSize: '9.5px' }}>{selectedRateDetail.d20Type || 'Dry Standard'}</span>
                 </div>
-                <div style={{ fontSize: '22px', fontWeight: 850, color: '#0284c7' }}>
+                <div style={{ fontSize: '22px', fontWeight: 850, color: 'var(--accent-primary, #006B68)' }}>
                   ${selectedRateDetail.d20.toLocaleString()} <span style={{ fontSize: '12px', fontWeight: 600 }}>USD</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#0369a1', marginTop: '2px', fontWeight: 600 }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', fontWeight: 600 }}>
                   ≈ {format(selectedRateDetail.d20)} (Local Equivalent)
                 </div>
               </div>
 
               {/* 40HC Card */}
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ background: 'rgba(22, 163, 74, 0.08)', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <small style={{ color: '#15803d', fontSize: '11px', textTransform: 'uppercase', fontWeight: 800 }}>40HC</small>
                   <span className="badge green" style={{ fontSize: '9.5px' }}>{selectedRateDetail.h40Type || 'High Cube'}</span>
@@ -656,53 +656,53 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
             </div>
 
             {/* Complete Routing & Port Breakdown Table */}
-            <div style={{ border: '1px solid var(--line)', borderRadius: '8px', overflow: 'hidden' }}>
-              <div style={{ background: '#f1f5f9', padding: '6px 12px', fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>
+            <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-elevated, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 12px', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                 Port Routing & Terminal Architecture
               </div>
-              <div className="grid g4" style={{ padding: '10px 12px', gap: '8px', background: '#fff' }}>
+              <div className="grid g4" style={{ padding: '10px 12px', gap: '8px', background: 'var(--surface-primary, #FFFFFF)' }}>
                 <div style={{ fontSize: '11px' }}>
-                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Place of Receipt (POR)</span>
-                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.por || '—'}</b>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', display: 'block' }}>Place of Receipt (POR)</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)' }}>{selectedRateDetail.por || '—'}</b>
                 </div>
                 <div style={{ fontSize: '11px' }}>
-                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Port of Loading (POL)</span>
-                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.pol}</b>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', display: 'block' }}>Port of Loading (POL)</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)' }}>{selectedRateDetail.pol}</b>
                 </div>
                 <div style={{ fontSize: '11px' }}>
-                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Port of Discharge (POD)</span>
-                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.pod}</b>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', display: 'block' }}>Port of Discharge (POD)</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)' }}>{selectedRateDetail.pod}</b>
                 </div>
                 <div style={{ fontSize: '11px' }}>
-                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Final Place of Delivery (FPOD)</span>
-                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.fpod || '—'}</b>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', display: 'block' }}>Final Place of Delivery (FPOD)</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)' }}>{selectedRateDetail.fpod || '—'}</b>
                 </div>
               </div>
             </div>
 
             {/* Itemized Terms & Free Time */}
-            <div style={{ border: '1px solid var(--line)', borderRadius: '8px', padding: '12px 14px', fontSize: '11.5px', background: '#fff' }}>
-              <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '8px', fontSize: '12px' }}>Free Time & Liner Terms</b>
+            <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '12px 14px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)' }}>
+              <b style={{ color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '8px', fontSize: '12px' }}>Free Time & Liner Terms</b>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)', display: 'block', fontSize: '10.5px' }}>Combined Demurrage & Detention:</span>
-                  <b style={{ color: 'var(--ink)', fontSize: '12px' }}>{selectedRateDetail.ft || '14 Days Combined'}</b>
+                <div style={{ background: 'var(--surface-elevated, #F8FAFC)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', display: 'block', fontSize: '10.5px' }}>Combined Demurrage & Detention:</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '12px' }}>{selectedRateDetail.ft || '14 Days Combined'}</b>
                 </div>
-                <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)', display: 'block', fontSize: '10.5px' }}>Rate Type Classification:</span>
-                  <b style={{ color: 'var(--ink)', fontSize: '12px' }}>{selectedRateDetail.rateType || 'Direct Spot'}</b>
+                <div style={{ background: 'var(--surface-elevated, #F8FAFC)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', display: 'block', fontSize: '10.5px' }}>Rate Type Classification:</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '12px' }}>{selectedRateDetail.rateType || 'Direct Spot'}</b>
                 </div>
-                <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)', display: 'block', fontSize: '10.5px' }}>Corridor Transit Time:</span>
-                  <b style={{ color: 'var(--ink)', fontSize: '12px' }}>{selectedRateDetail.tt || '28 days'}</b>
+                <div style={{ background: 'var(--surface-elevated, #F8FAFC)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', display: 'block', fontSize: '10.5px' }}>Corridor Transit Time:</span>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '12px' }}>{selectedRateDetail.tt || '28 days'}</b>
                 </div>
               </div>
             </div>
 
             {/* Surcharges & Remarks */}
-            <div style={{ padding: '9px 12px', background: '#eff6ff', borderRadius: '7px', border: '1px solid #bfdbfe', fontSize: '11px' }}>
-              <b style={{ color: 'var(--brand)' }}>Operational Remarks & Surcharges:</b>
-              <p style={{ margin: '2px 0 0', color: 'var(--ink)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+            <div style={{ padding: '9px 12px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '7px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '11px' }}>
+              <b style={{ color: 'var(--accent-primary, #006B68)' }}>Operational Remarks & Surcharges:</b>
+              <p style={{ margin: '2px 0 0', color: 'var(--text-primary, #1F2937)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
                 {selectedRateDetail.remarks || selectedRateDetail.remark || 'No additional operational remarks.'}
               </p>
             </div>
@@ -771,8 +771,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
             {/* Smart Rate Capsule Link Box */}
             <div
               style={{
-                background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
-                border: '1px solid #bfdbfe',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 padding: '10px 12px',
                 display: 'flex',
@@ -1382,7 +1382,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
       <div className="rateeditor-full">
         {/* Main Table: Rates Matrix */}
         <div className="card" style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--fr8x-outline)', borderRadius: '4px' }}>
-          <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0' }}>
+          <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0' }}>
             <div className="rates-desktop-tabs" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
               <button
                 className={`tab ${activeTab === 'all' ? 'active' : ''}`}
@@ -1443,7 +1443,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                 <button
                   type="button"
                   className="btn danger sm"
-                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: 'auto', background: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' }}
+                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: 'auto', background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', borderColor: '#fca5a5' }}
                   onClick={() => {
                     if (window.confirm(`Are you sure you want to permanently delete all ${myRates.length} custom rates? This cannot be undone.`)) {
                       clearAllMyRates();
@@ -1514,9 +1514,9 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
           </div>
 
           {/* Unified POL / POD Corridor Search & Global Search Deck */}
-          <div className="rates-search-deck" style={{ padding: '10px 14px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline, #cbd5e1)' }}>
+          <div className="rates-search-deck" style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--fr8x-outline, #cbd5e1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'inline-flex', background: '#e2e8f0', padding: '2px', borderRadius: '6px' }}>
+              <div style={{ display: 'inline-flex', background: 'var(--border-subtle, #E5E7EB)', padding: '2px', borderRadius: '6px' }}>
                 <button
                   type="button"
                   onClick={() => setSearchMode('corridor')}
@@ -1575,8 +1575,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                     gap: '4px',
                     fontSize: '10.5px',
                     color: '#dc2626',
-                    background: '#fef2f2',
-                    border: '1px solid #fecaca',
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
                     padding: '3px 8px',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1605,7 +1605,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                       fontSize: '11.5px',
                       border: '1px solid var(--fr8x-outline, #cbd5e1)',
                       borderRadius: '6px',
-                      background: '#ffffff',
+                      background: 'var(--surface-primary, #FFFFFF)',
                       color: 'var(--fr8x-text)',
                       outline: 'none',
                     }}
@@ -1614,7 +1614,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                     <button
                       type="button"
                       onClick={() => setPolSearch('')}
-                      style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                      style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary, #64748B)', padding: '2px' }}
                     >
                       <X size={12} />
                     </button>
@@ -1635,7 +1635,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     border: '1px solid var(--fr8x-outline, #cbd5e1)',
                     borderRadius: '6px',
                     cursor: 'pointer',
@@ -1660,7 +1660,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                       fontSize: '11.5px',
                       border: '1px solid var(--fr8x-outline, #cbd5e1)',
                       borderRadius: '6px',
-                      background: '#ffffff',
+                      background: 'var(--surface-primary, #FFFFFF)',
                       color: 'var(--fr8x-text)',
                       outline: 'none',
                     }}
@@ -1669,7 +1669,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                     <button
                       type="button"
                       onClick={() => setPodSearch('')}
-                      style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                      style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary, #64748B)', padding: '2px' }}
                     >
                       <X size={12} />
                     </button>
@@ -1678,7 +1678,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
               </div>
             ) : (
               <div className="search-icon-wrap" style={{ position: 'relative', width: '100%' }}>
-                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 2 }} />
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary, #64748B)', pointerEvents: 'none', zIndex: 2 }} />
                 <input
                   type="text"
                   className="search-input-field has-leading-icon"
@@ -1692,7 +1692,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                     fontSize: '11.5px',
                     border: '1px solid var(--fr8x-outline, #cbd5e1)',
                     borderRadius: '6px',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     color: 'var(--fr8x-text)',
                     outline: 'none',
                     boxSizing: 'border-box',
@@ -1702,7 +1702,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary, #64748B)', padding: '2px' }}
                   >
                     <X size={12} />
                   </button>
@@ -1743,7 +1743,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
               </colgroup>
               <thead>
                 {/* Header row — clean, high-contrast, zero-curve, 1px outline */}
-                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                <tr style={{ background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--fr8x-outline)' }}>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
@@ -1765,7 +1765,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                   <th className="rates-sticky-action-col" style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTIONS</th>
                 </tr>
                 {/* Per-column search row */}
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                <tr style={{ background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--fr8x-outline)' }}>
                   <th />
                   <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', fontFamily: 'monospace', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEQ…" value={colSearch.seq || ''} onChange={(e) => updateColSearch('seq', e.target.value)} /></th>
                   <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="Provider…" value={colSearch.sp || ''} onChange={(e) => updateColSearch('sp', e.target.value)} /></th>
@@ -1785,8 +1785,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                         style={{
                           fontSize: '10px',
                           padding: '2px 6px',
-                          background: '#fee2e2',
-                          color: '#b91c1c',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#dc2626',
                           border: '1px solid #fca5a5',
                           borderRadius: '3px',
                           cursor: 'pointer',
@@ -1809,14 +1809,14 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                   </tr>
                 ) : filteredRates.length === 0 ? (
                   <tr>
-                    <td colSpan={19} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#64748b' }}>
+                    <td colSpan={19} style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-secondary, #64748B)' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--surface-secondary, #F9FAFB)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: 'var(--text-secondary, #64748B)' }}>
                         <FileSpreadsheet size={24} />
                       </div>
-                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', marginBottom: '4px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                         {allAvailableRates.length === 0 ? 'No freight rates available' : 'No rates matching current filters'}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginBottom: '16px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
                         {allAvailableRates.length === 0
                           ? 'Publish your ocean spot or contract freight rates using the editor above or import in bulk via CSV/Excel.'
                           : 'Try adjusting your search criteria or resetting column filters.'}
@@ -1879,7 +1879,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                       <tr
                         key={rate.id}
                         className={isCompared ? 'compared-row' : ''}
-                        style={{ background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#fff' : '#f7f9fd', cursor: 'pointer' }}
+                        style={{ background: isCompared ? 'rgba(0, 107, 104, 0.08)' : idx % 2 === 0 ? 'var(--surface-primary, #FFFFFF)' : 'var(--surface-secondary, #F8FAFC)', cursor: 'pointer' }}
                         onClick={() => {
                           setRatesEditorMode('edit');
                           setShowRatesEditorModal(true);
@@ -1921,8 +1921,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                               style={{
                                 width: '20px',
                                 height: '20px',
-                                border: '1px solid #cbd5e1',
-                                background: '#fff',
+                                border: '1px solid var(--border-default, #D9DEE5)',
+                                background: 'var(--surface-primary, #FFFFFF)',
                                 borderRadius: '4px',
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -1994,7 +1994,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                         <td style={{ padding: '6px 6px', fontSize: '11px', color: 'var(--mut)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.remarks || rate.remark || ''}>
                           {rate.remarks || rate.remark || '—'}
                         </td>
-                        <td className="rates-sticky-action-col" style={{ padding: '6px 6px', background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#ffffff' : '#f7f9fd' }}>
+                        <td className="rates-sticky-action-col" style={{ padding: '6px 6px', background: isCompared ? 'rgba(0, 107, 104, 0.08)' : idx % 2 === 0 ? 'var(--surface-primary, #FFFFFF)' : 'var(--surface-secondary, #F8FAFC)' }}>
                           <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
                             <button className="btn secondary sm" style={{ padding: '3px 5px' }} onClick={(e) => { e.stopPropagation(); setSelectedRateDetail(rate); }} title="View Rate Detail">
                               <Eye size={12} />
@@ -2071,8 +2071,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                                 className="btn danger sm"
                                 style={{
                                   padding: '3px 5px',
-                                  background: '#fee2e2',
-                                  color: '#b91c1c',
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  color: '#dc2626',
                                   border: '1px solid #fca5a5',
                                   borderRadius: '3px',
                                   cursor: 'pointer',
@@ -2223,14 +2223,14 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
               <SkeletonScreen type="card" count={3} label="Loading rates cards…" />
             </div>
           ) : filteredRates.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 16px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#64748b' }}>
+            <div style={{ textAlign: 'center', padding: '40px 16px', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--surface-secondary, #F9FAFB)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: 'var(--text-secondary, #64748B)' }}>
                 <FileSpreadsheet size={22} />
               </div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                 {allAvailableRates.length === 0 ? 'No freight rates available' : 'No Matching Rates Found'}
               </div>
-              <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 14px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
+              <p style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', margin: '0 0 14px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
                 {allAvailableRates.length === 0
                   ? 'Add your container rates using the editor or import freight tariffs.'
                   : 'Try changing search keywords, selecting another carrier, or clearing filters.'}
@@ -2310,8 +2310,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                           style={{
                             fontSize: '9.5px',
                             fontFamily: 'monospace',
-                            color: '#64748b',
-                            background: '#f1f5f9',
+                            color: 'var(--text-secondary, #64748B)',
+                            background: 'var(--surface-secondary, #F9FAFB)',
                             padding: '1px 5px',
                             borderRadius: '3px',
                           }}
@@ -2325,7 +2325,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                     <div className="mobile-rate-corridor">
                       <div className="mobile-rate-route-line">
                         <div className="mobile-rate-port" title={rate.por ? `POR: ${rate.por} · POL: ${rate.pol}` : `POL: ${rate.pol}`}>
-                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>{rate.por ? 'POR / POL' : 'ORIGIN'}</small>
+                          <small style={{ display: 'block', fontSize: '9px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>{rate.por ? 'POR / POL' : 'ORIGIN'}</small>
                           <span>{rate.por ? `${rate.por} (${rate.pol.split('(')[0].trim()})` : rate.pol.split('(')[0].trim()}</span>
                         </div>
 
@@ -2338,7 +2338,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                         </div>
 
                         <div className="mobile-rate-port mobile-rate-port-dest" title={rate.fpod ? `POD: ${rate.pod} · FPOD: ${rate.fpod}` : `POD: ${rate.pod}`}>
-                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>{rate.fpod ? 'POD / FPOD' : 'DESTINATION'}</small>
+                          <small style={{ display: 'block', fontSize: '9px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>{rate.fpod ? 'POD / FPOD' : 'DESTINATION'}</small>
                           <span>{rate.fpod ? `${rate.pod.split('(')[0].trim()} (${rate.fpod})` : rate.pod.split('(')[0].trim()}</span>
                         </div>
                       </div>
@@ -2380,9 +2380,9 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
 
                     {/* Free Time & Conditions */}
                     <div className="mobile-rate-meta-row">
-                      <span>Free Time: <b style={{ color: '#0f172a' }}>{rate.ft || '14 Days Combined'}</b></span>
+                      <span>Free Time: <b style={{ color: 'var(--text-primary, #1F2937)' }}>{rate.ft || '14 Days Combined'}</b></span>
                       {rate.remark && (
-                        <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '10px' }} className="truncate max-w-[180px]">
+                        <span style={{ color: 'var(--text-secondary, #64748B)', fontStyle: 'italic', fontSize: '10px' }} className="truncate max-w-[180px]">
                           {rate.remark}
                         </span>
                       )}

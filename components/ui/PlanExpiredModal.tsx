@@ -128,9 +128,9 @@ export function PlanExpiredModal() {
         style={{
           width: '100%',
           maxWidth: '580px',
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '12px',
-          border: '1px solid #cbd5e1',
+          border: '1px solid var(--border-default, #D9DEE5)',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
           overflow: 'hidden',
           animation: 'popIn 0.2s ease forwards',
@@ -178,8 +178,8 @@ export function PlanExpiredModal() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               borderRadius: '8px',
               padding: '10px 14px',
               fontSize: '11.5px',
@@ -187,7 +187,7 @@ export function PlanExpiredModal() {
           >
             <div>
               <span style={{ color: '#991b1b', fontWeight: 700 }}>Account: </span>
-              <span style={{ color: '#1e293b', fontWeight: 600 }}>{user.displayName} ({user.company})</span>
+              <span style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 600 }}>{user.displayName} ({user.company})</span>
             </div>
             <span
               style={{
@@ -351,8 +351,8 @@ export function PlanExpiredModal() {
               <div
                 style={{
                   marginTop: '12px',
-                  background: '#f8fafc',
-                  border: '1px solid #cbd5e1',
+                  background: 'var(--surface-secondary, #F9FAFB)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '8px',
                   padding: '16px',
                   display: 'flex',
@@ -364,20 +364,20 @@ export function PlanExpiredModal() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <ShieldCheck size={22} color="#16a34a" />
                     <div>
-                      <b style={{ fontSize: '13px', color: '#0f172a', display: 'block' }}>
+                      <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)', display: 'block' }}>
                         Razorpay Enterprise Instant Settlement
                       </b>
-                      <small style={{ fontSize: '11px', color: '#64748b' }}>
+                      <small style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                         Credit/Debit Card, NetBanking, UPI, and Corporate Wallets
                       </small>
                     </div>
                   </div>
-                  <span style={{ fontSize: '10px', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 800, background: 'rgba(21, 128, 61, 0.12)', color: '#15803d', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(21, 128, 61, 0.35)' }}>
                     ⚡ 0ms INSTANT UNBLOCK
                   </span>
                 </div>
 
-                <div style={{ padding: '10px 12px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px', color: '#1e40af', lineHeight: 1.5 }}>
+                <div style={{ padding: '10px 12px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.5 }}>
                   When paying via Razorpay, your payment reference is automatically verified by the Platform Automation Engine. Your plan is renewed immediately and workspace features unlock with zero wait time.
                 </div>
               </div>
@@ -388,7 +388,7 @@ export function PlanExpiredModal() {
               <div
                 style={{
                   marginTop: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--surface-elevated, #F8FAFC)',
                   border: '1px solid var(--fr8x-outline, #cbd5e1)',
                   borderRadius: '8px',
                   padding: '14px',
@@ -401,8 +401,8 @@ export function PlanExpiredModal() {
                   style={{
                     width: '130px',
                     height: '130px',
-                    background: '#ffffff',
-                    border: '1px solid #cbd5e1',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '8px',
                     display: 'grid',
                     placeItems: 'center',
@@ -463,7 +463,7 @@ export function PlanExpiredModal() {
               <div
                 style={{
                   marginTop: '12px',
-                  background: '#f8fafc',
+                  background: 'var(--surface-secondary, #F9FAFB)',
                   border: '1px solid var(--fr8x-outline, #cbd5e1)',
                   borderRadius: '8px',
                   padding: '12px 14px',
@@ -540,7 +540,7 @@ export function PlanExpiredModal() {
                   fontSize: '12px',
                   borderRadius: '6px',
                   border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                  background: '#ffffff',
+                  background: 'var(--surface-primary, #FFFFFF)',
                   color: 'var(--fr8x-text)',
                 }}
               />

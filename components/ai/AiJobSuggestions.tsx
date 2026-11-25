@@ -27,7 +27,7 @@ export function AiJobSuggestions({ onAppend }: AiJobSuggestionsProps) {
       style={{
         marginTop: 8,
         padding: '10px 12px',
-        background: '#F4F6F8',
+        background: 'var(--surface-secondary, #F9FAFB)',
         border: '1px solid #D9E0E8',
         borderRadius: 8,
       }}
@@ -52,12 +52,12 @@ export function AiJobSuggestions({ onAppend }: AiJobSuggestionsProps) {
             onClick={() => onAppend(text)}
             style={{
               textAlign: 'left',
-              background: '#FFFFFF',
-              border: '1px solid #D9E0E8',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
               borderRadius: 6,
               padding: '6px 10px',
               fontSize: 12,
-              color: '#172B45',
+              color: 'var(--text-primary, #1F2937)',
               cursor: 'pointer',
               lineHeight: 1.4,
             }}

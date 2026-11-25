@@ -43,7 +43,7 @@ export default function GodfatherSearchPage() {
       <div className="gf-card" style={{ padding: '14px', marginBottom: '14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
-            <Search style={{ width: '15px', height: '15px', position: 'absolute', left: '10px', top: '9px', color: '#94a3b8' }} />
+            <Search style={{ width: '15px', height: '15px', position: 'absolute', left: '10px', top: '9px', color: 'var(--text-secondary, #64748B)' }} />
             <input
               type="text"
               autoFocus
@@ -56,7 +56,7 @@ export default function GodfatherSearchPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Filter style={{ width: '14px', height: '14px', color: '#64748b' }} />
+            <Filter style={{ width: '14px', height: '14px', color: 'var(--text-secondary, #64748B)' }} />
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -76,7 +76,7 @@ export default function GodfatherSearchPage() {
 
         {/* Quick query tags */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '11px', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 800, color: '#475569' }}>Quick Searches:</span>
+          <span style={{ fontWeight: 800, color: 'var(--text-secondary, #64748B)' }}>Quick Searches:</span>
           {['Maersk', '27AABCA1234F1Z5', 'Nhava Sheva', 'Rotterdam', 'FCL'].map((tag) => (
             <button
               key={tag}
@@ -85,9 +85,9 @@ export default function GodfatherSearchPage() {
               style={{
                 padding: '3px 8px',
                 borderRadius: '4px',
-                background: '#f1f5f9',
-                border: '1px solid #cbd5e1',
-                color: '#334155',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-default, #D9DEE5)',
+                color: 'var(--text-primary, #1F2937)',
                 fontFamily: 'Consolas, monospace',
                 fontSize: '10.5px',
                 fontWeight: 700,

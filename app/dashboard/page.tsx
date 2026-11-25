@@ -98,7 +98,7 @@ export default function DashboardPage() {
     { label: 'My Posted', value: myPostedActive, icon: <Activity size={16} />, color: '#099889', href: '/auctions' },
     { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={16} />, color: '#7c3aed', href: '/auctions' },
     { label: 'Bids Won', value: bidsWon, icon: <Award size={16} />, color: '#d97706', href: '/auctions' },
-    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={16} />, color: '#64748b', href: '/auctions' },
+    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={16} />, color: 'var(--text-secondary, #64748B)', href: '/auctions' },
     { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={16} />, color: '#dc2626', href: '/feeds' },
     { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={16} />, color: '#059669', href: '/feeds' },
     { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={16} />, color: '#0891b2', href: '/jobs' },

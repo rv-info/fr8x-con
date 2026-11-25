@@ -130,22 +130,22 @@ export default function GodfatherDataHealthPage() {
   const actionRequiredCount = reports.filter((r) => r.overallHealth === 'ACTION REQUIRED').length;
 
   return (
-    <div style={{ padding: '24px', background: '#f8fafc', minHeight: '100vh' }}>
+    <div style={{ padding: '24px', background: 'var(--surface-secondary, #F9FAFB)', minHeight: '100vh' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#64748b', marginBottom: '4px' }}>
-            <Link href="/godfather" style={{ color: '#64748b', textDecoration: 'none' }}>Godfather</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
+            <Link href="/godfather" style={{ color: 'var(--text-secondary, #64748B)', textDecoration: 'none' }}>Godfather</Link>
             <span>/</span>
-            <Link href="/godfather/security" style={{ color: '#64748b', textDecoration: 'none' }}>Security</Link>
+            <Link href="/godfather/security" style={{ color: 'var(--text-secondary, #64748B)', textDecoration: 'none' }}>Security</Link>
             <span>/</span>
-            <span style={{ color: '#0f172a', fontWeight: 600 }}>AUTH ↔ POSTGRESQL HEALTH</span>
+            <span style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 600 }}>AUTH ↔ POSTGRESQL HEALTH</span>
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Database size={24} color="#0284c7" />
             Auth ↔ PostgreSQL Identity & Data Health
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary, #64748B)' }}>
             Authoritative production identity audit across Supabase Authentication, PostgreSQL canonical records, KYC, and Godfather approvals.
           </p>
         </div>
@@ -159,9 +159,9 @@ export default function GodfatherDataHealthPage() {
             gap: '8px',
             padding: '8px 16px',
             borderRadius: '8px',
-            background: '#ffffff',
-            border: '1px solid #cbd5e1',
-            color: '#334155',
+            background: 'var(--surface-primary, #FFFFFF)',
+            border: '1px solid var(--border-default, #D9DEE5)',
+            color: 'var(--text-primary, #1F2937)',
             fontWeight: 600,
             fontSize: '13px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
@@ -175,19 +175,19 @@ export default function GodfatherDataHealthPage() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <div style={{ background: '#ffffff', padding: '16px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Accounts Audited</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', marginTop: '6px' }}>{reports.length}</div>
+        <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle, #E5E7EB)', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Accounts Audited</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', marginTop: '6px' }}>{reports.length}</div>
         </div>
 
-        <div style={{ background: '#ffffff', padding: '16px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+        <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle, #E5E7EB)', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           <div style={{ fontSize: '12px', fontWeight: 600, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <CheckCircle2 size={14} color="#16a34a" /> Healthy Canonical Records
           </div>
           <div style={{ fontSize: '28px', fontWeight: 800, color: '#16a34a', marginTop: '6px' }}>{healthyCount}</div>
         </div>
 
-        <div style={{ background: '#ffffff', padding: '16px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+        <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--border-subtle, #E5E7EB)', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
           <div style={{ fontSize: '12px', fontWeight: 600, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <AlertTriangle size={14} color="#ea580c" /> Action Required / Disconnected
           </div>
@@ -196,7 +196,7 @@ export default function GodfatherDataHealthPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div style={{ background: '#ffffff', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '14px 18px', borderRadius: '12px', border: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
           <Search size={16} color="#94a3b8" />
           <input
@@ -204,7 +204,7 @@ export default function GodfatherDataHealthPage() {
             placeholder="Search by UID, email, or full name…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', border: 'none', outline: 'none', fontSize: '13px', color: '#0f172a' }}
+            style={{ width: '100%', border: 'none', outline: 'none', fontSize: '13px', color: 'var(--text-primary, #1F2937)' }}
           />
         </div>
 
@@ -218,8 +218,8 @@ export default function GodfatherDataHealthPage() {
                 borderRadius: '6px',
                 fontSize: '12px',
                 fontWeight: 600,
-                border: filterHealth === filter ? '1px solid #0284c7' : '1px solid #cbd5e1',
-                background: filterHealth === filter ? '#f0f9ff' : '#ffffff',
+                border: filterHealth === filter ? '1px solid #0284c7' : '1px solid var(--border-default, #D9DEE5)',
+                background: filterHealth === filter ? 'rgba(0, 107, 104, 0.08)' : 'var(--surface-primary, #FFFFFF)',
                 color: filterHealth === filter ? '#0284c7' : '#64748b',
                 cursor: 'pointer',
               }}
@@ -231,11 +231,11 @@ export default function GodfatherDataHealthPage() {
       </div>
 
       {/* Diagnostics Table */}
-      <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+      <div style={{ background: 'var(--surface-primary, #FFFFFF)', borderRadius: '12px', border: '1px solid var(--border-subtle, #E5E7EB)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 600 }}>
+              <tr style={{ background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>
                 <th style={{ padding: '12px 16px' }}>UID & Account</th>
                 <th style={{ padding: '12px 16px', textAlign: 'center' }}>Auth</th>
                 <th style={{ padding: '12px 16px', textAlign: 'center' }}>User Doc</th>
@@ -251,29 +251,29 @@ export default function GodfatherDataHealthPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                    <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: '#0284c7' }} />
+                  <td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary, #64748B)' }}>
+                    <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: 'var(--accent-primary, #006B68)' }} />
                     Auditing Supabase Auth &amp; PostgreSQL live records…
                   </td>
                 </tr>
               ) : filteredReports.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ padding: '36px', textAlign: 'center', color: '#94a3b8' }}>
+                  <td colSpan={10} style={{ padding: '36px', textAlign: 'center', color: 'var(--text-secondary, #64748B)' }}>
                     No account records match the current filters.
                   </td>
                 </tr>
               ) : (
                 filteredReports.map((report) => (
-                  <tr key={report.uid} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <tr key={report.uid} style={{ borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a', fontFamily: 'monospace', fontSize: '12px' }}>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)', fontFamily: 'monospace', fontSize: '12px' }}>
                         {report.uid}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>
                         {report.displayName ? `${report.displayName} · ` : ''}{report.email || 'No email attached'}
                       </div>
                       {report.companyName && (
-                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{report.companyName}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>{report.companyName}</div>
                       )}
                     </td>
 
@@ -352,7 +352,7 @@ export default function GodfatherDataHealthPage() {
                     </td>
 
                     {/* Last Checked */}
-                    <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '11px' }}>
+                    <td style={{ padding: '12px 16px', color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                       {report.lastChecked ? new Date(report.lastChecked).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'}
                     </td>
 

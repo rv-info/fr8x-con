@@ -50,7 +50,7 @@ import { getStatutoryProfile } from '@/lib/utils/statutory-kyc';
 // --- Password Strength Scorer ---
 type StrengthLevel = 'empty' | 'too_weak' | 'weak' | 'fair' | 'strong' | 'very_strong';
 function calcPasswordStrength(pwd: string): { level: StrengthLevel; score: number; label: string; color: string; bg: string } {
-  if (!pwd) return { level: 'empty', score: 0, label: '', color: '#94a3b8', bg: '#e2e8f0' };
+  if (!pwd) return { level: 'empty', score: 0, label: '', color: 'var(--text-secondary, #64748B)', bg: '#e2e8f0' };
   let score = 0;
   if (pwd.length >= 8) score++;
   if (pwd.length >= 12) score++;
@@ -89,7 +89,7 @@ function LiveClockPanel() {
   return (
     <div style={{
       width: '100%', height: '100%',
-      background: 'var(--color-surface, #FFFFFF)',
+      background: 'var(--surface-primary, #FFFFFF)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 28px', gap: '0', position: 'relative', overflow: 'hidden',
     }}>
@@ -100,39 +100,39 @@ function LiveClockPanel() {
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-primary-text, #172B4D)', letterSpacing: '0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
           FR8X
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--color-text-secondary, #52657D)', marginTop: '2px' }}>Enterprise Logistics Platform</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>Enterprise Logistics Platform</div>
       </div>
 
       {/* Digital Clock */}
       <div style={{
-        background: 'var(--color-bg-app, #F5F8FC)',
-        border: '1px solid var(--color-border, #DFE7F0)',
+        background: 'var(--app-bg, #FFFFFF)',
+        border: '1px solid var(--border-subtle, #E5E7EB)',
         borderRadius: '16px',
         padding: '20px 32px',
         textAlign: 'center',
         marginBottom: '20px',
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '52px', fontWeight: 900, color: 'var(--color-primary-text, #172B4D)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+          <span style={{ fontSize: '52px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
             {String(h12).padStart(2,'0')}:{mm}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary, #147DAB)', fontFamily: 'monospace' }}>{ampm}</span>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', fontFamily: 'monospace' }}>{ss}s</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', fontFamily: 'monospace' }}>{ampm}</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', fontFamily: 'monospace' }}>{ss}s</span>
           </div>
         </div>
-        <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #52657D)', marginTop: '6px', letterSpacing: '0.05em' }}>
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginTop: '6px', letterSpacing: '0.05em' }}>
           {days[now.getDay()]} · {months[now.getMonth()]} {now.getDate()}, {now.getFullYear()}
         </div>
       </div>
 
       {/* Mini Calendar */}
       <div style={{
-        background: 'var(--color-surface, #FFFFFF)',
-        border: '1px solid var(--color-border, #DFE7F0)',
+        background: 'var(--surface-primary, #FFFFFF)',
+        border: '1px solid var(--border-subtle, #E5E7EB)',
         borderRadius: '14px',
         padding: '16px',
         width: '100%',
@@ -140,20 +140,20 @@ function LiveClockPanel() {
         boxShadow: '0 1px 3px rgba(23,43,77,0.04)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
-          <Calendar size={14} color="var(--color-primary, #147DAB)" />
-          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary-text, #172B4D)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <Calendar size={14} color="var(--accent-primary, #006B68)" />
+          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {months[now.getMonth()]} {now.getFullYear()}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
           {['S','M','T','W','T','F','S'].map((d,i) => (
-            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
+            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
           ))}
           {calDays.map((d, i) => (
             <div key={i} style={{
               fontSize: '11px', fontWeight: d === now.getDate() ? 800 : 500,
-              color: d === now.getDate() ? '#fff' : d ? 'var(--color-primary-text, #172B4D)' : 'transparent',
-              background: d === now.getDate() ? 'var(--color-primary, #147DAB)' : 'transparent',
+              color: d === now.getDate() ? '#fff' : d ? 'var(--text-primary, #1F2937)' : 'transparent',
+              background: d === now.getDate() ? 'var(--accent-primary, #006B68)' : 'transparent',
               borderRadius: '4px', padding: '3px 0',
               transition: 'all 0.2s',
             }}>{d || ''}</div>
@@ -163,7 +163,7 @@ function LiveClockPanel() {
 
       {/* Tagline */}
       <div style={{ marginTop: '28px', textAlign: 'center', maxWidth: '220px' }}>
-        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary, #52657D)', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
           Trusted by freight professionals across 40+ countries for enterprise logistics procurement.
         </p>
       </div>
@@ -202,7 +202,7 @@ function TnCModal({
     }}>
       <div style={{
         width: '100%', maxWidth: '720px',
-        background: '#fff',
+        background: 'var(--surface-primary, #FFFFFF)',
         borderRadius: '20px',
         boxShadow: '0 40px 80px rgba(0,0,0,0.4)',
         display: 'flex', flexDirection: 'column',
@@ -211,20 +211,20 @@ function TnCModal({
       }}>
         {/* Modal Header */}
         <div style={{
-          background: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
+          background: 'var(--surface-primary, #FFFFFF)',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
           padding: '20px 24px',
           display: 'flex', alignItems: 'center', gap: '12px',
           flexShrink: 0,
         }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f0f9ff', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Scale size={20} color="#0284c7" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>FR8X Master Terms of Service & Commercial Agreement</div>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Review platform terms, commercial rules & trade compliance</div>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary, #1F2937)' }}>FR8X Master Terms of Service & Commercial Agreement</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>Review platform terms, commercial rules & trade compliance</div>
           </div>
-          <Link href="/terms" target="_blank" style={{ fontSize: '11px', color: '#0284c7', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '6px', border: '1px solid #bae6fd', background: '#f0f9ff' }}>
+          <Link href="/terms" target="_blank" style={{ fontSize: '11px', color: 'var(--accent-primary, #006B68)', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)', background: 'var(--surface-secondary, #F9FAFB)' }}>
             Full Page ↗
           </Link>
           <button
@@ -232,15 +232,15 @@ function TnCModal({
             onClick={onClose || onDecline}
             title="Close"
             style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--surface-secondary, #F9FAFB)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               borderRadius: '8px',
               width: '32px',
               height: '32px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#475569',
+              color: 'var(--text-secondary, #64748B)',
               cursor: 'pointer',
               flexShrink: 0,
             }}
@@ -254,8 +254,8 @@ function TnCModal({
           onScroll={handleScroll}
           style={{
             flex: 1, overflowY: 'auto', padding: '24px',
-            fontSize: '13px', color: '#334155', lineHeight: 1.7,
-            background: '#ffffff',
+            fontSize: '13px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.7,
+            background: 'var(--surface-primary, #FFFFFF)',
           }}
         >
           {!hasRead && !checked && (
@@ -268,9 +268,9 @@ function TnCModal({
 
         {/* Footer */}
         <div style={{
-          borderTop: '1px solid #e2e8f0',
+          borderTop: '1px solid var(--border-subtle, #E5E7EB)',
           padding: '16px 24px',
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           flexShrink: 0,
         }}>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '14px' }}>
@@ -281,9 +281,9 @@ function TnCModal({
                 setChecked(e.target.checked);
                 setHasRead(true);
               }}
-              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: '#1B2B4B', cursor: 'pointer' }}
+              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: 'var(--accent-primary, #006B68)', cursor: 'pointer' }}
             />
-            <span style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.5 }}>
               I have read and understood the FR8X Master Terms of Service, Commercial Agreement, Trade Compliance Policy, and Privacy Policy, and I agree to be legally bound by them on behalf of the corporate entity I represent.
             </span>
           </label>
@@ -293,7 +293,7 @@ function TnCModal({
               onClick={onDecline}
               style={{
                 height: '40px', padding: '0 20px', borderRadius: '8px',
-                border: '1px solid #e2e8f0', background: '#fff',
+                border: '1px solid var(--border-interactive, #D1D5DB)', background: 'var(--surface-primary, #FFFFFF)',
                 color: '#ef4444', fontWeight: 700, fontSize: '13.5px',
                 cursor: 'pointer',
               }}
@@ -342,11 +342,11 @@ function TnCBodyText() {
         { title: '12. Amendments', body: 'FR8X may amend these Terms with 15 days notice via registered email. Continued use constitutes acceptance. Refusing amended terms requires cessation of use and account closure request.' },
       ].map((section) => (
         <div key={section.title}>
-          <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px', fontSize: '13.5px' }}>{section.title}</div>
-          <div style={{ color: '#475569', lineHeight: 1.7 }}>{section.body}</div>
+          <div style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px', fontSize: '13.5px' }}>{section.title}</div>
+          <div style={{ color: 'var(--text-secondary, #64748B)', lineHeight: 1.7 }}>{section.body}</div>
         </div>
       ))}
-      <div style={{ marginTop: '8px', padding: '12px 16px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '12px', color: '#0369a1' }}>
+      <div style={{ marginTop: '8px', padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '12px', color: 'var(--accent-primary, #006B68)' }}>
         <strong>Contact:</strong> support@fr8x.in<br />
         FR8X Technology Private Limited, Mumbai, Maharashtra, India. Effective September 2026 · Version 3.1
       </div>
@@ -1046,7 +1046,7 @@ export default function RegisterPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--color-bg-app, #F5F8FC)',
+        background: 'var(--app-bg, #FFFFFF)',
         display: 'flex',
         flexDirection: 'row',
         minWidth: 0,
@@ -1061,8 +1061,8 @@ export default function RegisterPage() {
         height: '100vh',
         flexShrink: 0,
         display: 'none',
-        borderRight: '1px solid var(--color-border, #DFE7F0)',
-        background: 'var(--color-surface, #FFFFFF)',
+        borderRight: '1px solid var(--border-subtle, #E5E7EB)',
+        background: 'var(--surface-primary, #FFFFFF)',
       }} className="reg-left-panel">
         <LiveClockPanel />
       </div>
@@ -1097,7 +1097,7 @@ export default function RegisterPage() {
               style={{
                 fontSize: '20px',
                 fontWeight: 'bold',
-                color: '#002b66',
+                color: 'var(--accent-primary, #006B68)',
                 letterSpacing: '0.04em',
                 lineHeight: 1,
                 textTransform: 'uppercase',
@@ -1133,7 +1133,7 @@ export default function RegisterPage() {
             style={{
               padding: '10px 14px',
               borderRadius: '4px',
-              background: '#fff0f1',
+              background: 'rgba(239, 68, 68, 0.08)',
               border: '1px solid #f0c8ce',
               color: 'var(--red)',
               fontSize: '11pt',
@@ -1169,9 +1169,9 @@ export default function RegisterPage() {
               style={{
                 padding: '8px 12px',
                 borderRadius: '4px',
-                background: '#f0fdf4',
-                border: '1px solid #bbf7d0',
-                color: '#166534',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: '#059669',
                 fontSize: '11pt',
                 fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
                 marginBottom: '14px',
@@ -1283,7 +1283,7 @@ export default function RegisterPage() {
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
-                          color: '#64748b',
+                          color: 'var(--text-secondary, #64748B)',
                           display: 'flex',
                           alignItems: 'center',
                           padding: '4px',
@@ -1296,7 +1296,7 @@ export default function RegisterPage() {
                     {/* Password Strength Bar */}
                     {password.length > 0 && (
                       <div style={{ marginTop: '6px' }}>
-                        <div style={{ height: '5px', borderRadius: '3px', background: '#e2e8f0', overflow: 'hidden' }}>
+                        <div style={{ height: '5px', borderRadius: '3px', background: 'var(--border-subtle, #E5E7EB)', overflow: 'hidden' }}>
                           <div style={{
                             height: '100%',
                             width: `${(passwordStrength.score / 5) * 100}%`,
@@ -1313,12 +1313,12 @@ export default function RegisterPage() {
                           <span style={{ fontSize: '10px', fontWeight: 700, color: passwordStrength.color }}>
                             {passwordStrength.label}
                           </span>
-                          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>
                             {password.length >= 8 ? '' : `${8 - password.length} more chars`}
                           </span>
                         </div>
                         {passwordStrength.level === 'too_weak' || passwordStrength.level === 'weak' ? (
-                          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                          <div style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>
                             Add uppercase, numbers &amp; symbols to strengthen
                           </div>
                         ) : null}
@@ -1353,7 +1353,7 @@ export default function RegisterPage() {
                             borderBottomRightRadius: 0,
                             borderRight: 'none',
                             padding: '0 6px 0 8px',
-                            background: '#f8fafc',
+                            background: 'var(--surface-secondary, #F9FAFB)',
                           }}
                           renderTriggerValue={(opt, val) => (
                             <span style={{ fontWeight: 700, fontSize: '11pt', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1532,7 +1532,7 @@ export default function RegisterPage() {
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#0284c7',
+                            color: 'var(--accent-primary, #006B68)',
                             fontSize: '10.5px',
                             fontWeight: 700,
                             cursor: 'pointer',
@@ -1582,7 +1582,7 @@ export default function RegisterPage() {
                           left: 0,
                           right: 0,
                           zIndex: 99999,
-                          background: '#ffffff',
+                          background: 'var(--surface-primary, #FFFFFF)',
                           border: '1.5px solid #0284c7',
                           borderRadius: '6px',
                           boxShadow: '0 12px 28px rgba(0,0,0,0.18)',
@@ -1593,11 +1593,11 @@ export default function RegisterPage() {
                         <div
                           style={{
                             padding: '6px 10px',
-                            background: '#f8fafc',
-                            borderBottom: '1px solid #e2e8f0',
+                            background: 'var(--surface-secondary, #F9FAFB)',
+                            borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                             fontSize: '10px',
                             fontWeight: 800,
-                            color: '#64748b',
+                            color: 'var(--text-secondary, #64748B)',
                             textTransform: 'uppercase',
                             letterSpacing: '0.04em',
                             display: 'flex',
@@ -1609,7 +1609,7 @@ export default function RegisterPage() {
                           <button
                             type="button"
                             onClick={() => setIsCompanyDropdownOpen(false)}
-                            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                            style={{ background: 'none', border: 'none', color: 'var(--text-secondary, #64748B)', cursor: 'pointer', padding: 0 }}
                           >
                             <X size={12} />
                           </button>
@@ -1621,7 +1621,7 @@ export default function RegisterPage() {
                             onClick={() => handleSelectExistingCompany(comp)}
                             style={{
                               padding: '8px 12px',
-                              borderBottom: '1px solid #f1f5f9',
+                              borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                               cursor: 'pointer',
                               display: 'flex',
                               flexDirection: 'column',
@@ -1632,7 +1632,7 @@ export default function RegisterPage() {
                             onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                                 {comp.legalName}
                               </span>
                               {comp.verified && (
@@ -1641,11 +1641,11 @@ export default function RegisterPage() {
                                 </span>
                               )}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--accent-primary, #006B68)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <MapPin size={11} style={{ flexShrink: 0 }} />
                               <span>{comp.locationLabel}</span>
                               {comp.registeredAddress && (
-                                <span style={{ color: '#64748b' }}>· {comp.registeredAddress}</span>
+                                <span style={{ color: 'var(--text-secondary, #64748B)' }}>· {comp.registeredAddress}</span>
                               )}
                             </div>
                           </div>
@@ -1659,11 +1659,11 @@ export default function RegisterPage() {
                             }}
                             style={{
                               padding: '8px 12px',
-                              background: '#f8fafc',
-                              borderTop: '1px solid #e2e8f0',
+                              background: 'var(--surface-secondary, #F9FAFB)',
+                              borderTop: '1px solid var(--border-subtle, #E5E7EB)',
                               fontSize: '11px',
                               fontWeight: 600,
-                              color: '#0284c7',
+                              color: 'var(--accent-primary, #006B68)',
                               cursor: 'pointer',
                             }}
                           >
@@ -1679,11 +1679,11 @@ export default function RegisterPage() {
                         style={{
                           marginTop: '6px',
                           padding: '6px 10px',
-                          background: '#f0fdf4',
-                          border: '1px solid #bbf7d0',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          border: '1px solid rgba(16, 185, 129, 0.35)',
                           borderRadius: '4px',
                           fontSize: '11px',
-                          color: '#166534',
+                          color: '#059669',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '6px',
@@ -1702,11 +1702,11 @@ export default function RegisterPage() {
                         style={{
                           marginTop: '6px',
                           padding: '8px 12px',
-                          background: '#fffbeb',
+                          background: 'rgba(217, 119, 6, 0.1)',
                           border: '1px solid #fde68a',
                           borderRadius: '6px',
                           fontSize: '11px',
-                          color: '#92400e',
+                          color: '#d97706',
                           lineHeight: 1.4,
                         }}
                       >
@@ -1853,7 +1853,7 @@ export default function RegisterPage() {
                     style={{
                       padding: '18px 20px',
                       borderRadius: '8px',
-                      background: '#f0fdf4',
+                      background: 'rgba(16, 185, 129, 0.1)',
                       border: '1.5px solid #86efac',
                       boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                     }}
@@ -1864,7 +1864,7 @@ export default function RegisterPage() {
                           style={{
                             background: '#dcfce7',
                             color: '#15803d',
-                            border: '1px solid #bbf7d0',
+                            border: '1px solid rgba(16, 185, 129, 0.35)',
                             fontSize: '10.5px',
                             fontWeight: 800,
                             padding: '3px 8px',
@@ -1877,8 +1877,8 @@ export default function RegisterPage() {
                         </span>
                         <span
                           style={{
-                            background: '#fef3c7',
-                            color: '#92400e',
+                            background: 'rgba(217, 119, 6, 0.1)',
+                            color: '#d97706',
                             border: '1px solid #fde68a',
                             fontSize: '10.5px',
                             fontWeight: 800,
@@ -1892,51 +1892,51 @@ export default function RegisterPage() {
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <span style={{ fontSize: '11pt', color: '#64748b', textDecoration: 'line-through' }}>₹3,000/mo</span>
+                        <span style={{ fontSize: '11pt', color: 'var(--text-secondary, #64748B)', textDecoration: 'line-through' }}>₹3,000/mo</span>
                         <span style={{ fontSize: '18px', fontWeight: 900, color: '#15803d' }}>₹0 / Free Access</span>
                       </div>
                     </div>
 
-                    <h3 style={{ fontSize: '13pt', fontWeight: 800, color: '#0f172a', margin: '0 0 6px', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+                    <h3 style={{ fontSize: '13pt', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: '0 0 6px', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
                       Complimentary Premium Enterprise Tier Included
                     </h3>
-                    <p style={{ fontSize: '11pt', color: '#334155', margin: '0 0 14px', lineHeight: 1.5, fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+                    <p style={{ fontSize: '11pt', color: 'var(--text-primary, #1F2937)', margin: '0 0 14px', lineHeight: 1.5, fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
                       The Godfather Sovereign Administration has enabled 100% free open access across FR8X. All newly registered freight forwarders, shippers, and logistics entities receive complete, unrestricted Premium Enterprise access with zero subscription fees, zero tender bidding fees, and no credit card required.
                     </p>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'var(--surface-primary, #FFFFFF)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
                         <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <div>
-                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Unrestricted Reverse RFQs</div>
-                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Publish container tenders & bid across all air and sea lanes for ₹0.</div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>Unrestricted Reverse RFQs</div>
+                          <div style={{ fontSize: '10pt', color: 'var(--text-secondary, #64748B)', marginTop: '1px' }}>Publish container tenders & bid across all air and sea lanes for ₹0.</div>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'var(--surface-primary, #FFFFFF)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
                         <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <div>
-                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Real-Time Spot Tariffs</div>
-                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Instant search across verified carrier tariffs and historical market rates.</div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>Real-Time Spot Tariffs</div>
+                          <div style={{ fontSize: '10pt', color: 'var(--text-secondary, #64748B)', marginTop: '1px' }}>Instant search across verified carrier tariffs and historical market rates.</div>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'var(--surface-primary, #FFFFFF)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
                         <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <div>
-                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Golden Verified Entity Status</div>
-                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Complimentary verified partner badge issued upon KYC approval.</div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>Golden Verified Entity Status</div>
+                          <div style={{ fontSize: '10pt', color: 'var(--text-secondary, #64748B)', marginTop: '1px' }}>Complimentary verified partner badge issued upon KYC approval.</div>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'var(--surface-primary, #FFFFFF)', padding: '10px 12px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.35)' }}>
                         <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
                         <div>
-                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Zero Credit Card Required</div>
-                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Immediate platform access upon email verification with no billing forms.</div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>Zero Credit Card Required</div>
+                          <div style={{ fontSize: '10pt', color: 'var(--text-secondary, #64748B)', marginTop: '1px' }}>Immediate platform access upon email verification with no billing forms.</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Collapsible toggle for standard commercial pricing */}
-                    <div style={{ borderTop: '1px solid #bbf7d0', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.35)', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                       <span style={{ fontSize: '11pt', color: '#166534', fontWeight: 600 }}>
                         Automatic Entitlement: <strong>Premium Enterprise Tier (₹0 / 100% Free)</strong>
                       </span>
@@ -1946,7 +1946,7 @@ export default function RegisterPage() {
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: '#0284c7',
+                          color: 'var(--accent-primary, #006B68)',
                           fontSize: '11pt',
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -1964,14 +1964,14 @@ export default function RegisterPage() {
                     {showCommercialBreakdown && (
                       <div className="reg-plan-grid" style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed #cbd5e1' }}>
                         {/* Standard Trial */}
-                        <div className="reg-plan-card" style={{ border: '1px solid #e2e8f0', background: '#ffffff', opacity: 0.85 }}>
+                        <div className="reg-plan-card" style={{ border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', opacity: 0.85 }}>
                           <div>
                             <div className="reg-plan-header">
                               <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Tier</b>
                               <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>WAIVED</span>
                             </div>
                             <div className="reg-plan-price">
-                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b' }}>₹0</span>
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-secondary, #64748B)' }}>₹0</span>
                               <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard {membershipPricing.trialDays}-Day Evaluation</small>
                             </div>
                           </div>
@@ -1982,14 +1982,14 @@ export default function RegisterPage() {
                         </div>
 
                         {/* Standard Professional */}
-                        <div className="reg-plan-card" style={{ border: '1px solid #e2e8f0', background: '#ffffff', opacity: 0.85 }}>
+                        <div className="reg-plan-card" style={{ border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', opacity: 0.85 }}>
                           <div>
                             <div className="reg-plan-header">
                               <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional Tier</b>
                               <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>100% WAIVED</span>
                             </div>
                             <div className="reg-plan-price">
-                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹{membershipPricing.stdPro.toLocaleString()}/mo</span>
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-secondary, #64748B)', textDecoration: 'line-through' }}>₹{membershipPricing.stdPro.toLocaleString()}/mo</span>
                               <span style={{ fontSize: '15px', fontWeight: 800, color: '#15803d', marginLeft: '6px' }}>₹0</span>
                               <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard rate during paid commercial cycle</small>
                             </div>
@@ -2001,14 +2001,14 @@ export default function RegisterPage() {
                         </div>
 
                         {/* Standard Premium */}
-                        <div className="reg-plan-card" style={{ border: '1.5px solid #16a34a', background: '#f0fdf4' }}>
+                        <div className="reg-plan-card" style={{ border: '1.5px solid #16a34a', background: 'rgba(16, 185, 129, 0.1)' }}>
                           <div>
                             <div className="reg-plan-header">
                               <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium Enterprise Tier</b>
                               <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>ACTIVE (₹0)</span>
                             </div>
                             <div className="reg-plan-price">
-                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹{membershipPricing.stdPremium.toLocaleString()}/mo</span>
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-secondary, #64748B)', textDecoration: 'line-through' }}>₹{membershipPricing.stdPremium.toLocaleString()}/mo</span>
                               <span style={{ fontSize: '16px', fontWeight: 900, color: '#15803d', marginLeft: '6px' }}>₹0 / Free</span>
                               <small style={{ color: '#166534', fontSize: '10pt', marginTop: '2px', display: 'block', fontWeight: 600 }}>Golden Verified Tick + Zero Bid Fees Included</small>
                             </div>
@@ -2043,10 +2043,10 @@ export default function RegisterPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <Sparkles size={16} color="#0284c7" />
                           <div>
-                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#0369a1' }}>
+                            <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent-primary, #006B68)' }}>
                               {membershipPricing.campaignHeadline}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#475569' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                               {membershipPricing.campaignDescription}
                             </div>
                           </div>
@@ -2112,14 +2112,14 @@ export default function RegisterPage() {
                           <div className="reg-plan-header">
                             <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional Tier</b>
                             {membershipPricing.isDiscounted && (
-                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#0369a1', background: '#e0f2fe', padding: '1px 6px', borderRadius: '3px', border: '1px solid #bae6fd' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--accent-primary, #006B68)', background: '#e0f2fe', padding: '1px 6px', borderRadius: '3px', border: '1px solid var(--border-default, #D9DEE5)' }}>
                                 {membershipPricing.discountPercent}% OFF
                               </span>
                             )}
                           </div>
                           <div className="reg-plan-price">
                             {membershipPricing.isDiscounted && (
-                              <span style={{ fontSize: '12px', color: '#94a3b8', textDecoration: 'line-through', marginRight: '6px' }}>
+                              <span style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', textDecoration: 'line-through', marginRight: '6px' }}>
                                 ₹{membershipPricing.stdPro.toLocaleString()}
                               </span>
                             )}
@@ -2156,7 +2156,7 @@ export default function RegisterPage() {
                           </div>
                           <div className="reg-plan-price">
                             {membershipPricing.isDiscounted && (
-                              <span style={{ fontSize: '12px', color: '#94a3b8', textDecoration: 'line-through', marginRight: '6px' }}>
+                              <span style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', textDecoration: 'line-through', marginRight: '6px' }}>
                                 ₹{membershipPricing.stdPremium.toLocaleString()}
                               </span>
                             )}
@@ -2193,7 +2193,7 @@ export default function RegisterPage() {
                 zIndex: 10,
                 background: termsAccepted ? '#f0fdf4' : '#f8fafc',
                 padding: '12px 14px',
-                border: termsAccepted ? '1px solid #86efac' : '1px solid #cbd5e1',
+                border: termsAccepted ? '1px solid #86efac' : '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
                 transition: 'all 0.2s',
               }}
@@ -2208,18 +2208,18 @@ export default function RegisterPage() {
                     height: '18px',
                     marginTop: '2px',
                     flexShrink: 0,
-                    accentColor: '#1B2B4B',
+                    accentColor: 'var(--accent-primary, #006B68)',
                     cursor: 'pointer',
                   }}
                 />
-                <span style={{ fontSize: '12px', lineHeight: 1.5, color: '#1e293b' }}>
+                <span style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-primary, #1F2937)' }}>
                   I confirm legal authority to represent <b>{companyName || 'this corporate entity'}</b> and agree to the{' '}
                   <a
                     href="https://con.fr8x.in/terms"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      color: '#0284c7',
+                      color: 'var(--accent-primary, #006B68)',
                       fontWeight: 700,
                       textDecoration: 'underline',
                       fontSize: '12px',
@@ -2238,7 +2238,7 @@ export default function RegisterPage() {
                       background: 'none',
                       border: 'none',
                       padding: 0,
-                      color: '#0369a1',
+                      color: 'var(--accent-primary, #006B68)',
                       fontWeight: 600,
                       textDecoration: 'none',
                       cursor: 'pointer',
@@ -2297,7 +2297,7 @@ export default function RegisterPage() {
                 height: '64px',
                 borderRadius: '50%',
                 background: '#e0f2fe',
-                color: '#0284c7',
+                color: 'var(--accent-primary, #006B68)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -2315,23 +2315,23 @@ export default function RegisterPage() {
             <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)', margin: '0 0 20px', lineHeight: 1.5 }}>
               We have dispatched a single-use verification link to:
               <br />
-              <strong style={{ color: '#0f172a', wordBreak: 'break-all' }}>{email}</strong>
+              <strong style={{ color: 'var(--text-primary, #1F2937)', wordBreak: 'break-all' }}>{email}</strong>
             </p>
 
             <div
               style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '10px',
                 padding: '16px',
                 textAlign: 'left',
                 marginBottom: '24px',
                 fontSize: '12.5px',
-                color: '#334155',
+                color: 'var(--text-primary, #1F2937)',
                 lineHeight: 1.5,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0369a1', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', marginBottom: '6px' }}>
                 <Clock size={16} /> 15-Minute Expiration Notice
               </div>
               <div>

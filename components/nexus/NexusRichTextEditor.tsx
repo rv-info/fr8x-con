@@ -166,21 +166,21 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
       <table style="width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px;">
         <thead>
           <tr style="background: #F8FAFC; border-bottom: 2px solid #E2E8F0;">
-            <th style="padding: 8px 12px; text-align: left; border: 1px solid #E2E8F0; font-weight: 700;">Trade Lane / Port</th>
-            <th style="padding: 8px 12px; text-align: left; border: 1px solid #E2E8F0; font-weight: 700;">Equipment / Spec</th>
-            <th style="padding: 8px 12px; text-align: left; border: 1px solid #E2E8F0; font-weight: 700;">Rate / Benchmark</th>
+            <th style="padding: 8px 12px; text-align: left; border: 1px solid var(--border-subtle, #E5E7EB); font-weight: 700;">Trade Lane / Port</th>
+            <th style="padding: 8px 12px; text-align: left; border: 1px solid var(--border-subtle, #E5E7EB); font-weight: 700;">Equipment / Spec</th>
+            <th style="padding: 8px 12px; text-align: left; border: 1px solid var(--border-subtle, #E5E7EB); font-weight: 700;">Rate / Benchmark</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td style="padding: 8px 12px; border: 1px solid #E2E8F0;">Shanghai - Rotterdam</td>
-            <td style="padding: 8px 12px; border: 1px solid #E2E8F0;">40' HC Dry</td>
-            <td style="padding: 8px 12px; border: 1px solid #E2E8F0;">$2,450 / FEU</td>
+            <td style="padding: 8px 12px; border: 1px solid var(--border-subtle, #E5E7EB);">Shanghai - Rotterdam</td>
+            <td style="padding: 8px 12px; border: 1px solid var(--border-subtle, #E5E7EB);">40' HC Dry</td>
+            <td style="padding: 8px 12px; border: 1px solid var(--border-subtle, #E5E7EB);">$2,450 / FEU</td>
           </tr>
           <tr>
-            <td style="padding: 8px 12px; border: 1px solid #E2E8F0;">Nhava Sheva - Jebel Ali</td>
-            <td style="padding: 8px 12px; border: 1px solid #E2E8F0;">20' GP Dry</td>
-            <td style="padding: 8px 12px; border: 1px solid #E2E8F0;">$850 / TEU</td>
+            <td style="padding: 8px 12px; border: 1px solid var(--border-subtle, #E5E7EB);">Nhava Sheva - Jebel Ali</td>
+            <td style="padding: 8px 12px; border: 1px solid var(--border-subtle, #E5E7EB);">20' GP Dry</td>
+            <td style="padding: 8px 12px; border: 1px solid var(--border-subtle, #E5E7EB);">$850 / TEU</td>
           </tr>
         </tbody>
       </table>
@@ -261,7 +261,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
       // Append clean attachment badge to content
       const sizeStr = (file.size / 1024).toFixed(0) + ' KB';
       const attachmentHtml = `
-        <div style="display: inline-flex; align-items: center; gap: 8px; margin: 8px 4px 8px 0; padding: 6px 12px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 12px; font-weight: 600; color: #1E293B;">
+        <div style="display: inline-flex; align-items: center; gap: 8px; margin: 8px 4px 8px 0; padding: 6px 12px; background: #F8FAFC; border: 1px solid var(--border-default, #D9DEE5); border-radius: 8px; font-size: 12px; font-weight: 600; color: #1E293B;">
           <span>📎 ${file.name}</span>
           <span style="color: #64748B; font-size: 11px;">(${sizeStr})</span>
           <span style="color: #16A34A; font-size: 10px; background: #DCFCE7; padding: 2px 6px; border-radius: 4px;">✓ Verified Safe</span>
@@ -296,8 +296,8 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        background: '#FFFFFF',
-        border: '1px solid #D9E0E8',
+        background: 'var(--surface-primary, #FFFFFF)',
+        border: '1px solid var(--border-default, #D9DEE5)',
         borderRadius: '12px',
         boxShadow: 'var(--neu-card-shadow, 4px 4px 12px rgba(0,0,0,0.06), -4px -4px 12px rgba(255,255,255,0.9))',
         overflow: 'hidden',
@@ -311,7 +311,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           alignItems: 'center',
           padding: '8px 12px',
           background: '#FAFCFD',
-          borderBottom: '1px solid #E2E8F0',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
         }}
       >
         <div style={{ display: 'flex', gap: '4px' }}>
@@ -326,7 +326,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               fontSize: '12px',
               fontWeight: 700,
               borderRadius: '7px',
-              border: activeTab === 'write' ? '1px solid #CBD5E1' : '1px solid transparent',
+              border: activeTab === 'write' ? '1px solid var(--border-default, #D9DEE5)' : '1px solid transparent',
               background: activeTab === 'write' ? '#FFFFFF' : 'transparent',
               color: activeTab === 'write' ? '#0F172A' : '#64748B',
               boxShadow: activeTab === 'write' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
@@ -347,7 +347,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               fontSize: '12px',
               fontWeight: 700,
               borderRadius: '7px',
-              border: activeTab === 'preview' ? '1px solid #CBD5E1' : '1px solid transparent',
+              border: activeTab === 'preview' ? '1px solid var(--border-default, #D9DEE5)' : '1px solid transparent',
               background: activeTab === 'preview' ? '#FFFFFF' : 'transparent',
               color: activeTab === 'preview' ? '#0F172A' : '#64748B',
               boxShadow: activeTab === 'preview' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
@@ -359,7 +359,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
           <ShieldCheck size={14} color="#16A34A" />
           <span>HTML Sanitized &amp; XSS Protected</span>
         </div>
@@ -374,12 +374,12 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
             alignItems: 'center',
             gap: '4px',
             padding: '8px 12px',
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E2E8F0',
+            background: 'var(--surface-primary, #FFFFFF)',
+            borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
           }}
         >
           {/* History */}
-          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               className="toolbar-btn"
@@ -401,7 +401,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           </div>
 
           {/* Inline Styles */}
-          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               className="toolbar-btn"
@@ -441,7 +441,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           </div>
 
           {/* Headings & Blocks */}
-          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               className="toolbar-btn"
@@ -490,7 +490,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           </div>
 
           {/* Lists */}
-          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               className="toolbar-btn"
@@ -512,7 +512,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           </div>
 
           {/* Alignment */}
-          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               className="toolbar-btn"
@@ -543,7 +543,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           </div>
 
           {/* Insert Elements */}
-          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', gap: '2px', paddingRight: '6px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               className="toolbar-btn"
@@ -603,8 +603,8 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                   top: '100%',
                   left: 0,
                   marginTop: '4px',
-                  background: '#FFFFFF',
-                  border: '1px solid #CBD5E1',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '8px',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                   zIndex: 50,
@@ -625,8 +625,8 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                       padding: '5px 4px',
                       fontSize: '11px',
                       fontWeight: 600,
-                      background: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
+                      background: 'var(--surface-secondary, #F9FAFB)',
+                      border: '1px solid var(--border-subtle, #E5E7EB)',
                       borderRadius: '5px',
                       cursor: 'pointer',
                       textAlign: 'center',
@@ -667,7 +667,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               fontSize: '14px',
               lineHeight: 1.65,
               color: '#0F172A',
-              background: '#FFFFFF',
+              background: 'var(--surface-primary, #FFFFFF)',
               overflowY: 'auto',
               flex: 1,
             }}
@@ -679,7 +679,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                 position: 'absolute',
                 top: '16px',
                 left: '16px',
-                color: '#94A3B8',
+                color: 'var(--text-secondary, #64748B)',
                 fontSize: '14px',
                 pointerEvents: 'none',
                 lineHeight: 1.65,
@@ -695,7 +695,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
           style={{
             minHeight,
             padding: '20px',
-            background: '#FFFFFF',
+            background: 'var(--surface-primary, #FFFFFF)',
             fontSize: '14px',
             lineHeight: 1.7,
             color: '#1E293B',
@@ -709,7 +709,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
             />
           ) : (
-            <div style={{ color: '#94A3B8', fontStyle: 'italic' }}>
+            <div style={{ color: 'var(--text-secondary, #64748B)', fontStyle: 'italic' }}>
               No content to preview yet. Switch to the editor and write your trade discussion.
             </div>
           )}
@@ -721,7 +721,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
         style={{
           padding: '10px 14px',
           background: '#FAFCFD',
-          borderTop: '1px solid #E2E8F0',
+          borderTop: '1px solid var(--border-subtle, #E5E7EB)',
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
@@ -747,9 +747,9 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                 padding: '5px 12px',
                 fontSize: '11.5px',
                 fontWeight: 600,
-                color: '#2563EB',
-                background: '#EFF6FF',
-                border: '1px solid #BFDBFE',
+                color: 'var(--accent-primary, #006B68)',
+                background: 'var(--surface-elevated, #F8FAFC)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
                 cursor: isScanning ? 'wait' : 'pointer',
               }}
@@ -758,12 +758,12 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               {isScanning ? 'Scanning File Integrity...' : 'Attach Document (PDF, PNG, JPG, DOCX, XLSX ≤ 10MB)'}
             </button>
             {isScanning && (
-              <span style={{ fontSize: '11px', color: '#64748B' }}>SHA-256 Malware scan in progress...</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>SHA-256 Malware scan in progress...</span>
             )}
           </div>
 
           {/* Counts */}
-          <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#64748B', fontWeight: 600 }}>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>
             <span>Words: <b>{wordCount}</b></span>
             <span>Characters: <b>{charCount}</b></span>
           </div>
@@ -776,11 +776,11 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               alignItems: 'center',
               gap: '6px',
               padding: '6px 10px',
-              background: '#FEF2F2',
+              background: 'rgba(239, 68, 68, 0.1)',
               border: '1px solid #FCA5A5',
               borderRadius: '6px',
               fontSize: '11.5px',
-              color: '#DC2626',
+              color: '#dc2626',
             }}
           >
             <AlertCircle size={13} />
@@ -799,8 +799,8 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                   alignItems: 'center',
                   gap: '6px',
                   padding: '3px 8px',
-                  background: '#F1F5F9',
-                  border: '1px solid #CBD5E1',
+                  background: 'var(--surface-secondary, #F9FAFB)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '5px',
                   fontSize: '11px',
                   color: '#1E293B',
@@ -808,7 +808,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               >
                 <CheckCircle2 size={12} color="#16A34A" />
                 <span style={{ fontWeight: 600 }}>{doc.name}</span>
-                <span style={{ color: '#64748B' }}>({(doc.size / 1024).toFixed(0)} KB)</span>
+                <span style={{ color: 'var(--text-secondary, #64748B)' }}>({(doc.size / 1024).toFixed(0)} KB)</span>
                 <button
                   type="button"
                   onClick={() => removeAttachment(doc.id)}
@@ -817,7 +817,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                     border: 'none',
                     padding: 0,
                     cursor: 'pointer',
-                    color: '#94A3B8',
+                    color: 'var(--text-secondary, #64748B)',
                     display: 'flex',
                   }}
                   title="Remove attachment"
@@ -846,7 +846,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
         >
           <div
             style={{
-              background: '#FFFFFF',
+              background: 'var(--surface-primary, #FFFFFF)',
               borderRadius: '12px',
               padding: '20px',
               width: '90%',
@@ -860,7 +860,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
             </h4>
             <form onSubmit={handleInsertLink} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary, #64748B)' }}>
                   Destination URL <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <input
@@ -872,7 +872,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                     width: '100%',
                     padding: '8px 10px',
                     fontSize: '13px',
-                    border: '1px solid #CBD5E1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     outline: 'none',
                   }}
@@ -881,7 +881,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, marginBottom: '4px', color: '#475569' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, marginBottom: '4px', color: 'var(--text-secondary, #64748B)' }}>
                   Anchor Text (Optional)
                 </label>
                 <input
@@ -893,7 +893,7 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                     width: '100%',
                     padding: '8px 10px',
                     fontSize: '13px',
-                    border: '1px solid #CBD5E1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     outline: 'none',
                   }}
@@ -912,8 +912,8 @@ export const NexusRichTextEditor: React.FC<NexusRichTextEditorProps> = ({
                     padding: '6px 12px',
                     fontSize: '12px',
                     fontWeight: 600,
-                    background: '#F1F5F9',
-                    border: '1px solid #CBD5E1',
+                    background: 'var(--surface-secondary, #F9FAFB)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     cursor: 'pointer',
                   }}
@@ -950,10 +950,10 @@ const toolBtnStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: '#FFFFFF',
-  border: '1px solid #E2E8F0',
+  background: 'var(--surface-primary, #FFFFFF)',
+  border: '1px solid var(--border-subtle, #E5E7EB)',
   borderRadius: '5px',
-  color: '#334155',
+  color: 'var(--text-primary, #1F2937)',
   cursor: 'pointer',
   padding: 0,
   transition: 'all 0.12s ease',

@@ -18,7 +18,7 @@ export default function DownloadRedirect() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
       }}
     >
       <div className="fr8x-loader" aria-label="Loading..." role="status" />

@@ -110,7 +110,7 @@ export default function GlobalAppError({ error, reset }: ErrorProps) {
         <p
           style={{
             fontSize: '14px',
-            color: '#94a3b8',
+            color: 'var(--text-secondary, #64748B)',
             lineHeight: 1.6,
             margin: '0 0 24px',
           }}
@@ -202,7 +202,7 @@ export default function GlobalAppError({ error, reset }: ErrorProps) {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#64748b',
+              color: 'var(--text-secondary, #64748B)',
               fontSize: '12px',
               cursor: 'pointer',
               display: 'flex',
@@ -245,7 +245,7 @@ export default function GlobalAppError({ error, reset }: ErrorProps) {
             borderTop: '1px solid rgba(51, 65, 85, 0.4)',
             paddingTop: '16px',
             fontSize: '12px',
-            color: '#64748b',
+            color: 'var(--text-secondary, #64748B)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

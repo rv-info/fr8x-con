@@ -79,7 +79,7 @@ export function JobDetailsModal({
       title={job.title}
       maxWidth="680px"
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: '#FFFFFF' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--surface-primary, #FFFFFF)' }}>
         {/* Header with Company Logo & Metadata */}
         <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
           <UserAvatar
@@ -89,36 +89,36 @@ export function JobDetailsModal({
             showCompanyLogo={true}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#172B45', lineHeight: 1.3 }}>
+            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', lineHeight: 1.3 }}>
               {job.title}
             </h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-              <span style={{ color: '#075B5B', fontSize: '13px', fontWeight: 700 }}>{job.company}</span>
-              <span className="badge green" style={{ fontSize: '9px', display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', padding: '1px 6px', borderRadius: '4px' }}>
+              <span style={{ color: 'var(--accent-primary, #006B68)', fontSize: '13px', fontWeight: 700 }}>{job.company}</span>
+              <span className="badge green" style={{ fontSize: '9px', display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(16, 185, 129, 0.12)', color: '#137333', border: '1px solid #CEEAD6', padding: '1px 6px', borderRadius: '4px' }}>
                 <ShieldCheck size={11} /> Verified Employer
               </span>
               <span style={{ color: '#D9E0E8' }}>·</span>
-              <span style={{ fontSize: '11.5px', color: '#526174', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <MapPin size={11} /> {job.location || 'Pan-India'}
               </span>
               <span style={{ color: '#D9E0E8' }}>·</span>
-              <span style={{ fontSize: '11.5px', color: '#526174', display: 'flex', alignItems: 'center', gap: '3px' }}>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                 <Briefcase size={11} /> {job.employmentType || 'Full-time'}
               </span>
               {job.experience && (
                 <>
                   <span style={{ color: '#D9E0E8' }}>·</span>
-                  <span style={{ fontSize: '11.5px', color: '#526174' }}>Exp: {job.experience}</span>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)' }}>Exp: {job.experience}</span>
                 </>
               )}
             </div>
             {job.category && (
               <div style={{ marginTop: '4px' }}>
-                <span style={{ fontSize: '11px', color: '#075B5B', background: '#F4F6F8', border: '1px solid #D9E0E8', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                <span style={{ fontSize: '11px', color: 'var(--accent-primary, #006B68)', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
                   {job.category}
                 </span>
                 {job.vacancies && job.vacancies > 1 && (
-                  <span style={{ marginLeft: '6px', fontSize: '11px', color: '#526174' }}>
+                  <span style={{ marginLeft: '6px', fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                     ({job.vacancies} vacancies)
                   </span>
                 )}
@@ -131,8 +131,8 @@ export function JobDetailsModal({
         {job.packageDetails && (
           <div
             style={{
-              background: '#FFFFFF',
-              border: '1px solid #D9E0E8',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-default, #D9DEE5)',
               borderRadius: 8,
               padding: '10px 14px',
               display: 'flex',
@@ -142,12 +142,12 @@ export function JobDetailsModal({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <DollarSign size={15} style={{ color: '#075B5B' }} />
-              <span style={{ fontSize: '11.5px', color: '#526174', fontWeight: 600 }}>Compensation Package:</span>
-              <b style={{ fontSize: '13.5px', color: '#075B5B' }}>{job.packageDetails}</b>
+              <DollarSign size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />
+              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>Compensation Package:</span>
+              <b style={{ fontSize: '13.5px', color: 'var(--accent-primary, #006B68)' }}>{job.packageDetails}</b>
             </div>
             {job.closingDate && (
-              <span style={{ fontSize: '11px', color: '#526174', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Calendar size={12} /> Deadline: {job.closingDate}
               </span>
             )}
@@ -164,7 +164,7 @@ export function JobDetailsModal({
           if (sList.length === 0) return null;
           return (
             <div>
-              <b style={{ display: 'block', fontSize: '11px', color: '#526174', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.04em' }}>
+              <b style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.04em' }}>
                 Required Skills &amp; Domain Expertise
               </b>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -172,12 +172,12 @@ export function JobDetailsModal({
                   <span
                     key={s}
                     style={{
-                      background: '#F4F6F8',
-                      border: '1px solid #D9E0E8',
+                      background: 'var(--surface-secondary, #F9FAFB)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       borderRadius: '4px',
                       padding: '3px 8px',
                       fontSize: '11.5px',
-                      color: '#172B45',
+                      color: 'var(--text-primary, #1F2937)',
                       fontWeight: 500,
                     }}
                   >
@@ -192,10 +192,10 @@ export function JobDetailsModal({
         {/* Job Overview / Description */}
         {job.description && job.description !== job.requirements && (
           <div>
-            <b style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#172B45', marginBottom: '4px' }}>
+            <b style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
               Job Overview
             </b>
-            <p style={{ fontSize: '12px', color: '#526174', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>
               {job.description}
             </p>
           </div>
@@ -208,10 +208,10 @@ export function JobDetailsModal({
           { label: 'Qualifications & Background', value: job.qualifications },
         ].filter((s) => s.value).map((sec) => (
           <div key={sec.label}>
-            <b style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#172B45', marginBottom: '4px' }}>
+            <b style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
               {sec.label}
             </b>
-            <p style={{ fontSize: '12px', color: '#526174', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>
               {sec.value}
             </p>
           </div>
@@ -220,18 +220,18 @@ export function JobDetailsModal({
         {/* ── PHASE 2.4: MANDATORY EMPLOYER CONTACT INFORMATION & ACTIONS ── */}
         <div
           style={{
-            background: '#FFFFFF',
-            border: '1px solid #D9E0E8',
+            background: 'var(--surface-primary, #FFFFFF)',
+            border: '1px solid var(--border-default, #D9DEE5)',
             borderRadius: 8,
             padding: '14px',
             boxShadow: '3px 3px 8px rgba(0,0,0,0.04), -2px -2px 6px rgba(255,255,255,0.9)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #D9E0E8', paddingBottom: '8px', marginBottom: '10px' }}>
-            <b style={{ fontSize: '12px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-default, #D9DEE5)', paddingBottom: '8px', marginBottom: '10px' }}>
+            <b style={{ fontSize: '12px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Mail size={13} /> Employer Contact &amp; Application Channels
             </b>
-            <span style={{ fontSize: '10.5px', color: '#526174' }}>
+            <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
               Verified Direct Contact Details
             </span>
           </div>
@@ -240,11 +240,11 @@ export function JobDetailsModal({
             {/* Recruiter Identity Row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <b style={{ fontSize: '13px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <User size={13} color="#075B5B" />
                   {job.contactPerson || job.postedBy || 'Talent Acquisition Team'}
                 </b>
-                <small style={{ color: '#526174', fontSize: '11px', display: 'block' }}>
+                <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', display: 'block' }}>
                   {job.contactDesignation || 'Recruiter'} · {job.company}
                 </small>
               </div>
@@ -262,9 +262,9 @@ export function JobDetailsModal({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #D9E0E8',
-                      color: '#075B5B',
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      color: 'var(--accent-primary, #006B68)',
                       fontWeight: 600,
                       textDecoration: 'none',
                     }}
@@ -285,9 +285,9 @@ export function JobDetailsModal({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #D9E0E8',
-                      color: '#172B45',
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      color: 'var(--text-primary, #1F2937)',
                       fontWeight: 600,
                       textDecoration: 'none',
                     }}
@@ -310,7 +310,7 @@ export function JobDetailsModal({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      backgroundColor: '#E6F4EA',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
                       border: '1px solid #A8DAB5',
                       color: '#137333',
                       fontWeight: 600,
@@ -334,9 +334,9 @@ export function JobDetailsModal({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #D9E0E8',
-                      color: '#526174',
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      color: 'var(--text-secondary, #64748B)',
                       cursor: 'pointer',
                     }}
                     title="Copy email to clipboard"
@@ -357,9 +357,9 @@ export function JobDetailsModal({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #D9E0E8',
-                      color: '#526174',
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      color: 'var(--text-secondary, #64748B)',
                       cursor: 'pointer',
                     }}
                     title="Copy phone number to clipboard"
@@ -381,9 +381,9 @@ export function JobDetailsModal({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #D9E0E8',
-                      color: '#172B45',
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      color: 'var(--text-primary, #1F2937)',
                       textDecoration: 'none',
                     }}
                     title="Visit official company website"
@@ -395,18 +395,18 @@ export function JobDetailsModal({
             </div>
 
             {/* Contact details metadata readout */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11.5px', color: '#172B45', flexWrap: 'wrap', backgroundColor: '#F8FAFC', padding: '6px 10px', borderRadius: '4px' }}>
-              <span style={{ color: '#526174' }}>Official Email:</span>
-              <strong style={{ color: '#075B5B' }}>{emailToUse || 'recruiter@company.com'}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)', flexWrap: 'wrap', backgroundColor: 'var(--surface-secondary, #F9FAFB)', padding: '6px 10px', borderRadius: '4px' }}>
+              <span style={{ color: 'var(--text-secondary, #64748B)' }}>Official Email:</span>
+              <strong style={{ color: 'var(--accent-primary, #006B68)' }}>{emailToUse || 'recruiter@company.com'}</strong>
               {phoneToUse && (
                 <>
                   <span style={{ color: '#D9E0E8' }}>|</span>
-                  <span style={{ color: '#526174' }}>Phone:</span>
+                  <span style={{ color: 'var(--text-secondary, #64748B)' }}>Phone:</span>
                   <strong>{phoneToUse}</strong>
                 </>
               )}
               {job.hasWhatsApp && (
-                <span className="badge green" style={{ fontSize: '8px', padding: '1px 5px', background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', borderRadius: '3px' }}>
+                <span className="badge green" style={{ fontSize: '8px', padding: '1px 5px', background: 'rgba(16, 185, 129, 0.12)', color: '#137333', border: '1px solid #CEEAD6', borderRadius: '3px' }}>
                   WHATSAPP ACTIVE
                 </span>
               )}
@@ -414,8 +414,8 @@ export function JobDetailsModal({
 
             {/* Application Instructions */}
             {job.applicationInstructions && (
-              <div style={{ background: '#F8FAFC', padding: '8px 10px', borderRadius: '4px', fontSize: '11px', color: '#526174', border: '1px solid #D9E0E8' }}>
-                <b style={{ color: '#172B45' }}>Application Instructions:</b> {job.applicationInstructions}
+              <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '8px 10px', borderRadius: '4px', fontSize: '11px', color: 'var(--text-secondary, #64748B)', border: '1px solid var(--border-default, #D9DEE5)' }}>
+                <b style={{ color: 'var(--text-primary, #1F2937)' }}>Application Instructions:</b> {job.applicationInstructions}
               </div>
             )}
           </div>
@@ -428,15 +428,15 @@ export function JobDetailsModal({
             gap: '10px',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderTop: '1px solid #D9E0E8',
+            borderTop: '1px solid var(--border-default, #D9DEE5)',
             paddingTop: '14px',
             marginTop: '4px',
             flexWrap: 'wrap',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Users size={14} style={{ color: '#075B5B' }} />
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#172B45' }}>
+            <Users size={14} style={{ color: 'var(--accent-primary, #006B68)' }} />
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
               {applicationCount} Candidate Application{applicationCount === 1 ? '' : 's'}
             </span>
           </div>
@@ -455,7 +455,7 @@ export function JobDetailsModal({
                   padding: '0 14px',
                   backgroundColor: '#075B5B',
                   color: '#FFFFFF',
-                  border: '1px solid #075B5B',
+                  border: '1px solid var(--accent-primary, #006B68)',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -468,7 +468,7 @@ export function JobDetailsModal({
                 <Users size={13} /> Manage Applications ({applicationCount})
               </button>
             ) : hasApplied ? (
-              <div style={{ background: '#E6F4EA', border: '1px solid #CEEAD6', borderRadius: '6px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#137333', fontSize: '12px', fontWeight: 600 }}>
+              <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid #CEEAD6', borderRadius: '6px', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#137333', fontSize: '12px', fontWeight: 600 }}>
                 <CheckCircle2 size={14} color="#137333" />
                 <span>Application Submitted &amp; Active</span>
               </div>
@@ -484,7 +484,7 @@ export function JobDetailsModal({
                   padding: '0 20px',
                   backgroundColor: '#075B5B',
                   color: '#FFFFFF',
-                  border: '1px solid #075B5B',
+                  border: '1px solid var(--accent-primary, #006B68)',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 700,

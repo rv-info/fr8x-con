@@ -207,7 +207,7 @@ export default function SmartRatePublicPage() {
             >
               {matchedRate.id}
             </span>
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
               Carrier Contract: <b style={{ color: '#f8fafc' }}>{matchedRate.carrier}</b>
             </span>
           </div>
@@ -258,13 +258,13 @@ export default function SmartRatePublicPage() {
           >
             {/* Origin Port */}
             <div style={{ minWidth: '180px' }}>
-              <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
                 Port of Loading (POL)
               </span>
               <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '2px 0 0', color: '#f8fafc' }}>
                 {matchedRate.pol}
               </h2>
-              <small style={{ color: '#64748b', fontSize: '11.5px' }}>Receipt: {matchedRate.por || matchedRate.pol}</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>Receipt: {matchedRate.por || matchedRate.pol}</small>
             </div>
 
             {/* Route Arrow with Transit Time */}
@@ -277,25 +277,25 @@ export default function SmartRatePublicPage() {
                 <Ship size={18} color="#38bdf8" />
                 <div style={{ height: '2px', background: 'linear-gradient(90deg, #38bdf8, #0284c7)', flex: 1 }}></div>
               </div>
-              <small style={{ color: '#94a3b8', fontSize: '11px' }}>{matchedRate.route || 'Direct Ocean Corridor'}</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>{matchedRate.route || 'Direct Ocean Corridor'}</small>
             </div>
 
             {/* Destination Port */}
             <div style={{ minWidth: '180px', textAlign: 'right' }}>
-              <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
                 Port of Discharge (POD)
               </span>
               <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '2px 0 0', color: '#f8fafc' }}>
                 {matchedRate.pod}
               </h2>
-              <small style={{ color: '#64748b', fontSize: '11.5px' }}>Delivery: {matchedRate.fpod || matchedRate.pod}</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>Delivery: {matchedRate.fpod || matchedRate.pod}</small>
             </div>
           </div>
         </div>
 
         {/* Ocean Freight Charges Grid */}
         <div style={{ padding: '24px' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, display: 'block', marginBottom: '12px' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, display: 'block', marginBottom: '12px' }}>
             Ocean Container Rates (All-In Base Freight)
           </span>
 
@@ -318,9 +318,9 @@ export default function SmartRatePublicPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>{matchedRate.d20Type || '20DV'}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>{matchedRate.d20Type || '20DV'}</span>
                   <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', marginTop: '4px' }}>
-                    ${matchedRate.d20.toLocaleString()} <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>USD</span>
+                    ${matchedRate.d20.toLocaleString()} <span style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>USD</span>
                   </div>
                 </div>
                 <span
@@ -336,7 +336,7 @@ export default function SmartRatePublicPage() {
                   PER CONTAINER
                 </span>
               </div>
-              <p style={{ color: '#94a3b8', fontSize: '11.5px', margin: '10px 0 0' }}>
+              <p style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px', margin: '10px 0 0' }}>
                 Max Payload: 28,000 KG · Heavy Duty Dry Cargo
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function SmartRatePublicPage() {
                 <div>
                   <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 700 }}>{matchedRate.h40Type || '40HC'}</span>
                   <div style={{ fontSize: '28px', fontWeight: 900, color: '#38bdf8', marginTop: '4px' }}>
-                    ${matchedRate.h40.toLocaleString()} <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>USD</span>
+                    ${matchedRate.h40.toLocaleString()} <span style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>USD</span>
                   </div>
                 </div>
                 <span
@@ -371,7 +371,7 @@ export default function SmartRatePublicPage() {
                   BEST VALUE
                 </span>
               </div>
-              <p style={{ color: '#94a3b8', fontSize: '11.5px', margin: '10px 0 0' }}>
+              <p style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px', margin: '10px 0 0' }}>
                 Volume: 76.4 CBM · High Volume General Cargo
               </p>
             </div>
@@ -387,21 +387,21 @@ export default function SmartRatePublicPage() {
             }}
           >
             <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '8px', padding: '12px' }}>
-              <small style={{ color: '#94a3b8', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700 }}>Free Time Allowance</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700 }}>Free Time Allowance</small>
               <p style={{ fontSize: '13px', fontWeight: 700, margin: '2px 0 0', color: '#f8fafc' }}>
                 {matchedRate.ft || '14 Days Combined Free Time'}
               </p>
             </div>
 
             <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '8px', padding: '12px' }}>
-              <small style={{ color: '#94a3b8', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700 }}>Liner Inclusions</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700 }}>Liner Inclusions</small>
               <p style={{ fontSize: '13px', fontWeight: 700, margin: '2px 0 0', color: '#f8fafc' }}>
                 BAS + BAF + LSS + ISPS
               </p>
             </div>
 
             <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '8px', padding: '12px' }}>
-              <small style={{ color: '#94a3b8', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700 }}>Service Provider Desk</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', fontSize: '10px', fontWeight: 700 }}>Service Provider Desk</small>
               <p style={{ fontSize: '13px', fontWeight: 700, margin: '2px 0 0', color: '#f8fafc' }}>
                 {matchedRate.sp}
               </p>
@@ -427,7 +427,7 @@ export default function SmartRatePublicPage() {
               gap: '12px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary, #64748B)', fontSize: '12px' }}>
               <ShieldCheck size={16} color="#10b981" />
               Verified &amp; Sealed by FR8X Maritime Network
             </div>
@@ -511,7 +511,7 @@ export default function SmartRatePublicPage() {
                 <h3 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 8px', color: '#f8fafc' }}>
                   Rate Lock Request Received!
                 </h3>
-                <p style={{ color: '#94a3b8', fontSize: '13px', lineHeight: 1.6, margin: '0 0 20px' }}>
+                <p style={{ color: 'var(--text-secondary, #64748B)', fontSize: '13px', lineHeight: 1.6, margin: '0 0 20px' }}>
                   Your cargo booking request under <b>{matchedRate.id}</b> has been transmitted directly to{' '}
                   <b>{matchedRate.sp}</b>. The commercial desk will respond to <b>{bookingShipperEmail}</b> with
                   vessel booking confirmation and container gate-in instructions.
@@ -545,7 +545,7 @@ export default function SmartRatePublicPage() {
                   <button
                     type="button"
                     onClick={() => setShowBookingModal(false)}
-                    style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '18px', cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary, #64748B)', fontSize: '18px', cursor: 'pointer' }}
                   >
                     ✕
                   </button>
@@ -556,7 +556,7 @@ export default function SmartRatePublicPage() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                     Company / Shipper Name <span style={{ color: '#f87171' }}>*</span>
                   </label>
                   <input
@@ -578,7 +578,7 @@ export default function SmartRatePublicPage() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                     Corporate Email Address <span style={{ color: '#f87171' }}>*</span>
                   </label>
                   <input
@@ -602,7 +602,7 @@ export default function SmartRatePublicPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                       Contact Phone / WhatsApp
                     </label>
                     <input
@@ -622,7 +622,7 @@ export default function SmartRatePublicPage() {
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                       Required Equipment / Qty
                     </label>
                     <input

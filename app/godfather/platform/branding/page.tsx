@@ -94,31 +94,31 @@ export default function BrandingManagementPage() {
     <div
       style={{
         padding: '24px',
-        backgroundColor: '#F8FAFD',
+        backgroundColor: 'var(--app-bg, #FFFFFF)',
         minHeight: '100vh',
-        fontFamily: 'Calibri, Arial, sans-serif',
+        fontFamily: 'var(--font-family-primary)',
         fontSize: '12px',
-        color: '#1A2332',
+        color: 'var(--text-primary, #1F2937)',
       }}
     >
       {/* Breadcrumb / Top Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#718096' }}>
-          <Link href="/godfather" style={{ color: '#1B2B4B', textDecoration: 'none', fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
+          <Link href="/godfather" style={{ color: 'var(--text-primary, #1F2937)', textDecoration: 'none', fontWeight: 600 }}>
             Godfather Platform
           </Link>
           <span>/</span>
-          <span style={{ color: '#1A2332', fontWeight: 700 }}>Icons &amp; Branding Management</span>
+          <span style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 700 }}>Icons &amp; Branding Management</span>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <Link
             href="/sitemap"
             style={{
               padding: '6px 12px',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #1B2B4B',
-              color: '#1B2B4B',
-              borderRadius: '4px',
+              backgroundColor: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
+              color: 'var(--text-primary, #1F2937)',
+              borderRadius: '6px',
               textDecoration: 'none',
               fontWeight: 600,
               fontSize: '12px',
@@ -130,10 +130,10 @@ export default function BrandingManagementPage() {
             onClick={() => window.print()}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#1B2B4B',
-              border: '1px solid #1B2B4B',
+              backgroundColor: 'var(--accent-primary, #006B68)',
+              border: '1px solid var(--accent-primary, #006B68)',
               color: '#FFFFFF',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: 600,
               fontSize: '12px',
@@ -147,19 +147,20 @@ export default function BrandingManagementPage() {
       {/* Hero Header */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '6px',
+          backgroundColor: 'var(--surface-primary, #FFFFFF)',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
+          borderRadius: '8px',
           padding: '20px 24px',
           marginBottom: '20px',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
           <div>
-            <h1 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 700, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <h1 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Centralized Icons, Logos &amp; Visual Brand Registry
             </h1>
-            <p style={{ margin: 0, color: '#4A5568', fontSize: '12px', maxWidth: '850px', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, color: 'var(--text-secondary, #64748B)', fontSize: '12px', maxWidth: '850px', lineHeight: 1.5 }}>
               Manage, preview, and update all icons and graphics utilized throughout the FR8X web application. Every component
               consumes stable asset IDs; updating an asset here automatically updates all views across Dashboard, Feeds, Nexus,
               Auctions, Rates, Network, Jobs, and Print templates without requiring code changes.
@@ -167,16 +168,16 @@ export default function BrandingManagementPage() {
           </div>
           <div
             style={{
-              backgroundColor: '#EEF1F7',
-              border: '1px solid #CBD5E0',
-              borderRadius: '4px',
+              backgroundColor: 'var(--surface-secondary, #F8FAFC)',
+              border: '1px solid var(--border-default, #D9DEE5)',
+              borderRadius: '6px',
               padding: '8px 12px',
               textAlign: 'center',
               minWidth: '140px',
             }}
           >
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#1B2B4B' }}>{ASSET_REGISTRY.length} ASSETS</div>
-            <div style={{ fontSize: '12px', color: '#718096' }}>In Central Registry</div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{ASSET_REGISTRY.length} ASSETS</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>In Central Registry</div>
           </div>
         </div>
       </div>
@@ -184,9 +185,9 @@ export default function BrandingManagementPage() {
       {/* Filter & Search Bar */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '6px',
+          backgroundColor: 'var(--surface-primary, #FFFFFF)',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
+          borderRadius: '8px',
           padding: '12px 16px',
           marginBottom: '20px',
           display: 'flex',
@@ -203,15 +204,15 @@ export default function BrandingManagementPage() {
               onClick={() => setSelectedCategory(cat.id)}
               style={{
                 padding: '5px 12px',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 border: '1px solid',
-                borderColor: selectedCategory === cat.id ? '#1B2B4B' : '#E2E8F0',
-                backgroundColor: selectedCategory === cat.id ? '#1B2B4B' : '#FFFFFF',
-                color: selectedCategory === cat.id ? '#FFFFFF' : '#4A5568',
+                borderColor: selectedCategory === cat.id ? 'var(--accent-primary, #006B68)' : 'var(--border-interactive, #D1D5DB)',
+                backgroundColor: selectedCategory === cat.id ? 'var(--accent-primary, #006B68)' : 'var(--surface-primary, #FFFFFF)',
+                color: selectedCategory === cat.id ? '#FFFFFF' : 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
                 fontWeight: selectedCategory === cat.id ? 700 : 500,
                 cursor: 'pointer',
-                fontFamily: 'Calibri, Arial, sans-serif',
+                fontFamily: 'var(--font-family-primary)',
               }}
             >
               {cat.label}
@@ -227,13 +228,13 @@ export default function BrandingManagementPage() {
             style={{
               width: '100%',
               padding: '6px 10px',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: '4px',
+              backgroundColor: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-default, #D9DEE5)',
+              borderRadius: '6px',
               fontSize: '12px',
-              color: '#1A2332',
+              color: 'var(--text-primary, #1F2937)',
               outline: 'none',
-              fontFamily: 'Calibri, Arial, sans-serif',
+              fontFamily: 'var(--font-family-primary)',
             }}
           />
         </div>
@@ -256,14 +257,14 @@ export default function BrandingManagementPage() {
             <div
               key={asset.id}
               style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '6px',
+                backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
+                borderRadius: '8px',
                 padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                boxShadow: '0 1px 2px rgba(27, 43, 75, 0.04)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               <div>
@@ -272,17 +273,17 @@ export default function BrandingManagementPage() {
                   <span
                     style={{
                       padding: '2px 8px',
-                      backgroundColor: '#EEF1F7',
-                      color: '#1B2B4B',
+                      backgroundColor: 'var(--surface-secondary, #F8FAFC)',
+                      color: 'var(--text-primary, #1F2937)',
                       borderRadius: '4px',
                       fontSize: '11px',
                       fontWeight: 700,
-                      border: '1px solid #CBD5E0',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                     }}
                   >
                     {asset.category}
                   </span>
-                  <span style={{ color: '#718096', fontSize: '11px' }}>{asset.module}</span>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>{asset.module}</span>
                 </div>
 
                 {/* Preview Box & Meta */}
@@ -292,9 +293,9 @@ export default function BrandingManagementPage() {
                       width: '72px',
                       height: '72px',
                       minWidth: '72px',
-                      backgroundColor: '#F8FAFD',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: '4px',
+                      backgroundColor: 'var(--surface-secondary, #F8FAFC)',
+                      border: '1px solid var(--border-subtle, #E5E7EB)',
+                      borderRadius: '6px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -317,13 +318,13 @@ export default function BrandingManagementPage() {
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#1B2B4B', marginBottom: '2px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '2px' }}>
                       {asset.name}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#718096', fontFamily: 'Consolas, monospace', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontFamily: 'Consolas, monospace', marginBottom: '4px' }}>
                       ID: {asset.id}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#4A5568' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                       Rec. Size: <b>{asset.recommendedDimensions}</b> ({asset.supportedFormats.join(', ').toUpperCase()})
                     </div>
                   </div>
@@ -331,20 +332,20 @@ export default function BrandingManagementPage() {
 
                 {/* Purpose & Location */}
                 <div style={{ marginBottom: '10px' }}>
-                  <div style={{ fontSize: '11px', color: '#718096', fontWeight: 600 }}>PURPOSE / CONTEXT</div>
-                  <div style={{ fontSize: '12px', color: '#1A2332', lineHeight: 1.4 }}>{asset.purpose}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>PURPOSE / CONTEXT</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.4 }}>{asset.purpose}</div>
                 </div>
 
                 <div style={{ marginBottom: '10px' }}>
-                  <div style={{ fontSize: '11px', color: '#718096', fontWeight: 600 }}>CURRENT ASSET PATH</div>
-                  <code style={{ fontSize: '11px', color: '#1B2B4B', backgroundColor: '#F8FAFD', padding: '2px 4px', borderRadius: '2px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>CURRENT ASSET PATH</div>
+                  <code style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', backgroundColor: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '2px 5px', borderRadius: '4px' }}>
                     {asset.defaultPath}
                   </code>
                 </div>
 
                 <div style={{ marginBottom: '14px' }}>
-                  <div style={{ fontSize: '11px', color: '#718096', fontWeight: 600 }}>INSTRUCTIONS</div>
-                  <div style={{ fontSize: '11px', color: '#4A5568', fontStyle: 'italic' }}>{asset.replacementInstructions}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>INSTRUCTIONS</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontStyle: 'italic' }}>{asset.replacementInstructions}</div>
                 </div>
               </div>
 
@@ -356,9 +357,9 @@ export default function BrandingManagementPage() {
                     padding: '6px 10px',
                     borderRadius: '4px',
                     fontSize: '11px',
-                    backgroundColor: status.success ? '#F0FFF4' : '#FFF5F5',
-                    color: status.success ? '#22543D' : '#9B2C2C',
-                    border: `1px solid ${status.success ? '#9AE6B4' : '#FEB2B2'}`,
+                    backgroundColor: status.success ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    color: status.success ? '#059669' : '#dc2626',
+                    border: `1px solid ${status.success ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
                   }}
                 >
                   {status.text}
@@ -366,16 +367,16 @@ export default function BrandingManagementPage() {
               )}
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #EDF2F7', paddingTop: '12px' }}>
+              <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', paddingTop: '12px' }}>
                 <label
                   style={{
                     flex: 1,
                     textAlign: 'center',
                     padding: '6px 12px',
-                    backgroundColor: isUploading ? '#EEF1F7' : '#FFFFFF',
-                    border: '1px solid #1B2B4B',
-                    color: '#1B2B4B',
-                    borderRadius: '4px',
+                    backgroundColor: isUploading ? 'var(--surface-secondary, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-interactive, #D1D5DB)',
+                    color: 'var(--text-primary, #1F2937)',
+                    borderRadius: '6px',
                     fontWeight: 600,
                     fontSize: '12px',
                     cursor: isUploading ? 'not-allowed' : 'pointer',
@@ -406,10 +407,10 @@ export default function BrandingManagementPage() {
                   }}
                   style={{
                     padding: '6px 12px',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #CBD5E0',
-                    color: '#4A5568',
-                    borderRadius: '4px',
+                    backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-interactive, #D1D5DB)',
+                    color: 'var(--text-secondary, #64748B)',
+                    borderRadius: '6px',
                     fontSize: '12px',
                     cursor: 'pointer',
                     fontWeight: 500,

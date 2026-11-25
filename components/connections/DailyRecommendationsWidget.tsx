@@ -325,7 +325,7 @@ export function DailyRecommendationsWidget({
             gap: '8px',
             marginBottom: '14px',
             paddingBottom: '10px',
-            borderBottom: '1px solid #e2e8f0',
+            borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -395,9 +395,9 @@ export function DailyRecommendationsWidget({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64748b',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
+                color: 'var(--text-secondary, #64748B)',
+                border: '1px solid var(--border-default, #D9DEE5)',
+                background: 'var(--surface-primary, #FFFFFF)',
                 borderRadius: '6px',
                 cursor: 'pointer',
               }}
@@ -412,16 +412,16 @@ export function DailyRecommendationsWidget({
           style={{
             padding: '24px 16px',
             textAlign: 'center',
-            background: '#ffffff',
+            background: 'var(--surface-primary, #FFFFFF)',
             border: '1px dashed #cbd5e1',
             borderRadius: '8px',
           }}
         >
-          <Users size={32} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
+          <Users size={32} style={{ color: 'var(--text-secondary, #64748B)', margin: '0 auto 8px', display: 'block' }} />
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
             No new connection recommendations available today
           </div>
-          <p style={{ fontSize: '12px', color: '#64748b', maxWidth: '440px', margin: '0 auto 14px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', maxWidth: '440px', margin: '0 auto 14px', lineHeight: 1.5 }}>
             Smart recommendations appear here based on verified freight peers matching your trade lanes, active corridors, and company profiles.
           </p>
           <button
@@ -460,7 +460,7 @@ export function DailyRecommendationsWidget({
           gap: '8px',
           marginBottom: '14px',
           paddingBottom: '10px',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -513,8 +513,8 @@ export function DailyRecommendationsWidget({
               fontSize: '11px',
               fontWeight: 600,
               padding: '5px 12px',
-              background: '#ffffff',
-              border: '1px solid #cbd5e1',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-default, #D9DEE5)',
               color: 'var(--brand)',
               display: 'flex',
               alignItems: 'center',
@@ -533,9 +533,9 @@ export function DailyRecommendationsWidget({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#64748b',
-              border: '1px solid #cbd5e1',
-              background: '#ffffff',
+              color: 'var(--text-secondary, #64748B)',
+              border: '1px solid var(--border-default, #D9DEE5)',
+              background: 'var(--surface-primary, #FFFFFF)',
               borderRadius: '6px',
               cursor: 'pointer',
             }}
@@ -562,8 +562,8 @@ export function DailyRecommendationsWidget({
             <div
               key={u.uid}
               style={{
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
+                background: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '8px',
                 padding: '12px',
                 display: 'flex',
@@ -586,7 +586,7 @@ export function DailyRecommendationsWidget({
                   right: '8px',
                   background: 'none',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary, #64748B)',
                   cursor: 'pointer',
                   padding: '2px',
                   borderRadius: '4px',
@@ -606,9 +606,9 @@ export function DailyRecommendationsWidget({
                     fontWeight: 800,
                     padding: '2px 8px',
                     borderRadius: '12px',
-                    background: rec.matchPercentage >= 85 ? '#ecfdf5' : '#eff6ff',
-                    color: rec.matchPercentage >= 85 ? '#065f46' : '#1e40af',
-                    border: `1px solid ${rec.matchPercentage >= 85 ? '#a7f3d0' : '#bfdbfe'}`,
+                    background: rec.matchPercentage >= 85 ? 'rgba(5, 150, 105, 0.12)' : 'var(--surface-elevated, #F8FAFC)',
+                    color: rec.matchPercentage >= 85 ? '#059669' : 'var(--accent-primary, #006B68)',
+                    border: `1px solid ${rec.matchPercentage >= 85 ? 'rgba(5, 150, 105, 0.35)' : 'var(--border-default, #D9DEE5)'}`,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px',
@@ -670,7 +670,7 @@ export function DailyRecommendationsWidget({
                       display: 'block',
                       fontSize: '10.5px',
                       fontWeight: 600,
-                      color: '#334155',
+                      color: 'var(--text-primary, #1F2937)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -685,7 +685,7 @@ export function DailyRecommendationsWidget({
                         alignItems: 'center',
                         gap: '3px',
                         fontSize: '10px',
-                        color: '#64748b',
+                        color: 'var(--text-secondary, #64748B)',
                         marginTop: '2px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -708,9 +708,9 @@ export function DailyRecommendationsWidget({
                       fontSize: '10px',
                       padding: '2px 6px',
                       borderRadius: '4px',
-                      background: '#f1f5f9',
-                      color: '#1e293b',
-                      border: '1px solid #e2e8f0',
+                      background: 'var(--surface-secondary, #F9FAFB)',
+                      color: 'var(--text-primary, #1F2937)',
+                      border: '1px solid var(--border-subtle, #E5E7EB)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -729,7 +729,7 @@ export function DailyRecommendationsWidget({
                   alignItems: 'center',
                   gap: '6px',
                   marginTop: 'auto',
-                  borderTop: '1px solid #f1f5f9',
+                  borderTop: '1px solid var(--border-subtle, #E5E7EB)',
                   paddingTop: '8px',
                 }}
               >
@@ -770,13 +770,13 @@ export function DailyRecommendationsWidget({
                       fontWeight: 700,
                       padding: '4px 8px',
                       borderRadius: '4px',
-                      background: '#f1f5f9',
-                      color: '#475569',
+                      background: 'var(--surface-secondary, #F9FAFB)',
+                      color: 'var(--text-secondary, #64748B)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '4px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                     }}
                   >
                     <Clock size={11} /> Sent

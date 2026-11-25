@@ -47,7 +47,7 @@ export function SkeletonScreen({
   );
 
   const shimmerStyle: React.CSSProperties = {
-    background: 'linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)',
+    background: 'linear-gradient(90deg, var(--surface-secondary, #F1F5F9) 25%, var(--border-subtle, #E5E7EB) 50%, var(--surface-secondary, #F1F5F9) 75%)',
     backgroundSize: '200% 100%',
     animation: 'skeletonShimmer 1.5s infinite',
   };
@@ -70,9 +70,9 @@ export function SkeletonScreen({
             key={i}
             style={{
               padding: '12px',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               borderRadius: '8px',
-              border: '1px solid var(--fr8x-outline, #e2e8f0)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               display: 'flex',
               flexDirection: 'column',
               gap: '8px',
@@ -125,9 +125,9 @@ export function SkeletonScreen({
             key={i}
             style={{
               padding: '16px',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               borderRadius: '8px',
-              border: '1px solid var(--fr8x-outline, #e2e8f0)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
@@ -169,9 +169,9 @@ export function SkeletonScreen({
             key={i}
             style={{
               padding: '16px',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               borderRadius: '8px',
-              border: '1px solid var(--fr8x-outline, #e2e8f0)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
@@ -199,14 +199,14 @@ export function SkeletonScreen({
         className={`skeleton-container ${className}`}
         {...commonAccessibilityProps}
         style={{
-          border: '1px solid var(--fr8x-outline, #e2e8f0)',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           borderRadius: '8px',
           overflow: 'hidden',
           ...style,
         }}
       >
         {srOnlyNotice}
-        <div style={{ height: '38px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', padding: '0 14px', gap: '16px' }}>
+        <div style={{ height: '38px', background: 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', alignItems: 'center', padding: '0 14px', gap: '16px' }}>
           <div style={{ width: '15%', height: '11px', borderRadius: '3px', ...shimmerStyle }} />
           <div style={{ width: '25%', height: '11px', borderRadius: '3px', ...shimmerStyle }} />
           <div style={{ width: '20%', height: '11px', borderRadius: '3px', ...shimmerStyle }} />
@@ -222,8 +222,8 @@ export function SkeletonScreen({
               display: 'flex',
               alignItems: 'center',
               gap: '16px',
-              borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none',
-              background: i % 2 === 0 ? '#ffffff' : '#fcfcfc',
+              borderBottom: i < items.length - 1 ? '1px solid var(--border-subtle, #E5E7EB)' : 'none',
+              background: i % 2 === 0 ? 'var(--surface-primary, #FFFFFF)' : 'var(--surface-secondary, #F8FAFC)',
             }}
           >
             <div style={{ width: '15%', height: '12px', borderRadius: '4px', ...shimmerStyle }} />
@@ -255,9 +255,9 @@ export function SkeletonScreen({
           key={i}
           style={{
             padding: '16px',
-            background: '#ffffff',
+            background: 'var(--surface-primary, #FFFFFF)',
             borderRadius: '8px',
-            border: '1px solid var(--fr8x-outline, #e2e8f0)',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',

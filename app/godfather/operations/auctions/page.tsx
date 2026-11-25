@@ -126,7 +126,7 @@ export default function AuctionsAdministrationPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div className="gf-card" style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div className="gf-search-input-wrap" style={{ width: '100%' }}>
-              <Search style={{ width: '14px', height: '14px', color: '#94a3b8' }} />
+              <Search style={{ width: '14px', height: '14px', color: 'var(--text-secondary, #64748B)' }} />
               <input
                 type="text"
                 value={searchQuery}
@@ -177,7 +177,7 @@ export default function AuctionsAdministrationPage() {
                     transition: 'all 0.15s ease',
                     marginBottom: 0,
                     borderColor: isSelected ? '#0284c7' : '#e2e8f0',
-                    background: isSelected ? '#f0f9ff' : '#ffffff',
+                    background: isSelected ? 'rgba(0, 107, 104, 0.08)' : 'var(--surface-primary, #FFFFFF)',
                     boxShadow: isSelected ? '0 0 0 1.5px #0284c7' : '0 1px 2px rgba(0,0,0,0.03)',
                   }}
                 >

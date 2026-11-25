@@ -500,11 +500,11 @@ export function RichPostEditor({
     <div
       className="rich-post-editor-container"
       style={{
-        border: '1px solid #D9E0E8',
+        border: '1px solid var(--border-default, #D9DEE5)',
         borderRadius: '8px',
-        background: '#FFFFFF',
+        background: 'var(--surface-primary, #FFFFFF)',
         overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(23, 43, 43, 0.04)',
+        boxShadow: 'var(--shadow-subtle, 0 1px 3px rgba(0, 0, 0, 0.04))',
         transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
       }}
     >
@@ -514,10 +514,10 @@ export function RichPostEditor({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '3px',
+          gap: '4px',
           padding: '6px 10px',
-          background: '#F8FAF9',
-          borderBottom: '1px solid #F4F6F8',
+          background: 'var(--surface-elevated, #F8FAFC)',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
           flexWrap: 'wrap',
           userSelect: 'none',
         }}
@@ -529,7 +529,7 @@ export function RichPostEditor({
           disabled={historyIndex <= 0 || isPreview || disabled}
           title="Undo (Ctrl+Z)"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: historyIndex > 0 ? 'pointer' : 'default', opacity: historyIndex > 0 ? 1 : 0.4 }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: historyIndex > 0 ? 'pointer' : 'default', opacity: historyIndex > 0 ? 1 : 0.4 }}
         >
           <Undo2 size={14} />
         </button>
@@ -539,12 +539,12 @@ export function RichPostEditor({
           disabled={historyIndex >= history.length - 1 || isPreview || disabled}
           title="Redo (Ctrl+Y)"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: historyIndex < history.length - 1 ? 'pointer' : 'default', opacity: historyIndex < history.length - 1 ? 1 : 0.4 }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: historyIndex < history.length - 1 ? 'pointer' : 'default', opacity: historyIndex < history.length - 1 ? 1 : 0.4 }}
         >
           <Redo2 size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: 'var(--border-subtle, #E5E7EB)', margin: '0 3px' }} />
 
         {/* Text Styles */}
         <button
@@ -553,7 +553,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Bold (Ctrl+B)"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Bold size={14} />
         </button>
@@ -563,7 +563,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Italic (Ctrl+I)"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Italic size={14} />
         </button>
@@ -573,7 +573,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Underline (Ctrl+U)"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <UnderlineIcon size={14} />
         </button>
@@ -583,12 +583,12 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Strikethrough"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Strikethrough size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: 'var(--border-subtle, #E5E7EB)', margin: '0 3px' }} />
 
         {/* Headings */}
         <button
@@ -597,7 +597,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Heading 1"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Heading1 size={14} />
         </button>
@@ -607,7 +607,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Heading 2"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Heading2 size={14} />
         </button>
@@ -617,12 +617,12 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Heading 3"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Heading3 size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: 'var(--border-subtle, #E5E7EB)', margin: '0 3px' }} />
 
         {/* Lists & Quotes */}
         <button
@@ -631,7 +631,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Bulleted List"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <List size={14} />
         </button>
@@ -641,7 +641,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Numbered List"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <ListOrdered size={14} />
         </button>
@@ -651,12 +651,12 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Blockquote"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Quote size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: 'var(--border-subtle, #E5E7EB)', margin: '0 3px' }} />
 
         {/* Link & Table */}
         <button
@@ -665,7 +665,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Insert Link"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Link2 size={14} />
         </button>
@@ -677,10 +677,10 @@ export function RichPostEditor({
           className="toolbar-btn"
           style={{
             padding: '4px 8px',
-            borderRadius: '4px',
-            border: parsedTable ? '1px solid #075B5B' : '1px solid transparent',
-            background: parsedTable ? '#F4F6F8' : 'transparent',
-            color: parsedTable ? '#075B5B' : '#172B45',
+            borderRadius: '5px',
+            border: parsedTable ? '1px solid var(--accent-primary, #006B68)' : '1px solid var(--border-subtle, #E5E7EB)',
+            background: parsedTable ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
+            color: parsedTable ? 'var(--accent-primary, #006B68)' : 'var(--text-primary, #1F2937)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -698,7 +698,7 @@ export function RichPostEditor({
           disabled={isPreview || disabled}
           title="Clear formatting on selection"
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          style={{ padding: '5px', borderRadius: '5px', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
         >
           <Eraser size={14} />
         </button>
@@ -714,12 +714,12 @@ export function RichPostEditor({
               alignItems: 'center',
               gap: '4px',
               padding: '4px 10px',
-              borderRadius: '5px',
+              borderRadius: '6px',
               fontSize: '11px',
               fontWeight: 700,
-              background: isPreview ? '#075B5B' : '#F4F6F8',
-              color: isPreview ? '#FFFFFF' : '#075B5B',
-              border: '1px solid #B8D5C8',
+              background: isPreview ? 'var(--accent-primary, #006B68)' : 'var(--surface-primary, #FFFFFF)',
+              color: isPreview ? '#FFFFFF' : 'var(--accent-primary, #006B68)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
@@ -739,9 +739,9 @@ export function RichPostEditor({
             padding: '14px 16px',
             fontSize: '13px',
             lineHeight: 1.6,
-            color: '#172B45',
-            background: '#FFFFFF',
-            fontFamily: 'Calibri Light, Calibri, sans-serif',
+            color: 'var(--text-primary, #1F2937)',
+            background: 'var(--surface-primary, #FFFFFF)',
+            fontFamily: 'var(--font-family-primary)',
           }}
         >
           {value.trim() ? (
@@ -750,7 +750,7 @@ export function RichPostEditor({
               dangerouslySetInnerHTML={{ __html: parseRichText(value) }}
             />
           ) : (
-            <span style={{ color: '#526174', fontStyle: 'italic', fontSize: '12px' }}>
+            <span style={{ color: 'var(--text-secondary, #64748B)', fontStyle: 'italic', fontSize: '12px' }}>
               Nothing to preview. Enter text or insert tables using the toolbar above.
             </span>
           )}
@@ -788,10 +788,10 @@ export function RichPostEditor({
           <div
             className="fr8x-interactive-table-card"
             style={{
-              border: '1px solid #D9E0E8',
+              border: '1px solid var(--border-default, #D9DEE5)',
               borderRadius: '8px',
-              background: '#FFFFFF',
-              boxShadow: '0 2px 6px rgba(23, 43, 43, 0.04)',
+              background: 'var(--surface-primary, #FFFFFF)',
+              boxShadow: 'var(--shadow-subtle, 0 2px 6px rgba(0, 0, 0, 0.04))',
               overflow: 'hidden',
             }}
           >
@@ -802,24 +802,24 @@ export function RichPostEditor({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '8px 12px',
-                background: '#F1F5F3',
-                borderBottom: '1px solid #D9E0E8',
+                background: 'var(--surface-elevated, #F8FAFC)',
+                borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                 flexWrap: 'wrap',
                 gap: '8px',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <TableIcon size={14} color="#075B5B" />
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#075B5B' }}>
+                <TableIcon size={14} color="var(--accent-primary, #006B68)" />
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-primary, #006B68)' }}>
                   Structured Rate / Commodity Table
                 </span>
                 <span
                   style={{
                     fontSize: '10px',
                     fontWeight: 700,
-                    background: '#F4F6F8',
-                    color: '#075B5B',
-                    border: '1px solid #B8D5C8',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    color: 'var(--accent-primary, #006B68)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     padding: '1px 6px',
                     borderRadius: '4px',
                   }}
@@ -841,14 +841,14 @@ export function RichPostEditor({
                     padding: '3px 8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
-                    color: '#172B45',
+                    borderRadius: '5px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: 'var(--text-primary, #1F2937)',
                     cursor: 'pointer',
                   }}
                 >
-                  <Plus size={11} color="#075B5B" /> Add Row
+                  <Plus size={11} color="var(--accent-primary, #006B68)" /> Add Row
                 </button>
                 <button
                   type="button"
@@ -862,10 +862,10 @@ export function RichPostEditor({
                     padding: '3px 8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
-                    color: parsedTable.rows.length <= 1 ? '#94a3b8' : '#C0392B',
+                    borderRadius: '5px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: parsedTable.rows.length <= 1 ? 'var(--text-secondary, #64748B)' : '#DC2626',
                     cursor: parsedTable.rows.length <= 1 ? 'not-allowed' : 'pointer',
                     opacity: parsedTable.rows.length <= 1 ? 0.5 : 1,
                   }}
@@ -884,15 +884,15 @@ export function RichPostEditor({
                     padding: '3px 8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
-                    color: '#172B45',
+                    borderRadius: '5px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: 'var(--text-primary, #1F2937)',
                     cursor: parsedTable.headers.length >= 5 ? 'not-allowed' : 'pointer',
                     opacity: parsedTable.headers.length >= 5 ? 0.5 : 1,
                   }}
                 >
-                  <Plus size={11} color="#075B5B" /> Add Col
+                  <Plus size={11} color="var(--accent-primary, #006B68)" /> Add Col
                 </button>
                 <button
                   type="button"
@@ -906,10 +906,10 @@ export function RichPostEditor({
                     padding: '3px 8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
-                    color: parsedTable.headers.length <= 2 ? '#94a3b8' : '#C0392B',
+                    borderRadius: '5px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: parsedTable.headers.length <= 2 ? 'var(--text-secondary, #64748B)' : '#DC2626',
                     cursor: parsedTable.headers.length <= 2 ? 'not-allowed' : 'pointer',
                     opacity: parsedTable.headers.length <= 2 ? 0.5 : 1,
                   }}
@@ -927,10 +927,10 @@ export function RichPostEditor({
                     padding: '3px 8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    border: '1px solid #D9E0E8',
-                    color: '#526174',
+                    borderRadius: '5px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: 'var(--text-secondary, #64748B)',
                     cursor: 'pointer',
                   }}
                 >
@@ -947,10 +947,10 @@ export function RichPostEditor({
                     padding: '3px 8px',
                     fontSize: '11px',
                     fontWeight: 600,
-                    borderRadius: '4px',
-                    background: '#FFF5F5',
-                    border: '1px solid #FED7D7',
-                    color: '#C0392B',
+                    borderRadius: '5px',
+                    background: 'rgba(220, 38, 38, 0.08)',
+                    border: '1px solid rgba(220, 38, 38, 0.35)',
+                    color: '#DC2626',
                     cursor: 'pointer',
                   }}
                 >
@@ -983,7 +983,7 @@ export function RichPostEditor({
                       style={{
                         width: '28px',
                         fontSize: '10px',
-                        color: '#526174',
+                        color: 'var(--text-secondary, #64748B)',
                         textAlign: 'center',
                         fontWeight: 600,
                         padding: '4px 0',
@@ -1004,12 +1004,12 @@ export function RichPostEditor({
                             padding: '6px 8px',
                             fontSize: '11.5px',
                             fontWeight: 700,
-                            color: '#075B5B',
-                            background: '#F4F6F8',
-                            border: '1px solid #B8D5C8',
+                            color: 'var(--accent-primary, #006B68)',
+                            background: 'var(--surface-elevated, #F8FAFC)',
+                            border: '1px solid var(--border-default, #D9DEE5)',
                             borderRadius: '4px',
                             outline: 'none',
-                            fontFamily: 'Calibri, sans-serif',
+                            fontFamily: 'var(--font-family-primary)',
                           }}
                         />
                       </th>
@@ -1023,7 +1023,7 @@ export function RichPostEditor({
                       <td
                         style={{
                           fontSize: '11px',
-                          color: '#526174',
+                          color: 'var(--text-secondary, #64748B)',
                           textAlign: 'center',
                           fontWeight: 500,
                         }}
@@ -1042,20 +1042,20 @@ export function RichPostEditor({
                               boxSizing: 'border-box',
                               padding: '6px 8px',
                               fontSize: '12px',
-                              color: '#172B45',
-                              background: '#FFFFFF',
-                              border: '1px solid #D9E0E8',
+                              color: 'var(--text-primary, #1F2937)',
+                              background: 'var(--surface-primary, #FFFFFF)',
+                              border: '1px solid var(--border-default, #D9DEE5)',
                               borderRadius: '4px',
                               outline: 'none',
-                              fontFamily: 'Calibri Light, Calibri, sans-serif',
+                              fontFamily: 'var(--font-family-primary)',
                               transition: 'border-color 0.15s ease',
                             }}
                             onFocus={(e) => {
-                              e.currentTarget.style.borderColor = '#075B5B';
-                              e.currentTarget.style.boxShadow = '0 0 0 1px #075B5B';
+                              e.currentTarget.style.borderColor = 'var(--accent-primary, #006B68)';
+                              e.currentTarget.style.boxShadow = '0 0 0 1px var(--accent-primary, #006B68)';
                             }}
                             onBlur={(e) => {
-                              e.currentTarget.style.borderColor = '#D9E0E8';
+                              e.currentTarget.style.borderColor = 'var(--border-default, #D9DEE5)';
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           />
@@ -1103,11 +1103,11 @@ export function RichPostEditor({
               padding: '6px 8px',
               fontSize: '13px',
               lineHeight: 1.5,
-              fontFamily: 'Calibri Light, Calibri, sans-serif',
+              fontFamily: 'var(--font-family-primary)',
               border: '1px solid transparent',
               outline: 'none',
               resize: 'vertical',
-              color: '#172B45',
+              color: 'var(--text-primary, #1F2937)',
               background: 'transparent',
               borderRadius: '4px',
             }}
@@ -1131,11 +1131,11 @@ export function RichPostEditor({
             padding: '10px 12px',
             fontSize: '13px',
             lineHeight: 1.5,
-            fontFamily: 'Calibri Light, Calibri, sans-serif',
+            fontFamily: 'var(--font-family-primary)',
             border: 'none',
             outline: 'none',
             resize: 'vertical',
-            color: '#172B45',
+            color: 'var(--text-primary, #1F2937)',
             background: 'transparent',
           }}
         />
@@ -1147,7 +1147,7 @@ export function RichPostEditor({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.45)',
+            background: 'rgba(15, 23, 42, 0.5)',
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
             zIndex: 99999,
@@ -1158,18 +1158,19 @@ export function RichPostEditor({
         >
           <div
             style={{
-              background: '#FFFFFF',
+              background: 'var(--surface-primary, #FFFFFF)',
+              color: 'var(--text-primary, #1F2937)',
               borderRadius: '10px',
               padding: '20px',
               maxWidth: '400px',
               width: '100%',
-              boxShadow: '0 20px 40px rgba(23, 43, 43, 0.2)',
-              border: '1px solid #D9E0E8',
+              boxShadow: 'var(--glass-shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.25))',
+              border: '1px solid var(--border-default, #D9DEE5)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B45', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Link2 size={16} color="#075B5B" /> Insert Hyperlink
+              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Link2 size={16} color="var(--accent-primary, #006B68)" /> Insert Hyperlink
               </h4>
               <button
                 type="button"
@@ -1183,18 +1184,18 @@ export function RichPostEditor({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', display: 'block', marginBottom: '4px' }}>
                   Link Text
                 </label>
                 <input
                   type="text"
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D9E0E8', outline: 'none' }}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', border: '1px solid var(--border-default, #D9DEE5)', outline: 'none' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', display: 'block', marginBottom: '4px' }}>
                   Target URL (HTTPS or platform relative)
                 </label>
                 <input
@@ -1205,10 +1206,10 @@ export function RichPostEditor({
                     setLinkError('');
                   }}
                   placeholder="https://example.com"
-                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D9E0E8', outline: 'none' }}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', border: '1px solid var(--border-default, #D9DEE5)', outline: 'none' }}
                 />
                 {linkError && (
-                  <span style={{ fontSize: '10.5px', color: '#C0392B', display: 'block', marginTop: '3px' }}>
+                  <span style={{ fontSize: '10.5px', color: '#DC2626', display: 'block', marginTop: '3px' }}>
                     {linkError}
                   </span>
                 )}
@@ -1219,14 +1220,16 @@ export function RichPostEditor({
               <button
                 type="button"
                 onClick={() => setShowLinkModal(false)}
-                style={{ padding: '6px 12px', borderRadius: '5px', fontSize: '12px', fontWeight: 600, background: '#F1F5F3', border: '1px solid #D9E0E8', color: '#172B45', cursor: 'pointer' }}
+                className="btn secondary sm"
+                style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-interactive, #D1D5DB)', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleInsertLink}
-                style={{ padding: '6px 14px', borderRadius: '5px', fontSize: '12px', fontWeight: 600, background: '#075B5B', color: '#FFFFFF', border: 'none', cursor: 'pointer' }}
+                className="btn primary sm"
+                style={{ padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: 'var(--accent-primary, #006B68)', color: '#FFFFFF', border: '1px solid var(--accent-primary, #006B68)', cursor: 'pointer' }}
               >
                 Insert Link
               </button>
@@ -1241,7 +1244,7 @@ export function RichPostEditor({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.45)',
+            background: 'rgba(15, 23, 42, 0.5)',
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
             zIndex: 99999,
@@ -1252,18 +1255,19 @@ export function RichPostEditor({
         >
           <div
             style={{
-              background: '#FFFFFF',
+              background: 'var(--surface-primary, #FFFFFF)',
+              color: 'var(--text-primary, #1F2937)',
               borderRadius: '10px',
               padding: '20px',
               maxWidth: '460px',
               width: '100%',
-              boxShadow: '0 20px 40px rgba(23, 43, 43, 0.2)',
-              border: '1px solid #D9E0E8',
+              boxShadow: 'var(--glass-shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.25))',
+              border: '1px solid var(--border-default, #D9DEE5)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B45', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <TableIcon size={16} color="#075B5B" /> Insert Structured Rate / Commodity Table
+              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TableIcon size={16} color="var(--accent-primary, #006B68)" /> Insert Structured Rate / Commodity Table
               </h4>
               <button
                 type="button"
@@ -1277,7 +1281,7 @@ export function RichPostEditor({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', display: 'block', marginBottom: '4px' }}>
                   Columns (2 to 5)
                 </label>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
@@ -1291,10 +1295,10 @@ export function RichPostEditor({
                         padding: '6px 0',
                         fontSize: '12px',
                         fontWeight: 700,
-                        borderRadius: '5px',
-                        border: tableCols === c ? '1.5px solid #075B5B' : '1px solid #D9E0E8',
-                        background: tableCols === c ? '#F4F6F8' : '#FFFFFF',
-                        color: tableCols === c ? '#075B5B' : '#172B45',
+                        borderRadius: '6px',
+                        border: tableCols === c ? '1px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
+                        background: tableCols === c ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
+                        color: tableCols === c ? 'var(--accent-primary, #006B68)' : 'var(--text-primary, #1F2937)',
                         cursor: 'pointer',
                       }}
                     >
@@ -1304,7 +1308,7 @@ export function RichPostEditor({
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', display: 'block', marginBottom: '4px' }}>
                   Data Rows (1 to 10)
                 </label>
                 <input
@@ -1320,8 +1324,10 @@ export function RichPostEditor({
                     width: '100%',
                     padding: '6px 10px',
                     fontSize: '12px',
-                    borderRadius: '5px',
-                    border: '1px solid #D9E0E8',
+                    borderRadius: '6px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    color: 'var(--text-primary, #1F2937)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     outline: 'none',
                     boxSizing: 'border-box',
                     height: '32px',
@@ -1331,7 +1337,7 @@ export function RichPostEditor({
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', display: 'block', marginBottom: '6px' }}>
                 Column Header Titles
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1349,8 +1355,10 @@ export function RichPostEditor({
                     style={{
                       padding: '6px 10px',
                       fontSize: '12px',
-                      borderRadius: '5px',
-                      border: '1px solid #D9E0E8',
+                      borderRadius: '6px',
+                      background: 'var(--surface-primary, #FFFFFF)',
+                      color: 'var(--text-primary, #1F2937)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       outline: 'none',
                       boxSizing: 'border-box',
                     }}
@@ -1363,14 +1371,15 @@ export function RichPostEditor({
               <button
                 type="button"
                 onClick={() => setShowTableModal(false)}
+                className="btn secondary sm"
                 style={{
                   padding: '6px 14px',
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 600,
-                  background: '#F1F5F3',
-                  border: '1px solid #D9E0E8',
-                  color: '#172B45',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  border: '1px solid var(--border-interactive, #D1D5DB)',
+                  color: 'var(--text-primary, #1F2937)',
                   cursor: 'pointer',
                 }}
               >
@@ -1379,14 +1388,15 @@ export function RichPostEditor({
               <button
                 type="button"
                 onClick={handleInsertTable}
+                className="btn primary sm"
                 style={{
                   padding: '6px 16px',
-                  borderRadius: '5px',
+                  borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 700,
-                  background: '#075B5B',
+                  background: 'var(--accent-primary, #006B68)',
                   color: '#FFFFFF',
-                  border: 'none',
+                  border: '1px solid var(--accent-primary, #006B68)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

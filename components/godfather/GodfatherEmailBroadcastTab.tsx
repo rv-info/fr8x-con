@@ -307,9 +307,9 @@ export function GodfatherEmailBroadcastTab() {
       {/* ── Top Header & Stats Strip ── */}
       <div
         style={{
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '12px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           padding: '20px 24px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
@@ -330,38 +330,38 @@ export function GodfatherEmailBroadcastTab() {
               >
                 <Send size={16} color="#ffffff" />
               </div>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0 }}>
                 Godfather Email Broadcast Desk
               </h2>
             </div>
-            <p style={{ fontSize: '12.5px', color: '#64748b', margin: '4px 0 0' }}>
+            <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0' }}>
               Dispatch standardized, responsive branded HTML emails for Promotions, Newsletters, Platform Updates, and Maintenance notices to all registered members or selected clients.
             </p>
           </div>
 
           {/* Quick Metrics */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 14px', textAlign: 'center' }}>
-              <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Registered Users</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>{registeredUsers.length}</div>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '8px 14px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, textTransform: 'uppercase' }}>Registered Users</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary, #1F2937)' }}>{registeredUsers.length}</div>
             </div>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 14px', textAlign: 'center' }}>
-              <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Sent Broadcasts</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0284c7' }}>{broadcastHistory.length}</div>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '8px 14px', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, textTransform: 'uppercase' }}>Sent Broadcasts</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-primary, #006B68)' }}>{broadcastHistory.length}</div>
             </div>
             <button
               type="button"
               onClick={fetchMetadata}
               style={{
-                background: '#f1f5f9',
-                border: '1px solid #cbd5e1',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 padding: '10px 12px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                color: '#334155',
+                color: 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
                 fontWeight: 600,
               }}
@@ -373,13 +373,13 @@ export function GodfatherEmailBroadcastTab() {
         </div>
 
         {/* Category Presets Quick Bar */}
-        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Load Quick Preset:
           </span>
           {[
             { cat: 'PROMO' as BroadcastCategory, label: 'Promotional Offer (40% Off)', icon: Sparkles, color: '#059669' },
-            { cat: 'NEWSLETTER' as BroadcastCategory, label: 'Monthly Freight Newsletter', icon: Megaphone, color: '#0284c7' },
+            { cat: 'NEWSLETTER' as BroadcastCategory, label: 'Monthly Freight Newsletter', icon: Megaphone, color: 'var(--accent-primary, #006B68)' },
             { cat: 'UPDATE' as BroadcastCategory, label: 'Platform Update (v3.2)', icon: Bell, color: '#4f46e5' },
             { cat: 'MAINTENANCE' as BroadcastCategory, label: 'System Maintenance Notice', icon: AlertTriangle, color: '#d97706' },
           ].map((p) => {
@@ -396,7 +396,7 @@ export function GodfatherEmailBroadcastTab() {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  border: isSelected ? `1.5px solid ${p.color}` : '1px solid #e2e8f0',
+                  border: isSelected ? `1.5px solid ${p.color}` : '1px solid var(--border-subtle, #E5E7EB)',
                   background: isSelected ? '#ffffff' : '#f8fafc',
                   color: isSelected ? p.color : '#475569',
                   fontWeight: isSelected ? 700 : 500,
@@ -440,9 +440,9 @@ export function GodfatherEmailBroadcastTab() {
         {/* LEFT COLUMN: The Composer Form */}
         <div
           style={{
-            background: '#ffffff',
+            background: 'var(--surface-primary, #FFFFFF)',
             borderRadius: '12px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
             padding: '24px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
@@ -450,18 +450,18 @@ export function GodfatherEmailBroadcastTab() {
             gap: '18px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '12px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Layers size={16} color="#0284c7" /> Email Announcement Parameters
             </h3>
-            <span style={{ fontSize: '11px', color: '#64748b' }}>
-              Sender: <strong style={{ color: '#0f172a' }}>{category === 'MAINTENANCE' || category === 'UPDATE' ? 'tech@fr8x.in' : 'support@fr8x.in'}</strong>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
+              Sender: <strong style={{ color: 'var(--text-primary, #1F2937)' }}>{category === 'MAINTENANCE' || category === 'UPDATE' ? 'tech@fr8x.in' : 'support@fr8x.in'}</strong>
             </span>
           </div>
 
           {/* Target Audience Selector */}
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '8px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '8px' }}>
               Recipient Audience:
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -471,7 +471,7 @@ export function GodfatherEmailBroadcastTab() {
                 style={{
                   padding: '12px 14px',
                   borderRadius: '8px',
-                  border: targetType === 'all' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                  border: targetType === 'all' ? '2px solid #0284c7' : '1px solid var(--border-subtle, #E5E7EB)',
                   background: targetType === 'all' ? '#f0f9ff' : '#ffffff',
                   color: targetType === 'all' ? '#0369a1' : '#475569',
                   textAlign: 'left',
@@ -484,7 +484,7 @@ export function GodfatherEmailBroadcastTab() {
                 <Users size={20} color={targetType === 'all' ? '#0284c7' : '#94a3b8'} />
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 700 }}>All Registered Users</div>
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                     Broadcast to all {registeredUsers.length} verified accounts
                   </div>
                 </div>
@@ -496,7 +496,7 @@ export function GodfatherEmailBroadcastTab() {
                 style={{
                   padding: '12px 14px',
                   borderRadius: '8px',
-                  border: targetType === 'specific' ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                  border: targetType === 'specific' ? '2px solid #0284c7' : '1px solid var(--border-subtle, #E5E7EB)',
                   background: targetType === 'specific' ? '#f0f9ff' : '#ffffff',
                   color: targetType === 'specific' ? '#0369a1' : '#475569',
                   textAlign: 'left',
@@ -509,15 +509,15 @@ export function GodfatherEmailBroadcastTab() {
                 <User size={20} color={targetType === 'specific' ? '#0284c7' : '#94a3b8'} />
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 700 }}>Particular Person(s)</div>
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>Target specific corporate email(s)</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>Target specific corporate email(s)</div>
                 </div>
               </button>
             </div>
 
             {/* If Specific: show user selector and email input */}
             {targetType === 'specific' && (
-              <div style={{ marginTop: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px' }}>
-                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>
+              <div style={{ marginTop: '12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '14px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
                   Enter Recipient Email Address(es) (comma-separated):
                 </label>
                 <input
@@ -530,17 +530,17 @@ export function GodfatherEmailBroadcastTab() {
                     height: '38px',
                     padding: '0 12px',
                     borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     fontSize: '13px',
-                    color: '#0f172a',
-                    background: '#ffffff',
+                    color: 'var(--text-primary, #1F2937)',
+                    background: 'var(--surface-primary, #FFFFFF)',
                   }}
                 />
 
                 {/* Quick Add from Registered List */}
                 <div style={{ marginTop: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>
                       Or Click to Pick from Registered Directory:
                     </span>
                     <input
@@ -551,10 +551,10 @@ export function GodfatherEmailBroadcastTab() {
                       style={{
                         padding: '2px 8px',
                         fontSize: '11px',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         borderRadius: '4px',
                         width: '140px',
-                        background: '#ffffff',
+                        background: 'var(--surface-primary, #FFFFFF)',
                       }}
                     />
                   </div>
@@ -566,12 +566,12 @@ export function GodfatherEmailBroadcastTab() {
                         onClick={() => handleSelectUserEmail(u.email)}
                         style={{
                           fontSize: '11px',
-                          background: '#ffffff',
-                          border: '1px solid #cbd5e1',
+                          background: 'var(--surface-primary, #FFFFFF)',
+                          border: '1px solid var(--border-default, #D9DEE5)',
                           borderRadius: '4px',
                           padding: '3px 8px',
                           cursor: 'pointer',
-                          color: '#0369a1',
+                          color: 'var(--accent-primary, #006B68)',
                           fontWeight: 600,
                         }}
                       >
@@ -579,7 +579,7 @@ export function GodfatherEmailBroadcastTab() {
                       </button>
                     ))}
                     {filteredUsers.length === 0 && (
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>No matching registered users.</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>No matching registered users.</span>
                     )}
                   </div>
                 </div>
@@ -589,7 +589,7 @@ export function GodfatherEmailBroadcastTab() {
 
           {/* Subject Line */}
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
               Email Subject Line <span style={{ color: '#dc2626' }}>*</span>:
             </label>
             <input
@@ -602,9 +602,9 @@ export function GodfatherEmailBroadcastTab() {
                 height: '38px',
                 padding: '0 12px',
                 borderRadius: '6px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 fontSize: '13px',
-                color: '#0f172a',
+                color: 'var(--text-primary, #1F2937)',
                 fontWeight: 600,
               }}
             />
@@ -613,7 +613,7 @@ export function GodfatherEmailBroadcastTab() {
           {/* Heading & Badge */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
                 Main Email Heading <span style={{ color: '#dc2626' }}>*</span>:
               </label>
               <input
@@ -626,14 +626,14 @@ export function GodfatherEmailBroadcastTab() {
                   height: '38px',
                   padding: '0 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   fontSize: '13px',
-                  color: '#0f172a',
+                  color: 'var(--text-primary, #1F2937)',
                 }}
               />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
                 Badge Ribbon Tag:
               </label>
               <input
@@ -646,9 +646,9 @@ export function GodfatherEmailBroadcastTab() {
                   height: '38px',
                   padding: '0 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   fontSize: '12px',
-                  color: '#0f172a',
+                  color: 'var(--text-primary, #1F2937)',
                 }}
               />
             </div>
@@ -656,7 +656,7 @@ export function GodfatherEmailBroadcastTab() {
 
           {/* Highlight Notice Box */}
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
               Highlight Notice Banner (Optional):
             </label>
             <input
@@ -669,9 +669,9 @@ export function GodfatherEmailBroadcastTab() {
                 height: '38px',
                 padding: '0 12px',
                 borderRadius: '6px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 fontSize: '13px',
-                color: '#0f172a',
+                color: 'var(--text-primary, #1F2937)',
               }}
             />
           </div>
@@ -679,10 +679,10 @@ export function GodfatherEmailBroadcastTab() {
           {/* Body Content */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                 Email Message Content <span style={{ color: '#dc2626' }}>*</span>:
               </label>
-              <span style={{ fontSize: '11px', color: '#64748b' }}>Paragraphs separated by blank lines</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>Paragraphs separated by blank lines</span>
             </div>
             <textarea
               rows={8}
@@ -693,9 +693,9 @@ export function GodfatherEmailBroadcastTab() {
                 width: '100%',
                 padding: '12px',
                 borderRadius: '6px',
-                border: '1px solid #cbd5e1',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 fontSize: '13px',
-                color: '#0f172a',
+                color: 'var(--text-primary, #1F2937)',
                 lineHeight: 1.6,
                 fontFamily: 'inherit',
                 resize: 'vertical',
@@ -706,7 +706,7 @@ export function GodfatherEmailBroadcastTab() {
           {/* Action CTA Button */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
                 CTA Button Text:
               </label>
               <input
@@ -719,14 +719,14 @@ export function GodfatherEmailBroadcastTab() {
                   height: '38px',
                   padding: '0 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   fontSize: '13px',
-                  color: '#0f172a',
+                  color: 'var(--text-primary, #1F2937)',
                 }}
               />
             </div>
             <div>
-              <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '6px' }}>
                 CTA Destination URL:
               </label>
               <input
@@ -739,29 +739,29 @@ export function GodfatherEmailBroadcastTab() {
                   height: '38px',
                   padding: '0 12px',
                   borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   fontSize: '13px',
-                  color: '#0f172a',
+                  color: 'var(--text-primary, #1F2937)',
                 }}
               />
             </div>
           </div>
 
           {/* Dispatch Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <button
               type="button"
               disabled={isSendingTest || isSending}
               onClick={() => handleExecuteBroadcast(true)}
               style={{
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 padding: '10px 16px',
                 cursor: 'pointer',
                 fontSize: '12.5px',
                 fontWeight: 700,
-                color: '#334155',
+                color: 'var(--text-primary, #1F2937)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -802,9 +802,9 @@ export function GodfatherEmailBroadcastTab() {
         {/* RIGHT COLUMN: Live Responsive HTML Email Preview */}
         <div
           style={{
-            background: '#ffffff',
+            background: 'var(--surface-primary, #FFFFFF)',
             borderRadius: '12px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
             padding: '24px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
@@ -812,15 +812,15 @@ export function GodfatherEmailBroadcastTab() {
             gap: '14px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Eye size={16} color="#0284c7" />
-              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0 }}>
                 Live HTML Email Preview
               </h3>
             </div>
             {/* Viewport switch: Desktop / Mobile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--surface-secondary, #F9FAFB)', padding: '3px', borderRadius: '6px' }}>
               <button
                 type="button"
                 onClick={() => setPreviewDevice('desktop')}
@@ -863,15 +863,15 @@ export function GodfatherEmailBroadcastTab() {
           </div>
 
           {/* Email Subject Header Bar */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '8px 12px', fontSize: '12px', color: '#475569' }}>
-            <span style={{ fontWeight: 700, color: '#0f172a' }}>Subject:</span> {subject || '(No subject provided)'}
+          <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '8px 12px', fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>Subject:</span> {subject || '(No subject provided)'}
           </div>
 
           {/* Rendered Email Frame */}
           <div
             style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--surface-secondary, #F9FAFB)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               borderRadius: '8px',
               padding: '20px',
               display: 'flex',
@@ -1041,19 +1041,19 @@ export function GodfatherEmailBroadcastTab() {
       {/* ── Broadcasts Register / History Table ── */}
       <div
         style={{
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '12px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           padding: '24px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0 }}>
               Broadcast Dispatch Register & Audit History
             </h3>
-            <p style={{ fontSize: '12px', color: '#64748b', margin: '3px 0 0' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: '3px 0 0' }}>
               Chronological log of all system emails, promotional blasts, and maintenance announcements dispatched from this desk.
             </p>
           </div>
@@ -1070,7 +1070,7 @@ export function GodfatherEmailBroadcastTab() {
                   fontWeight: historyFilter === cat ? 700 : 500,
                   padding: '4px 10px',
                   borderRadius: '6px',
-                  border: historyFilter === cat ? '1px solid #0284c7' : '1px solid #e2e8f0',
+                  border: historyFilter === cat ? '1px solid #0284c7' : '1px solid var(--border-subtle, #E5E7EB)',
                   background: historyFilter === cat ? '#f0f9ff' : '#ffffff',
                   color: historyFilter === cat ? '#0369a1' : '#64748b',
                   cursor: 'pointer',
@@ -1086,14 +1086,14 @@ export function GodfatherEmailBroadcastTab() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Type</th>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Subject & Headline</th>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Target Audience</th>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Recipients</th>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Sent At</th>
-                <th style={{ padding: '10px 14px', color: '#64748b', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+              <tr style={{ background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1.5px solid #e2e8f0', textAlign: 'left' }}>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Type</th>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Subject & Headline</th>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Target Audience</th>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Recipients</th>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Status</th>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Sent At</th>
+                <th style={{ padding: '10px 14px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -1102,7 +1102,7 @@ export function GodfatherEmailBroadcastTab() {
                 .map((record) => {
                   const bColor = categoryBadgeColor[record.category] || categoryBadgeColor.UPDATE;
                   return (
-                    <tr key={record.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <tr key={record.id} style={{ borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
                       <td style={{ padding: '12px 14px' }}>
                         <span
                           style={{
@@ -1121,8 +1121,8 @@ export function GodfatherEmailBroadcastTab() {
                         </span>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{record.subject}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b' }}>{record.title}</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{record.subject}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>{record.title}</div>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
                         <span
@@ -1135,7 +1135,7 @@ export function GodfatherEmailBroadcastTab() {
                           {record.targetType === 'all' ? 'All Registered Users' : 'Specific Recipient(s)'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+                      <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                         {record.successCount} sent
                         {record.failureCount > 0 && (
                           <span style={{ color: '#dc2626', fontSize: '11px', marginLeft: '4px' }}>({record.failureCount} failed)</span>
@@ -1156,7 +1156,7 @@ export function GodfatherEmailBroadcastTab() {
                           {record.status}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 14px', fontSize: '11.5px', color: '#64748b' }}>
+                      <td style={{ padding: '12px 14px', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)' }}>
                         {new Date(record.sentAt).toLocaleString('en-IN', {
                           month: 'short',
                           day: 'numeric',
@@ -1179,13 +1179,13 @@ export function GodfatherEmailBroadcastTab() {
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                           style={{
-                            background: '#f1f5f9',
-                            border: '1px solid #cbd5e1',
+                            background: 'var(--surface-secondary, #F9FAFB)',
+                            border: '1px solid var(--border-default, #D9DEE5)',
                             borderRadius: '4px',
                             padding: '3px 8px',
                             fontSize: '11px',
                             fontWeight: 600,
-                            color: '#0369a1',
+                            color: 'var(--accent-primary, #006B68)',
                             cursor: 'pointer',
                           }}
                         >
@@ -1198,7 +1198,7 @@ export function GodfatherEmailBroadcastTab() {
 
               {broadcastHistory.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-secondary, #64748B)' }}>
                     No email broadcasts dispatched yet. Use the composer above to send your first announcement.
                   </td>
                 </tr>

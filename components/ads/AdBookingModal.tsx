@@ -277,7 +277,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
         title="Book Sponsored Advertisement &amp; Creative Editor"
         maxWidth="1020px"
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px', background: '#FFFFFF' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px', background: 'var(--surface-primary, #FFFFFF)' }}>
           {/* LEFT: Configuration & CTA Controls */}
           <form
             onSubmit={handleFormSubmit}
@@ -291,13 +291,13 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
             }}
           >
             {/* Advertiser Identification Card */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-              <b style={{ fontSize: '11.5px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+              <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
                 <ShieldCheck size={12} /> Advertiser Identity &amp; Contact
               </b>
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                     Business / Brand Name <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
@@ -305,12 +305,12 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
                     placeholder="e.g. Maersk / MSC / Kuehne+Nagel"
-                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                     Contact Person Name <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
@@ -318,7 +318,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     value={contactPerson}
                     onChange={(e) => setContactPerson(e.target.value)}
                     placeholder="Marketing Lead"
-                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                     required
                   />
                 </div>
@@ -326,7 +326,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
 
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
                 <div>
-                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                     Official Contact Email <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
@@ -335,12 +335,12 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
                     placeholder="sponsor@company.com"
-                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                     Phone Number <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -350,10 +350,10 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                       value={contactPhone}
                       onChange={(e) => setContactPhone(e.target.value)}
                       placeholder="+91 9876543210"
-                      style={{ flex: 1, height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                      style={{ flex: 1, height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                       required
                     />
-                    <label style={{ fontSize: '10px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <label style={{ fontSize: '10px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       <input
                         type="checkbox"
                         checked={isSameWhatsApp}
@@ -367,12 +367,12 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
             </div>
 
             {/* Campaign Content Card */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-              <b style={{ fontSize: '11.5px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+              <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
                 <Tag size={12} /> Campaign Message &amp; Placement
               </b>
               <div>
-                <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                   Ad Headline <span style={{ color: '#DC2626' }}>*</span>
                 </label>
                 <input
@@ -380,13 +380,13 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   value={headline}
                   onChange={(e) => setHeadline(e.target.value)}
                   placeholder="e.g. Guaranteed FCL Allocation from Nhava Sheva to Rotterdam"
-                  style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                  style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                   required
                 />
               </div>
 
               <div style={{ marginTop: '6px' }}>
-                <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                   Ad Promotional Description
                 </label>
                 <textarea
@@ -395,13 +395,13 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Short, high-impact value proposition displayed with your visual creative..."
-                  style={{ width: '100%', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '6px 8px', resize: 'vertical' }}
+                  style={{ width: '100%', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '6px 8px', resize: 'vertical' }}
                 />
               </div>
 
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
                 <div>
-                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                     Destination URL <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
@@ -410,19 +410,19 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     value={destUrl}
                     onChange={(e) => setDestUrl(e.target.value)}
                     placeholder="https://company.com/rates"
-                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '2px' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>
                     Target Logistics Category
                   </label>
                   <select
                     className="input"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 6px' }}
+                    style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 6px' }}
                   >
                     <option value="Ocean Freight &amp; Carrier Direct">Ocean Freight &amp; Carrier Direct</option>
                     <option value="Air Cargo &amp; Charter Flights">Air Cargo &amp; Charter Flights</option>
@@ -436,17 +436,17 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
             </div>
 
             {/* Creative Upload Area */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-              <b style={{ fontSize: '11.5px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+              <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
                 <Upload size={12} /> Creative Asset (237 × 299 px Desktop Rail)
               </b>
               <div
                 style={{
-                  border: '1px dashed #075B5B',
+                  border: '1px dashed var(--accent-primary, #006B68)',
                   borderRadius: '6px',
                   padding: '12px',
                   textAlign: 'center',
-                  background: '#F8FAFC',
+                  background: 'var(--surface-secondary, #F9FAFB)',
                   position: 'relative',
                   cursor: 'pointer',
                 }}
@@ -467,10 +467,10 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                   <Upload size={18} color="#075B5B" />
-                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#172B45' }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                     {creativeName ? `✓ ${creativeName}` : 'Click to Upload Creative (PNG, JPG, WebP, GIF)'}
                   </span>
-                  <small style={{ color: '#526174', fontSize: '10px' }}>
+                  <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px' }}>
                     Recommended 237 × 299 px · Max 5MB
                   </small>
                 </div>
@@ -478,9 +478,9 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
             </div>
 
             {/* PHASE 4.2: CALL-TO-ACTION (CTA) BUTTON CONFIGURATION */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <b style={{ fontSize: '11.5px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <ExternalLink size={12} /> Actionable Call-To-Action (CTA) Buttons
                 </b>
                 <button
@@ -488,9 +488,9 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   onClick={handleAddCta}
                   disabled={ctaButtons.length >= 3}
                   style={{
-                    background: '#FFFFFF',
-                    border: '1px solid #075B5B',
-                    color: '#075B5B',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--accent-primary, #006B68)',
+                    color: 'var(--accent-primary, #006B68)',
                     fontSize: '10.5px',
                     fontWeight: 600,
                     padding: '2px 8px',
@@ -510,8 +510,8 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   <div
                     key={btn.id}
                     style={{
-                      background: '#F8FAFC',
-                      border: '1px solid #D9E0E8',
+                      background: 'var(--surface-secondary, #F9FAFB)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       borderRadius: '6px',
                       padding: '8px',
                       display: 'flex',
@@ -520,7 +520,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     }}
                   >
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#075B5B' }}>
+                      <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--accent-primary, #006B68)' }}>
                         Button #{idx + 1}
                       </span>
                       <select
@@ -539,7 +539,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
 
                           handleUpdateCta(btn.id, { type: t, label: defaultLabel, destination: defaultDest });
                         }}
-                        style={{ height: '26px', fontSize: '11px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 4px' }}
+                        style={{ height: '26px', fontSize: '11px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 4px' }}
                       >
                         <option value="visit_website">Visit Website</option>
                         <option value="contact_us">Contact Us</option>
@@ -556,7 +556,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                         value={btn.label}
                         onChange={(e) => handleUpdateCta(btn.id, { label: e.target.value })}
                         placeholder="Button Text"
-                        style={{ flex: 1, height: '26px', fontSize: '11px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 6px' }}
+                        style={{ flex: 1, height: '26px', fontSize: '11px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 6px' }}
                       />
 
                       <button
@@ -570,18 +570,18 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '10px', color: '#526174' }}>Target:</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>Target:</span>
                       <input
                         type="text"
                         value={btn.destination}
                         onChange={(e) => handleUpdateCta(btn.id, { destination: e.target.value })}
                         placeholder="URL, email or phone number"
-                        style={{ flex: 1, height: '24px', fontSize: '10.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 6px' }}
+                        style={{ flex: 1, height: '24px', fontSize: '10.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 6px' }}
                       />
                       <select
                         value={btn.style}
                         onChange={(e) => handleUpdateCta(btn.id, { style: e.target.value as any })}
-                        style={{ height: '24px', fontSize: '10px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 4px' }}
+                        style={{ height: '24px', fontSize: '10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 4px' }}
                       >
                         <option value="primary">Teal Fill</option>
                         <option value="outline">Neutral Outline</option>
@@ -594,12 +594,12 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
             </div>
 
             {/* PHASE 5: GEOGRAPHIC TARGETING & WORLDWIDE PRIVILEGE RESTRICTION */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <b style={{ fontSize: '11.5px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <Globe size={12} /> Geographic Targeting &amp; Regional Scope
                 </b>
-                <label style={{ fontSize: '11px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 700 }}>
+                <label style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontWeight: 700 }}>
                   <input
                     type="checkbox"
                     checked={isWorldwide}
@@ -610,7 +610,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
               </div>
 
               {isWorldwide ? (
-                <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '6px', padding: '10px', fontSize: '11.5px', color: '#92400E' }}>
+                <div style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1px solid #F59E0B', borderRadius: '6px', padding: '10px', fontSize: '11.5px', color: '#d97706' }}>
                   <b style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
                     <AlertTriangle size={14} /> Privileged Scope: Godfather Review Required
                   </b>
@@ -619,7 +619,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#526174', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                       Target Continents:
                     </span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
@@ -633,7 +633,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                             style={{
                               background: active ? '#075B5B' : '#FFFFFF',
                               color: active ? '#FFFFFF' : '#172B45',
-                              border: active ? '1px solid #075B5B' : '1px solid #D9E0E8',
+                              border: active ? '1px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                               borderRadius: '4px',
                               padding: '2px 8px',
                               fontSize: '11px',
@@ -649,7 +649,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   </div>
 
                   <div>
-                    <span style={{ fontSize: '10.5px', color: '#526174', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
                       Key Country Corridors:
                     </span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -661,9 +661,9 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                             type="button"
                             onClick={() => toggleCountry(ctry)}
                             style={{
-                              background: active ? '#E6F4EA' : '#FFFFFF',
+                              background: active ? 'rgba(16, 185, 129, 0.12)' : '#FFFFFF',
                               color: active ? '#137333' : '#526174',
-                              border: active ? '1px solid #A8DAB5' : '1px solid #D9E0E8',
+                              border: active ? '1px solid #A8DAB5' : '1px solid var(--border-default, #D9DEE5)',
                               borderRadius: '4px',
                               padding: '2px 6px',
                               fontSize: '10.5px',
@@ -682,8 +682,8 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
             </div>
 
             {/* Duration & Pricing Matrix */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-              <b style={{ fontSize: '11.5px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+              <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
                 <DollarSign size={12} /> Campaign Duration &amp; Tariff
               </b>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
@@ -696,7 +696,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                       style={{
                         padding: '8px',
                         borderRadius: '6px',
-                        border: isSel ? '2px solid #075B5B' : '1px solid #D9E0E8',
+                        border: isSel ? '2px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                         background: isSel ? '#F0FDF4' : '#FFFFFF',
                         cursor: 'pointer',
                         textAlign: 'center',
@@ -705,17 +705,17 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                       <b style={{ fontSize: '13px', color: isSel ? '#075B5B' : '#172B45', display: 'block' }}>
                         ₹{d.cost.toLocaleString('en-IN')}
                       </b>
-                      <small style={{ fontSize: '10.5px', color: '#526174' }}>{d.label}</small>
+                      <small style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>{d.label}</small>
                     </div>
                   );
                 })}
               </div>
 
               {/* Total Summary */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #D9E0E8' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-default, #D9DEE5)' }}>
                 <div>
-                  <span style={{ fontSize: '11px', color: '#526174' }}>Total Campaign Investment:</span>
-                  <strong style={{ fontSize: '14px', color: '#075B5B', marginLeft: '6px' }}>₹{totalCost.toLocaleString('en-IN')}</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>Total Campaign Investment:</span>
+                  <strong style={{ fontSize: '14px', color: 'var(--accent-primary, #006B68)', marginLeft: '6px' }}>₹{totalCost.toLocaleString('en-IN')}</strong>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
@@ -724,9 +724,9 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     style={{
                       height: '32px',
                       padding: '0 14px',
-                      background: '#FFFFFF',
-                      border: '1px solid #D9E0E8',
-                      color: '#172B45',
+                      background: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      color: 'var(--text-primary, #1F2937)',
                       borderRadius: '4px',
                       fontSize: '11.5px',
                       fontWeight: 600,
@@ -741,7 +741,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                       height: '32px',
                       padding: '0 18px',
                       background: '#075B5B',
-                      border: '1px solid #075B5B',
+                      border: '1px solid var(--accent-primary, #006B68)',
                       color: '#FFFFFF',
                       borderRadius: '4px',
                       fontSize: '11.5px',
@@ -763,12 +763,12 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              borderLeft: '1px solid #D9E0E8',
+              borderLeft: '1px solid var(--border-default, #D9DEE5)',
               paddingLeft: '16px',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <b style={{ fontSize: '12px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Eye size={13} color="#075B5B" /> Live Advertisement Preview
               </b>
               <div style={{ display: 'flex', gap: '4px' }}>
@@ -778,7 +778,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   style={{
                     background: previewDevice === 'desktop' ? '#075B5B' : '#FFFFFF',
                     color: previewDevice === 'desktop' ? '#FFFFFF' : '#526174',
-                    border: '1px solid #D9E0E8',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '4px',
                     padding: '3px 8px',
                     fontSize: '11px',
@@ -796,7 +796,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   style={{
                     background: previewDevice === 'mobile' ? '#075B5B' : '#FFFFFF',
                     color: previewDevice === 'mobile' ? '#FFFFFF' : '#526174',
-                    border: '1px solid #D9E0E8',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '4px',
                     padding: '3px 8px',
                     fontSize: '11px',
@@ -811,7 +811,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
               </div>
             </div>
 
-            <p style={{ fontSize: '11px', color: '#526174', margin: 0 }}>
+            <p style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', margin: 0 }}>
               Live rendering matching the 237 × 299 px sponsored placement in the FR8X feed sidebar.
             </p>
 
@@ -822,8 +822,8 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                 maxWidth: '280px',
                 minHeight: '299px',
                 margin: '0 auto',
-                background: '#FFFFFF',
-                border: '1px solid #D9E0E8',
+                background: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 padding: '10px',
                 boxShadow: '4px 4px 10px rgba(0,0,0,0.06), -4px -4px 10px rgba(255,255,255,0.95)',
@@ -835,10 +835,10 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
               <div>
                 {/* Sponsor Label */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '9px', fontWeight: 700, color: '#526174', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', letterSpacing: '0.04em' }}>
                     SPONSORED
                   </span>
-                  <span style={{ fontSize: '9px', color: '#075B5B', fontWeight: 600 }}>
+                  <span style={{ fontSize: '9px', color: 'var(--accent-primary, #006B68)', fontWeight: 600 }}>
                     {isWorldwide ? 'WORLDWIDE' : selectedContinents[0] || 'REGIONAL'}
                   </span>
                 </div>
@@ -850,11 +850,11 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                     height: '130px',
                     borderRadius: '6px',
                     overflow: 'hidden',
-                    backgroundColor: '#F4F6F8',
+                    backgroundColor: 'var(--surface-secondary, #F9FAFB)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '1px solid #D9E0E8',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     position: 'relative',
                   }}
                 >
@@ -867,7 +867,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                   ) : (
                     <div style={{ textAlign: 'center', padding: '10px' }}>
                       <Globe size={24} color="#075B5B" />
-                      <span style={{ fontSize: '10px', color: '#526174', display: 'block', marginTop: '4px' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', display: 'block', marginTop: '4px' }}>
                         237 × 299 px Creative
                       </span>
                     </div>
@@ -891,16 +891,16 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                 </div>
 
                 {/* Headline & Description */}
-                <h4 style={{ margin: '8px 0 4px', fontSize: '12px', fontWeight: 700, color: '#172B45', lineHeight: 1.3 }}>
+                <h4 style={{ margin: '8px 0 4px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', lineHeight: 1.3 }}>
                   {headline || 'Your Catchy Logistics Headline Appears Here'}
                 </h4>
-                <p style={{ margin: 0, fontSize: '10.5px', color: '#526174', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                <p style={{ margin: 0, fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   {description || 'Promotional message detailing ocean rates, port reliability, and direct carrier booking assurances.'}
                 </p>
               </div>
 
               {/* Actionable CTA Buttons Rendered */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #D9E0E8' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-default, #D9DEE5)' }}>
                 {ctaButtons.filter((b) => b.visible).map((btn) => (
                   <button
                     key={btn.id}
@@ -920,10 +920,10 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
                       justifyContent: 'center',
                       gap: '4px',
                       ...(btn.style === 'primary'
-                        ? { background: '#075B5B', color: '#FFFFFF', border: '1px solid #075B5B' }
+                        ? { background: '#075B5B', color: '#FFFFFF', border: '1px solid var(--accent-primary, #006B68)' }
                         : btn.style === 'glass'
-                        ? { background: '#E6F4EA', color: '#137333', border: '1px solid #A8DAB5' }
-                        : { background: '#FFFFFF', color: '#172B45', border: '1px solid #D9E0E8' }),
+                        ? { background: 'rgba(16, 185, 129, 0.12)', color: '#137333', border: '1px solid #A8DAB5' }
+                        : { background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', border: '1px solid var(--border-default, #D9DEE5)' }),
                     }}
                   >
                     {btn.type === 'email_us' ? (
@@ -941,7 +941,7 @@ export function AdBookingModal({ isOpen, onClose, onSuccess }: AdBookingModalPro
               </div>
             </div>
 
-            <div style={{ background: '#F8FAFC', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '8px 10px', fontSize: '10.5px', color: '#526174' }}>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '8px 10px', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
               <strong>Target Corridors:</strong>{' '}
               {isWorldwide ? 'Worldwide (Global All Ports)' : `${selectedContinents.join(', ')} (${selectedCountries.slice(0, 3).join(', ')}${selectedCountries.length > 3 ? ` +${selectedCountries.length - 3}` : ''})`}
             </div>

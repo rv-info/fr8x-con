@@ -436,7 +436,7 @@ export function SearchConnectionsModal({
                 left: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#64748b',
+                color: 'var(--text-secondary, #64748B)',
                 pointerEvents: 'none',
                 zIndex: 2,
               }}
@@ -454,7 +454,7 @@ export function SearchConnectionsModal({
                 fontSize: '13px',
                 borderRadius: '8px',
                 border: '1.5px solid #cbd5e1',
-                background: '#ffffff',
+                background: 'var(--surface-primary, #FFFFFF)',
                 outline: 'none',
               }}
             />
@@ -468,7 +468,7 @@ export function SearchConnectionsModal({
                   top: '10px',
                   background: 'none',
                   border: 'none',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary, #64748B)',
                   cursor: 'pointer',
                   padding: '2px',
                 }}
@@ -481,7 +481,7 @@ export function SearchConnectionsModal({
           {/* Recent Searches Chips */}
           {!searchTerm && recentSearches.length > 0 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', padding: '2px 0' }}>
-              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Clock size={11} /> Recent:
               </span>
               {recentSearches.map((item) => (
@@ -494,9 +494,9 @@ export function SearchConnectionsModal({
                     gap: '5px',
                     padding: '3px 8px',
                     borderRadius: '12px',
-                    background: '#f1f5f9',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     fontSize: '11px',
-                    color: '#334155',
+                    color: 'var(--text-primary, #1F2937)',
                     cursor: 'pointer',
                     userSelect: 'none',
                   }}
@@ -507,7 +507,7 @@ export function SearchConnectionsModal({
                     type="button"
                     onClick={(e) => removeHistoryItem(e, item.id)}
                     title="Remove from history"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#94a3b8', display: 'flex' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-secondary, #64748B)', display: 'flex' }}
                     className="hover:text-red-500"
                   >
                     <X size={10} />
@@ -522,7 +522,7 @@ export function SearchConnectionsModal({
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '10.5px',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary, #64748B)',
                   padding: '2px 4px',
                   textDecoration: 'underline',
                 }}
@@ -559,7 +559,7 @@ export function SearchConnectionsModal({
                   fontSize: '11px',
                   fontWeight: activeFilter === chip.id ? 700 : 500,
                   borderRadius: '20px',
-                  border: activeFilter === chip.id ? '1px solid var(--brand)' : '1px solid #e2e8f0',
+                  border: activeFilter === chip.id ? '1px solid var(--brand)' : '1px solid var(--border-subtle, #E5E7EB)',
                   background: activeFilter === chip.id ? '#eef6ff' : '#ffffff',
                   color: activeFilter === chip.id ? 'var(--brand)' : '#475569',
                   cursor: 'pointer',
@@ -585,9 +585,9 @@ export function SearchConnectionsModal({
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: '10px',
-              background: actionNotice.type === 'success' ? '#f0fdf4' : actionNotice.type === 'error' ? '#fef2f2' : '#eff6ff',
-              border: `1px solid ${actionNotice.type === 'success' ? '#bbf7d0' : actionNotice.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
-              color: actionNotice.type === 'success' ? '#166534' : actionNotice.type === 'error' ? '#991b1b' : '#1e40af',
+              background: actionNotice.type === 'success' ? 'rgba(21, 128, 61, 0.1)' : actionNotice.type === 'error' ? 'rgba(220, 38, 38, 0.1)' : 'var(--surface-elevated, #F8FAFC)',
+              border: `1px solid ${actionNotice.type === 'success' ? 'rgba(21, 128, 61, 0.35)' : actionNotice.type === 'error' ? 'rgba(220, 38, 38, 0.35)' : 'var(--border-default, #D9DEE5)'}`,
+              color: actionNotice.type === 'success' ? '#15803D' : actionNotice.type === 'error' ? '#DC2626' : 'var(--text-primary, #1F2937)',
               animation: 'fadeIn 0.2s ease',
             }}
           >
@@ -627,9 +627,9 @@ export function SearchConnectionsModal({
               style={{
                 padding: '30px 20px',
                 textAlign: 'center',
-                background: '#fef2f2',
+                background: 'rgba(239, 68, 68, 0.08)',
                 borderRadius: '8px',
-                border: '1px solid #fecaca',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
               }}
             >
               <b style={{ fontSize: '13.5px', color: '#991b1b', display: 'block', marginBottom: '6px' }}>
@@ -648,7 +648,7 @@ export function SearchConnectionsModal({
               </button>
             </div>
           ) : isLoading && scoredCandidates.length === 0 ? (
-            <div style={{ padding: '36px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+            <div style={{ padding: '36px', textAlign: 'center', color: 'var(--text-secondary, #64748B)', fontSize: '13px' }}>
               Searching maritime enterprise network...
             </div>
           ) : scoredCandidates.length === 0 ? (
@@ -656,13 +656,13 @@ export function SearchConnectionsModal({
               style={{
                 padding: '40px 20px',
                 textAlign: 'center',
-                background: '#f8fafc',
+                background: 'var(--surface-secondary, #F9FAFB)',
                 borderRadius: '8px',
                 border: '1px dashed #cbd5e1',
               }}
             >
               <Search size={32} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
-              <b style={{ fontSize: '14px', color: '#1e293b', display: 'block', marginBottom: '4px' }}>
+              <b style={{ fontSize: '14px', color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                 No matching members found. Try another name or company.
               </b>
               {searchTerm && (
@@ -685,8 +685,8 @@ export function SearchConnectionsModal({
                 <div
                   key={candidate.uid}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    border: '1px solid var(--border-subtle, #E5E7EB)',
                     borderRadius: '8px',
                     padding: '12px 14px',
                     display: 'flex',
@@ -743,9 +743,9 @@ export function SearchConnectionsModal({
                               fontWeight: 800,
                               padding: '1px 7px',
                               borderRadius: '10px',
-                              background: percentage >= 85 ? '#ecfdf5' : '#eff6ff',
-                              color: percentage >= 85 ? '#065f46' : '#1e40af',
-                              border: `1px solid ${percentage >= 85 ? '#a7f3d0' : '#bfdbfe'}`,
+                              background: percentage >= 85 ? 'rgba(5, 150, 105, 0.12)' : 'var(--surface-elevated, #F8FAFC)',
+                              color: percentage >= 85 ? '#059669' : 'var(--accent-primary, #006B68)',
+                              border: `1px solid ${percentage >= 85 ? 'rgba(5, 150, 105, 0.35)' : 'var(--border-default, #D9DEE5)'}`,
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '3px',
@@ -755,12 +755,12 @@ export function SearchConnectionsModal({
                           </span>
                         </div>
 
-                        <div style={{ fontSize: '11.5px', color: '#475569', marginTop: '2px' }}>
+                        <div style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>
                           <span style={{ fontWeight: 600 }}>{candidate.designation || 'Trade Specialist'}</span> ·{' '}
                           <span style={{ fontWeight: 700, color: 'var(--brand)' }}>{candidate.company || 'Enterprise'}</span>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#64748b', marginTop: '3px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '3px', flexWrap: 'wrap' }}>
                           {candidate.city && (
                             <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                               <MapPin size={11} /> {candidate.city}, {candidate.country || 'India'}
@@ -824,12 +824,12 @@ export function SearchConnectionsModal({
                               fontWeight: 700,
                               padding: '4px 8px',
                               borderRadius: '4px',
-                              background: '#f1f5f9',
-                              color: '#475569',
+                              background: 'var(--surface-secondary, #F9FAFB)',
+                              color: 'var(--text-secondary, #64748B)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '4px',
-                              border: '1px solid #cbd5e1',
+                              border: '1px solid var(--border-default, #D9DEE5)',
                             }}
                           >
                             <Clock size={11} /> REQUEST SENT
@@ -860,9 +860,9 @@ export function SearchConnectionsModal({
                               fontWeight: 800,
                               padding: '4px 8px',
                               borderRadius: '4px',
-                              background: '#ecfdf5',
-                              color: '#065f46',
-                              border: '1px solid #a7f3d0',
+                              background: 'rgba(16, 185, 129, 0.1)',
+                              color: '#059669',
+                              border: '1px solid rgba(16, 185, 129, 0.35)',
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '4px',
@@ -951,15 +951,15 @@ export function SearchConnectionsModal({
                     <div
                       style={{
                         padding: '8px 10px',
-                        background: '#f8fafc',
+                        background: 'var(--surface-secondary, #F9FAFB)',
                         borderRadius: '6px',
-                        border: '1px solid #cbd5e1',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '6px',
                       }}
                     >
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                         Include personalized connection message:
                       </span>
                       <textarea
@@ -973,8 +973,8 @@ export function SearchConnectionsModal({
                           fontSize: '11.5px',
                           padding: '6px 8px',
                           borderRadius: '4px',
-                          border: '1px solid #cbd5e1',
-                          background: '#ffffff',
+                          border: '1px solid var(--border-default, #D9DEE5)',
+                          background: 'var(--surface-primary, #FFFFFF)',
                         }}
                       />
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
@@ -1006,13 +1006,13 @@ export function SearchConnectionsModal({
                         alignItems: 'center',
                         gap: '6px',
                         flexWrap: 'wrap',
-                        background: '#f8fafc',
+                        background: 'var(--surface-secondary, #F9FAFB)',
                         padding: '6px 8px',
                         borderRadius: '6px',
-                        border: '1px solid #f1f5f9',
+                        border: '1px solid var(--border-subtle, #E5E7EB)',
                       }}
                     >
-                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>
                         Why Matched:
                       </span>
                       {reasons.map((r, i) => (
@@ -1023,9 +1023,9 @@ export function SearchConnectionsModal({
                             fontWeight: 600,
                             padding: '2px 6px',
                             borderRadius: '4px',
-                            background: '#ffffff',
-                            color: '#1e293b',
-                            border: '1px solid #e2e8f0',
+                            background: 'var(--surface-primary, #FFFFFF)',
+                            color: 'var(--text-primary, #1F2937)',
+                            border: '1px solid var(--border-subtle, #E5E7EB)',
                           }}
                           title={r.detail}
                         >
@@ -1037,22 +1037,22 @@ export function SearchConnectionsModal({
 
                   {/* Work History, Education & Certifications Snippets */}
                   {(candidate.experiences?.length || candidate.educations?.length || candidate.certifications?.length) ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '10.5px', color: '#64748b' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
                       {candidate.experiences && candidate.experiences.length > 0 && (
                         <div>
-                          <strong style={{ color: '#334155' }}>Work History:</strong>{' '}
+                          <strong style={{ color: 'var(--text-primary, #1F2937)' }}>Work History:</strong>{' '}
                           {candidate.experiences.map((exp: any) => `${exp.designation || exp.title || 'Professional'} at ${exp.company}`).join(' · ')}
                         </div>
                       )}
                       {candidate.educations && candidate.educations.length > 0 && (
                         <div>
-                          <strong style={{ color: '#334155' }}>Education:</strong>{' '}
+                          <strong style={{ color: 'var(--text-primary, #1F2937)' }}>Education:</strong>{' '}
                           {candidate.educations.map((edu: any) => `${edu.qualification} (${edu.institution})`).join(' · ')}
                         </div>
                       )}
                       {candidate.certifications && candidate.certifications.length > 0 && (
                         <div>
-                          <strong style={{ color: '#334155' }}>Certifications:</strong>{' '}
+                          <strong style={{ color: 'var(--text-primary, #1F2937)' }}>Certifications:</strong>{' '}
                           {candidate.certifications.map((cert: any) => cert.title).join(' · ')}
                         </div>
                       )}
@@ -1070,10 +1070,10 @@ export function SearchConnectionsModal({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid var(--border-subtle, #E5E7EB)',
             paddingTop: '10px',
             fontSize: '11px',
-            color: '#64748b',
+            color: 'var(--text-secondary, #64748B)',
           }}
         >
           <span>

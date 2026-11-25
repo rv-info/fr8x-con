@@ -54,7 +54,7 @@ function PeopleRedirect() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '16px',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
       }}
     >
       <div className="fr8x-loader" aria-label="Loading Enterprise Network…" role="status" />

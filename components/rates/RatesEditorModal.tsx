@@ -394,14 +394,15 @@ export function RatesEditorModal({
           width: '90%',
           maxWidth: '1200px',
           maxHeight: '90vh',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-primary, #FFFFFF)',
+          color: 'var(--text-primary, #1F2937)',
           borderRadius: '8px',
-          border: '1px solid #CBD5E0',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+          border: '1px solid var(--border-default, #D9DEE5)',
+          boxShadow: 'var(--glass-shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.25))',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          fontFamily: 'Calibri, Arial, sans-serif',
+          fontFamily: 'var(--font-family-primary)',
           fontSize: '13px',
         }}
         role="dialog"
@@ -412,8 +413,8 @@ export function RatesEditorModal({
         <div
           style={{
             padding: '14px 20px',
-            backgroundColor: '#F8FAFD',
-            borderBottom: '1px solid #E2E8F0',
+            backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+            borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -426,7 +427,7 @@ export function RatesEditorModal({
                 width: '32px',
                 height: '32px',
                 borderRadius: '6px',
-                backgroundColor: '#1B2B4B',
+                backgroundColor: 'var(--accent-primary, #006B68)',
                 color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
@@ -442,7 +443,7 @@ export function RatesEditorModal({
                   style={{
                     fontSize: '15px',
                     fontWeight: 700,
-                    color: '#1B2B4B',
+                    color: 'var(--text-primary, #1F2937)',
                     margin: 0,
                     letterSpacing: '0.02em',
                   }}
@@ -455,15 +456,15 @@ export function RatesEditorModal({
                     fontWeight: 700,
                     padding: '2px 8px',
                     borderRadius: '4px',
-                    backgroundColor: editingRateId ? '#FEF3C7' : mode === 'overview' ? '#E0F2FE' : '#EEF2F7',
-                    color: editingRateId ? '#92400E' : mode === 'overview' ? '#0369A1' : '#1B2B4B',
-                    border: `1px solid ${editingRateId ? '#F59E0B' : mode === 'overview' ? '#7DD3FC' : '#CBD5E0'}`,
+                    backgroundColor: editingRateId ? 'rgba(180, 83, 9, 0.12)' : mode === 'overview' ? 'rgba(2, 132, 199, 0.12)' : 'var(--surface-primary, #FFFFFF)',
+                    color: editingRateId ? '#B45309' : mode === 'overview' ? '#0284C7' : 'var(--text-primary, #1F2937)',
+                    border: `1px solid ${editingRateId ? 'rgba(180, 83, 9, 0.35)' : mode === 'overview' ? 'rgba(2, 132, 199, 0.35)' : 'var(--border-default, #D9DEE5)'}`,
                   }}
                 >
                   {editingRateId ? `Editing Rate #${editingRateId}` : mode === 'overview' ? 'Overview Mode' : 'New Rate Creation'}
                 </span>
               </div>
-              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748B' }}>
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
                 {editingRateId
                   ? 'Update existing freight rate parameters or duplicate as a new distinct rate.'
                   : mode === 'overview'
@@ -498,17 +499,17 @@ export function RatesEditorModal({
           <div
             className="ai-rate-entry-card"
             style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #D9E0E8',
+              backgroundColor: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-default, #D9DEE5)',
               borderRadius: '8px',
               padding: '12px 14px',
-              boxShadow: '0 1px 3px rgba(23, 43, 43, 0.04)',
+              boxShadow: 'var(--shadow-subtle, 0 1px 3px rgba(0, 0, 0, 0.04))',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #F4F6F8', paddingBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span
                   style={{
@@ -518,13 +519,14 @@ export function RatesEditorModal({
                     width: '24px',
                     height: '24px',
                     borderRadius: '5px',
-                    backgroundColor: '#F4F6F8',
-                    color: '#075B5B',
+                    backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                    border: '1px solid var(--border-subtle, #E5E7EB)',
+                    color: 'var(--accent-primary, #006B68)',
                   }}
                 >
                   <Sparkles size={14} />
                 </span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#172B45', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
                   AI Natural-Language Rate Entry
                 </span>
                 <span
@@ -533,9 +535,9 @@ export function RatesEditorModal({
                     fontWeight: 700,
                     padding: '2px 6px',
                     borderRadius: '4px',
-                    backgroundColor: '#F4F6F8',
-                    color: '#075B5B',
-                    border: '1px solid #D9E0E8',
+                    backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                    color: 'var(--accent-primary, #006B68)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                   }}
                 >
                   Instant Parsing
@@ -555,11 +557,11 @@ export function RatesEditorModal({
                   height: '52px',
                   padding: '8px 10px',
                   borderRadius: '6px',
-                  border: '1px solid #D9E0E8',
-                  backgroundColor: '#FFFFFF',
-                  color: '#172B45',
+                  border: '1px solid var(--border-default, #D9DEE5)',
+                  backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                  color: 'var(--text-primary, #1F2937)',
                   fontSize: '12px',
-                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                  fontFamily: 'var(--font-family-primary)',
                   lineHeight: '1.4',
                   boxSizing: 'border-box',
                   resize: 'vertical',
@@ -577,7 +579,7 @@ export function RatesEditorModal({
             {/* Quick Sample Prompts & Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', color: '#526174', fontWeight: 600 }}>Quick Samples:</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>Quick Samples:</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -589,9 +591,9 @@ export function RatesEditorModal({
                     fontSize: '10.5px',
                     padding: '2px 7px',
                     borderRadius: '4px',
-                    backgroundColor: '#FAFBFD',
-                    border: '1px solid #D9E0E8',
-                    color: '#075B5B',
+                    backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: 'var(--accent-primary, #006B68)',
                     cursor: 'pointer',
                     fontWeight: 600,
                   }}
@@ -609,9 +611,9 @@ export function RatesEditorModal({
                     fontSize: '10.5px',
                     padding: '2px 7px',
                     borderRadius: '4px',
-                    backgroundColor: '#FAFBFD',
-                    border: '1px solid #D9E0E8',
-                    color: '#075B5B',
+                    backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: 'var(--accent-primary, #006B68)',
                     cursor: 'pointer',
                     fontWeight: 600,
                   }}
@@ -629,9 +631,9 @@ export function RatesEditorModal({
                     fontSize: '10.5px',
                     padding: '2px 7px',
                     borderRadius: '4px',
-                    backgroundColor: '#FAFBFD',
-                    border: '1px solid #D9E0E8',
-                    color: '#075B5B',
+                    backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    color: 'var(--accent-primary, #006B68)',
                     cursor: 'pointer',
                     fontWeight: 600,
                   }}
@@ -650,9 +652,9 @@ export function RatesEditorModal({
                       padding: '0 8px',
                       fontSize: '11px',
                       borderRadius: '5px',
-                      border: '1px solid #D9E0E8',
-                      backgroundColor: '#FFFFFF',
-                      color: '#526174',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      color: 'var(--text-secondary, #64748B)',
                       cursor: 'pointer',
                     }}
                   >
@@ -663,6 +665,7 @@ export function RatesEditorModal({
                   type="button"
                   onClick={() => handleAutoExtract()}
                   disabled={isAiParsing}
+                  className="btn primary sm"
                   style={{
                     height: '28px',
                     padding: '0 12px',
@@ -672,11 +675,10 @@ export function RatesEditorModal({
                     fontSize: '11.5px',
                     fontWeight: 700,
                     borderRadius: '5px',
-                    border: 'none',
-                    backgroundColor: '#075B5B',
+                    border: '1px solid var(--accent-primary, #006B68)',
+                    backgroundColor: 'var(--accent-primary, #006B68)',
                     color: '#FFFFFF',
                     cursor: 'pointer',
-                    boxShadow: '0 1px 2px rgba(7, 91, 91, 0.2)',
                   }}
                 >
                   <Zap size={13} />
@@ -691,16 +693,16 @@ export function RatesEditorModal({
                 style={{
                   marginTop: '4px',
                   padding: '8px 10px',
-                  backgroundColor: '#F4F6F8',
+                  backgroundColor: 'var(--surface-elevated, #F8FAFC)',
                   borderRadius: '6px',
-                  border: '1px solid #D9E0E8',
+                  border: '1px solid var(--border-subtle, #E5E7EB)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                   flexWrap: 'wrap',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#075B5B' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: 'var(--accent-primary, #006B68)' }}>
                   <Layers size={13} />
                   <span>{parsedResults.records.length} Rates Detected:</span>
                 </div>
@@ -717,9 +719,9 @@ export function RatesEditorModal({
                         borderRadius: '4px',
                         fontSize: '11px',
                         fontWeight: isSelected ? 700 : 500,
-                        backgroundColor: isSelected ? '#075B5B' : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#172B45',
-                        border: `1px solid ${isSelected ? '#075B5B' : '#D9E0E8'}`,
+                        backgroundColor: isSelected ? 'var(--accent-primary, #006B68)' : 'var(--surface-primary, #FFFFFF)',
+                        color: isSelected ? '#FFFFFF' : 'var(--text-primary, #1F2937)',
+                        border: `1px solid ${isSelected ? 'var(--accent-primary, #006B68)' : 'var(--border-default, #D9DEE5)'}`,
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -737,8 +739,8 @@ export function RatesEditorModal({
                 style={{
                   padding: '6px 10px',
                   borderRadius: '5px',
-                  backgroundColor: parsedResults.missingFields.length > 0 ? '#FFFBEB' : '#F0FDF4',
-                  border: `1px solid ${parsedResults.missingFields.length > 0 ? '#FDE68A' : '#BBF7D0'}`,
+                  backgroundColor: parsedResults.missingFields.length > 0 ? 'rgba(217, 119, 6, 0.1)' : 'rgba(22, 163, 74, 0.1)',
+                  border: `1px solid ${parsedResults.missingFields.length > 0 ? 'rgba(217, 119, 6, 0.35)' : 'rgba(22, 163, 74, 0.35)'}`,
                   fontSize: '11px',
                   display: 'flex',
                   alignItems: 'center',
@@ -753,13 +755,13 @@ export function RatesEditorModal({
                   ) : (
                     <CheckCircle2 size={13} color="#16A34A" style={{ flexShrink: 0 }} />
                   )}
-                  <span style={{ color: parsedResults.missingFields.length > 0 ? '#92400E' : '#166534' }}>
+                  <span style={{ color: parsedResults.missingFields.length > 0 ? '#D97706' : '#15803D' }}>
                     {parsedResults.missingFields.length > 0
                       ? `Partially extracted (${parsedResults.confidence}% match). Missing: ${parsedResults.missingFields.join(', ')}. Please verify in the fields below.`
                       : `Successfully mapped all rate fields with ${parsedResults.confidence}% confidence! Review populated fields below and click SAVE RATE.`}
                   </span>
                 </div>
-                <span style={{ color: '#526174', fontSize: '10.5px' }}>
+                <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>
                   Latency: {parsedResults.modelInfo.latencyMs}ms
                 </span>
               </div>
@@ -778,8 +780,8 @@ export function RatesEditorModal({
             {/* Column 1: Carrier & Route Geography */}
             <div
               style={{
-                backgroundColor: '#FAFBFD',
-                border: '1px solid #E2E8F0',
+                backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '6px',
                 padding: '12px 14px',
                 display: 'flex',
@@ -787,13 +789,13 @@ export function RatesEditorModal({
                 gap: '10px',
               }}
             >
-              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
-                <Compass size={13} color="#47799E" /> Routing &amp; Port Geography
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                <Compass size={13} color="var(--accent-primary, #006B68)" /> Routing &amp; Port Geography
               </div>
 
               {/* Carrier */}
               <div style={{ display: 'grid', gridTemplateColumns: '82px 1fr', gap: '6px', alignItems: 'center' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 8px', borderRadius: '4px', textAlign: 'center' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 8px', borderRadius: '4px', textAlign: 'center' }}>
                   CARRIER *
                 </label>
                 <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Search shipping line…" />
@@ -802,13 +804,13 @@ export function RatesEditorModal({
               {/* POR + POL */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                     POR
                   </label>
                   <PortSearch value={por} onChange={setPor} placeholder="POR" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                     POL *
                   </label>
                   <PortSearch value={pol} onChange={setPol} placeholder="POL" />
@@ -818,13 +820,13 @@ export function RatesEditorModal({
               {/* POD + FPOD */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                     POD *
                   </label>
                   <PortSearch value={pod} onChange={setPod} placeholder="POD" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '50px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                     FPOD
                   </label>
                   <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD" />
@@ -834,7 +836,7 @@ export function RatesEditorModal({
               {/* Transit & Routing */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '62px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                     TRANSIT
                   </label>
                   <input
@@ -846,7 +848,7 @@ export function RatesEditorModal({
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '62px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                     ROUTING
                   </label>
                   <input
@@ -863,8 +865,8 @@ export function RatesEditorModal({
             {/* Column 2: Equipment, Rates & Terms */}
             <div
               style={{
-                backgroundColor: '#FAFBFD',
-                border: '1px solid #E2E8F0',
+                backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '6px',
                 padding: '12px 14px',
                 display: 'flex',
@@ -872,14 +874,14 @@ export function RatesEditorModal({
                 gap: '10px',
               }}
             >
-              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid #E2E8F0', paddingBottom: '6px' }}>
-                <DollarSign size={13} color="#47799E" /> Equipment &amp; Rate Quotation
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                <DollarSign size={13} color="var(--accent-primary, #006B68)" /> Equipment &amp; Rate Quotation
               </div>
 
               {/* 20' Equipment & Rate */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '58px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
                     20 TYPE
                   </label>
                   <SearchableDropdown
@@ -891,7 +893,7 @@ export function RatesEditorModal({
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
                     {d20Type || '20DV'} ($) *
                   </label>
                   <input
@@ -908,7 +910,7 @@ export function RatesEditorModal({
               {/* 40' Equipment & Rate */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '58px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
                     40 TYPE
                   </label>
                   <SearchableDropdown
@@ -920,7 +922,7 @@ export function RatesEditorModal({
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
                     {h40Type || '40HC'} ($) *
                   </label>
                   <input
@@ -937,7 +939,7 @@ export function RatesEditorModal({
               {/* Free Time & Validity */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '65px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
                     FREE TIME
                   </label>
                   <input
@@ -949,7 +951,7 @@ export function RatesEditorModal({
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '65px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 2px', borderRadius: '4px', textAlign: 'center' }}>
                     VALIDITY *
                   </label>
                   <input
@@ -964,7 +966,7 @@ export function RatesEditorModal({
 
               {/* Rate Type */}
               <div style={{ display: 'grid', gridTemplateColumns: '82px 1fr', gap: '6px', alignItems: 'center' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: '#1B2B4B', background: '#EEF2F7', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 4px', borderRadius: '4px', textAlign: 'center' }}>
                   RATE TYPE
                 </label>
                 <SearchableDropdown
@@ -981,8 +983,8 @@ export function RatesEditorModal({
           {/* Remarks - Full Width */}
           <div
             style={{
-              backgroundColor: '#FAFBFD',
-              border: '1px solid #E2E8F0',
+              backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               borderRadius: '6px',
               padding: '12px 14px',
               display: 'flex',
@@ -990,8 +992,8 @@ export function RatesEditorModal({
               gap: '6px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700, color: '#1B2B4B' }}>
-              <FileText size={13} color="#47799E" /> REMARKS &amp; SURCHARGES
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
+              <FileText size={13} color="var(--accent-primary, #006B68)" /> REMARKS &amp; SURCHARGES
             </div>
             <textarea
               className="input"
@@ -1015,8 +1017,8 @@ export function RatesEditorModal({
         <div
           style={{
             padding: '12px 20px',
-            backgroundColor: '#F8FAFD',
-            borderTop: '1px solid #E2E8F0',
+            backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+            borderTop: '1px solid var(--border-subtle, #E5E7EB)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -1034,10 +1036,10 @@ export function RatesEditorModal({
                 fontSize: '12px',
                 padding: '7px 14px',
                 fontWeight: 600,
-                borderRadius: '4px',
-                background: '#FFFFFF',
-                color: '#4A5568',
-                border: '1px solid #CBD5E0',
+                borderRadius: '6px',
+                background: 'var(--surface-primary, #FFFFFF)',
+                color: 'var(--text-secondary, #64748B)',
+                border: '1px solid var(--border-interactive, #D1D5DB)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
@@ -1057,10 +1059,10 @@ export function RatesEditorModal({
                   fontSize: '12px',
                   padding: '7px 14px',
                   fontWeight: 600,
-                  borderRadius: '4px',
-                  background: '#FFFFFF',
-                  color: '#1B2B4B',
-                  border: '1px solid #CBD5E0',
+                  borderRadius: '6px',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  color: 'var(--text-primary, #1F2937)',
+                  border: '1px solid var(--border-interactive, #D1D5DB)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '5px',
@@ -1084,10 +1086,10 @@ export function RatesEditorModal({
                     fontSize: '12px',
                     padding: '7px 16px',
                     fontWeight: 700,
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    color: '#1B2B4B',
-                    border: '1px solid #1B2B4B',
+                    borderRadius: '6px',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    color: 'var(--text-primary, #1F2937)',
+                    border: '1px solid var(--border-interactive, #D1D5DB)',
                     cursor: 'pointer',
                   }}
                 >
@@ -1102,10 +1104,10 @@ export function RatesEditorModal({
                     fontSize: '12px',
                     padding: '7px 20px',
                     fontWeight: 700,
-                    borderRadius: '4px',
-                    background: '#1B2B4B',
+                    borderRadius: '6px',
+                    background: 'var(--glass-primary, var(--accent-primary, #006B68))',
                     color: '#FFFFFF',
-                    border: 'none',
+                    border: '1px solid var(--accent-primary, #006B68)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
@@ -1125,10 +1127,10 @@ export function RatesEditorModal({
                   fontSize: '12px',
                   padding: '8px 24px',
                   fontWeight: 700,
-                  borderRadius: '4px',
-                  background: '#1B2B4B',
+                  borderRadius: '6px',
+                  background: 'var(--glass-primary, var(--accent-primary, #006B68))',
                   color: '#FFFFFF',
-                  border: 'none',
+                  border: '1px solid var(--accent-primary, #006B68)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',

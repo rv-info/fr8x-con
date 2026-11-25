@@ -148,7 +148,7 @@ export default function TokenVerifyEmailPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -159,9 +159,9 @@ export default function TokenVerifyEmailPage() {
         style={{
           width: '100%',
           maxWidth: '560px',
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '16px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 0 1px 1px rgba(15, 23, 42, 0.02)',
           padding: '44px 36px',
           textAlign: 'center',
@@ -194,7 +194,7 @@ export default function TokenVerifyEmailPage() {
               style={{
                 fontSize: '20px',
                 fontWeight: 'bold',
-                color: '#002b66',
+                color: 'var(--accent-primary, #006B68)',
                 letterSpacing: '0.04em',
                 lineHeight: 1,
                 textTransform: 'uppercase',
@@ -208,7 +208,7 @@ export default function TokenVerifyEmailPage() {
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.14em',
-                color: '#64748b',
+                color: 'var(--text-secondary, #64748B)',
                 marginTop: '5px',
               }}
             >
@@ -225,7 +225,7 @@ export default function TokenVerifyEmailPage() {
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: '#f0f9ff',
+                background: 'var(--surface-secondary, #F9FAFB)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -234,10 +234,10 @@ export default function TokenVerifyEmailPage() {
             >
               <Loader2 className="animate-spin" size={34} color="#0284c7" />
             </div>
-            <h2 style={{ fontSize: '19px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+            <h2 style={{ fontSize: '19px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', margin: '0 0 8px' }}>
               Authenticating Security Token...
             </h2>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary, #64748B)', margin: 0, lineHeight: 1.5 }}>
               Validating single-use cryptographic credentials and provisioning your enterprise workspace.
             </p>
           </div>
@@ -260,7 +260,7 @@ export default function TokenVerifyEmailPage() {
                   fontWeight: 700,
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase',
-                  border: '1px solid #a7f3d0',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
                 }}
               >
                 <ShieldCheck size={16} /> Certified Enterprise Partner
@@ -272,7 +272,7 @@ export default function TokenVerifyEmailPage() {
                 style={{
                   fontSize: '23px',
                   fontWeight: 800,
-                  color: '#0f172a',
+                  color: 'var(--text-primary, #1F2937)',
                   letterSpacing: '-0.02em',
                   margin: '0 0 10px 0',
                   lineHeight: 1.3,
@@ -282,7 +282,7 @@ export default function TokenVerifyEmailPage() {
                   ? 'Welcome Back to FR8X Enterprise'
                   : 'Email Verified · Welcome to FR8X'}
               </h1>
-              <p style={{ fontSize: '14.5px', color: '#475569', lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: '14.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.6, margin: 0 }}>
                 {verifiedUser ? (
                   <>
                     Your corporate credentials for <strong>{verifiedUser.displayName}</strong> at{' '}
@@ -298,8 +298,8 @@ export default function TokenVerifyEmailPage() {
             {/* Enterprise Verified Credentials Dossier */}
             <div
               style={{
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '12px',
                 padding: '20px 22px',
                 marginBottom: '26px',
@@ -309,7 +309,7 @@ export default function TokenVerifyEmailPage() {
                 style={{
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#64748b',
+                  color: 'var(--text-secondary, #64748B)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
                   marginBottom: '14px',
@@ -323,18 +323,18 @@ export default function TokenVerifyEmailPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px', fontSize: '13px' }}>
                 <div>
-                  <div style={{ color: '#64748b', fontSize: '11.5px', marginBottom: '2px' }}>Organization</div>
-                  <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                  <div style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px', marginBottom: '2px' }}>Organization</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                     {verifiedUser?.company || 'Enterprise Partner'}
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ color: '#64748b', fontSize: '11.5px', marginBottom: '2px' }}>Corporate Email</div>
+                  <div style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px', marginBottom: '2px' }}>Corporate Email</div>
                   <div
                     style={{
                       fontWeight: 600,
-                      color: '#0f172a',
+                      color: 'var(--text-primary, #1F2937)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
@@ -345,18 +345,18 @@ export default function TokenVerifyEmailPage() {
                 </div>
 
                 <div>
-                  <div style={{ color: '#64748b', fontSize: '11.5px', marginBottom: '2px' }}>Workspace Access</div>
-                  <div style={{ fontWeight: 600, color: '#0f172a', textTransform: 'capitalize' }}>
+                  <div style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px', marginBottom: '2px' }}>Workspace Access</div>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)', textTransform: 'capitalize' }}>
                     {verifiedUser?.role ? verifiedUser.role.replace('_', ' ') : 'Corporate Admin'}
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ color: '#64748b', fontSize: '11.5px', marginBottom: '2px' }}>Security Session</div>
+                  <div style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px', marginBottom: '2px' }}>Security Session</div>
                   <div
                     style={{
                       fontWeight: 600,
-                      color: '#0284c7',
+                      color: 'var(--accent-primary, #006B68)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
@@ -397,8 +397,8 @@ export default function TokenVerifyEmailPage() {
               style={{
                 marginTop: '24px',
                 padding: '16px 18px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -410,7 +410,7 @@ export default function TokenVerifyEmailPage() {
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  backgroundColor: '#f0f9ff',
+                  backgroundColor: 'var(--surface-secondary, #F9FAFB)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -420,11 +420,11 @@ export default function TokenVerifyEmailPage() {
               >
                 <Headphones size={17} color="#0284c7" />
               </div>
-              <div style={{ fontSize: '12.5px', color: '#475569', lineHeight: 1.5 }}>
-                <strong style={{ color: '#0f172a' }}>Dedicated Corporate Partner Desk:</strong> Need custom rate
+              <div style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5 }}>
+                <strong style={{ color: 'var(--text-primary, #1F2937)' }}>Dedicated Corporate Partner Desk:</strong> Need custom rate
                 matrix integrations, carrier bidding setups, or team member invitations? Contact your dedicated
                 operations manager at{' '}
-                <a href="mailto:support@fr8x.in" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+                <a href="mailto:support@fr8x.in" style={{ color: 'var(--accent-primary, #006B68)', textDecoration: 'none', fontWeight: 600 }}>
                   support@fr8x.in
                 </a>
                 .
@@ -434,7 +434,7 @@ export default function TokenVerifyEmailPage() {
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Link
                 href="/login"
-                style={{ fontSize: '13px', color: '#64748b', textDecoration: 'none', fontWeight: 500 }}
+                style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', textDecoration: 'none', fontWeight: 500 }}
               >
                 Sign in with another corporate account &rarr;
               </Link>
@@ -450,7 +450,7 @@ export default function TokenVerifyEmailPage() {
                 width: '60px',
                 height: '60px',
                 borderRadius: '50%',
-                background: '#fef2f2',
+                background: 'rgba(239, 68, 68, 0.1)',
                 color: '#dc2626',
                 display: 'flex',
                 alignItems: 'center',
@@ -461,7 +461,7 @@ export default function TokenVerifyEmailPage() {
               <AlertCircle size={34} />
             </div>
 
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', margin: '0 0 8px' }}>
               {errorCode === 'TOKEN_EXPIRED'
                 ? 'Verification Link Expired'
                 : errorCode === 'TOKEN_ALREADY_USED'
@@ -469,15 +469,15 @@ export default function TokenVerifyEmailPage() {
                 : 'Verification Notice'}
             </h2>
 
-            <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.5, margin: '0 0 24px' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5, margin: '0 0 24px' }}>
               {message}
             </p>
 
             {/* Resend Verification Form */}
             <div
               style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '12px',
                 padding: '20px',
                 textAlign: 'left',
@@ -486,11 +486,11 @@ export default function TokenVerifyEmailPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <Mail size={16} color="#0284c7" />
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                   Request Fresh Verification Link
                 </span>
               </div>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 14px 0', lineHeight: 1.45 }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: '0 0 14px 0', lineHeight: 1.45 }}>
                 Enter your registered corporate email address to receive a fresh verification link valid for 15 minutes.
               </p>
 
@@ -507,7 +507,7 @@ export default function TokenVerifyEmailPage() {
                       height: '42px',
                       padding: '0 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       fontSize: '14px',
                       outline: 'none',
                       boxSizing: 'border-box',
@@ -591,9 +591,9 @@ export default function TokenVerifyEmailPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  background: '#ffffff',
-                  color: '#334155',
+                  border: '1px solid var(--border-default, #D9DEE5)',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  color: 'var(--text-primary, #1F2937)',
                   fontSize: '13px',
                   fontWeight: 600,
                   textDecoration: 'none',
@@ -623,7 +623,7 @@ export default function TokenVerifyEmailPage() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: '28px', fontSize: '11.5px', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', marginTop: '28px', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)' }}>
           Protected by FR8X Cryptographic Authority &bull; password@fr8x.in &bull; support@fr8x.in
         </div>
       </div>

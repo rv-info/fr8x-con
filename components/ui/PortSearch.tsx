@@ -97,10 +97,10 @@ export function PortSearch({ value, onChange, placeholder = 'Type 3 letters…',
           left: 0,
           right: 0,
           zIndex: 9999,
-          background: '#fff',
-          border: '1px solid var(--line)',
+          background: 'var(--surface-primary, #FFFFFF)',
+          border: '1px solid var(--border-default, #D9DEE5)',
           borderRadius: '6px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          boxShadow: 'var(--glass-shadow-raised, 0 4px 16px rgba(0, 0, 0, 0.12))',
           maxHeight: '220px',
           overflowY: 'auto',
           marginTop: '2px',
@@ -118,14 +118,14 @@ export function PortSearch({ value, onChange, placeholder = 'Type 3 letters…',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f7ff')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-elevated, #F8FAFC)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface-primary, #FFFFFF)')}
             >
               <div>
                 <b style={{ color: 'var(--ink)', fontSize: '11.5px' }}>{port.name}</b>
                 <small style={{ display: 'block', color: 'var(--mut)', fontSize: '10px' }}>{port.country} · {port.region}</small>
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--brand)', fontWeight: 700, background: '#e8f1fd', padding: '2px 5px', borderRadius: '3px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--accent-primary, #006B68)', fontWeight: 700, background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '2px 5px', borderRadius: '3px' }}>
                 {port.locode}
               </span>
             </div>
@@ -225,10 +225,10 @@ export function CarrierSearch({ value, onChange, placeholder = 'Type carrier nam
           left: 0,
           right: 0,
           zIndex: 9999,
-          background: '#fff',
-          border: '1px solid var(--line)',
+          background: 'var(--surface-primary, #FFFFFF)',
+          border: '1px solid var(--border-default, #D9DEE5)',
           borderRadius: '6px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          boxShadow: 'var(--glass-shadow-raised, 0 4px 16px rgba(0, 0, 0, 0.12))',
           maxHeight: '220px',
           overflowY: 'auto',
           marginTop: '2px',
@@ -246,14 +246,14 @@ export function CarrierSearch({ value, onChange, placeholder = 'Type carrier nam
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f7ff')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-elevated, #F8FAFC)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface-primary, #FFFFFF)')}
             >
               <div>
                 <b style={{ color: 'var(--ink)', fontSize: '11.5px' }}>{carrier.shortName}</b>
                 <small style={{ display: 'block', color: 'var(--mut)', fontSize: '10px' }}>{carrier.name} · {carrier.country}</small>
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--teal)', fontWeight: 700, background: '#e0f7f4', padding: '2px 5px', borderRadius: '3px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--accent-primary, #006B68)', fontWeight: 700, background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '2px 5px', borderRadius: '3px' }}>
                 {carrier.scac}
               </span>
             </div>

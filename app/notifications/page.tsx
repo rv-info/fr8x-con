@@ -40,7 +40,7 @@ const CATEGORY_MAP: Record<
   auctions: { label: 'Auctions & Bids', icon: <Gavel size={14} />, color: '#f59e0b' },
   bids: { label: 'Bids', icon: <Gavel size={14} />, color: '#f59e0b' },
   security: { label: 'Security & Safety', icon: <ShieldAlert size={14} />, color: '#ef4444' },
-  system: { label: 'System', icon: <Info size={14} />, color: '#64748b' },
+  system: { label: 'System', icon: <Info size={14} />, color: 'var(--text-secondary, #64748B)' },
 };
 
 export default function NotificationCenterPage() {

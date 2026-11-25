@@ -309,7 +309,7 @@ export default function JobsPage() {
           maxWidth="560px"
         >
           <form onSubmit={handleApplySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ background: '#f8fafc', border: '1px solid var(--line)', borderRadius: '8px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line)', borderRadius: '8px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <UserAvatar name={applyingJob.postedBy} companyName={applyingJob.company} size={36} showCompanyLogo={true} />
               <div>
                 <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>{applyingJob.title}</b>
@@ -416,7 +416,7 @@ export default function JobsPage() {
           maxWidth="680px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-secondary, #F9FAFB)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
               <div>
                 <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>{managingJobApps.title}</b>
                 <small style={{ fontSize: '11px', color: 'var(--mut)' }}>Posted by your organization on {managingJobApps.postedDate}</small>
@@ -441,7 +441,7 @@ export default function JobsPage() {
                       border: '1px solid var(--line)',
                       borderRadius: '8px',
                       padding: '12px 14px',
-                      background: '#ffffff',
+                      background: 'var(--surface-primary, #FFFFFF)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '8px',
@@ -472,12 +472,12 @@ export default function JobsPage() {
                     </div>
 
                     {app.coverNote && (
-                      <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: 0, background: '#f8fafc', padding: '6px 10px', borderRadius: '5px' }}>
+                      <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: 0, background: 'var(--surface-secondary, #F9FAFB)', padding: '6px 10px', borderRadius: '5px' }}>
                         &ldquo;{app.coverNote}&rdquo;
                       </p>
                     )}
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '6px', fontSize: '11px', color: 'var(--mut)', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle, #E5E7EB)', paddingTop: '6px', fontSize: '11px', color: 'var(--mut)', flexWrap: 'wrap', gap: '6px' }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <a href={`mailto:${app.candidateEmail}`} style={{ color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
                           <Mail size={11} /> {app.candidateEmail}

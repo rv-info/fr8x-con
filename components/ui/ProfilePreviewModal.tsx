@@ -854,10 +854,10 @@ export function ProfilePreviewModal({
             gap: '16px',
             alignItems: 'flex-start',
             flexWrap: 'wrap',
-            background: '#fafcff',
+            background: 'var(--surface-elevated, #F8FAFC)',
             padding: '16px',
             borderRadius: '10px',
-            border: '1px solid var(--line)',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
           }}
         >
           <UserAvatar
@@ -918,9 +918,9 @@ export function ProfilePreviewModal({
                   fontFamily: 'monospace',
                   fontSize: '10.5px',
                   fontWeight: 700,
-                  color: 'var(--brand)',
-                  background: '#eff6ff',
-                  border: '1px solid #bfdbfe',
+                  color: 'var(--accent-primary, #006B68)',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '4px',
                   padding: '2px 6px',
                   letterSpacing: '0.4px',
@@ -987,7 +987,7 @@ export function ProfilePreviewModal({
 
         {/* Company & Contact Card */}
         <div className="grid g2">
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
+          <div className="card cardbody" style={{ background: 'var(--surface-secondary, #F9FAFB)' }}>
             <small style={{ color: 'var(--mut)', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase' }}>
               Corporate Organization
             </small>
@@ -1022,7 +1022,7 @@ export function ProfilePreviewModal({
             )}
           </div>
 
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
+          <div className="card cardbody" style={{ background: 'var(--surface-secondary, #F9FAFB)' }}>
             <small style={{ color: 'var(--mut)', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase' }}>
               Direct B2B Communication
             </small>
@@ -1049,9 +1049,9 @@ export function ProfilePreviewModal({
                     }}
                     style={{
                       fontSize: '10px',
-                      color: '#0284c7',
+                      color: 'var(--accent-primary, #006B68)',
                       background: '#e0f2fe',
-                      border: '1px solid #bae6fd',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       padding: '1px 6px',
                       borderRadius: '4px',
                       fontWeight: 600,
@@ -1102,9 +1102,9 @@ export function ProfilePreviewModal({
                     }}
                     style={{
                       fontSize: '10px',
-                      color: '#0284c7',
+                      color: 'var(--accent-primary, #006B68)',
                       background: '#e0f2fe',
-                      border: '1px solid #bae6fd',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       padding: '1px 6px',
                       borderRadius: '4px',
                       fontWeight: 600,
@@ -1151,7 +1151,7 @@ export function ProfilePreviewModal({
         </div>
 
         {/* SECTION 1: Full Professional Work Experience */}
-        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+        <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
             <Briefcase size={14} color="var(--brand)" />
             <b style={{ fontSize: '12px', color: 'var(--ink)' }}>1. Work Experience</b>
@@ -1163,7 +1163,7 @@ export function ProfilePreviewModal({
                   key={exp.id || idx}
                   style={{
                     padding: '8px 12px',
-                    background: '#f8fafc',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     borderRadius: '6px',
                     border: '1px solid var(--line-light)',
                   }}
@@ -1175,7 +1175,7 @@ export function ProfilePreviewModal({
                         @ {exp.company}
                       </span>
                     </div>
-                    <span style={{ fontSize: '10.5px', color: 'var(--mut)', background: '#ffffff', border: '1px solid var(--line-light)', padding: '1px 6px', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '10.5px', color: 'var(--mut)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)', padding: '1px 6px', borderRadius: '4px' }}>
                       {exp.startMonth || ''} {exp.startYear} – {exp.isCurrent ? 'Present' : `${exp.endMonth || ''} ${exp.endYear}`}
                     </span>
                   </div>
@@ -1194,14 +1194,14 @@ export function ProfilePreviewModal({
               ))}
             </div>
           ) : (
-            <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
+            <div style={{ padding: '8px 12px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px', fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
               Standard freight forwarding operations & procurement background.
             </div>
           )}
         </div>
 
         {/* SECTION 2: Full Academic & Maritime Education */}
-        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+        <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
             <GraduationCap size={14} color="var(--brand)" />
             <b style={{ fontSize: '12px', color: 'var(--ink)' }}>2. Education</b>
@@ -1213,7 +1213,7 @@ export function ProfilePreviewModal({
                   key={edu.id || idx}
                   style={{
                     padding: '8px 12px',
-                    background: '#f8fafc',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     borderRadius: '6px',
                     border: '1px solid var(--line-light)',
                   }}
@@ -1223,7 +1223,7 @@ export function ProfilePreviewModal({
                       <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>{edu.qualification} in {edu.fieldOfStudy}</b>
                       <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600 }}>{edu.institution}</div>
                     </div>
-                    <span style={{ fontSize: '10.5px', color: 'var(--mut)', background: '#ffffff', border: '1px solid var(--line-light)', padding: '1px 6px', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '10.5px', color: 'var(--mut)', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)', padding: '1px 6px', borderRadius: '4px' }}>
                       {edu.startYear} – {edu.endYear} {edu.grade ? `· ${edu.grade}` : ''}
                     </span>
                   </div>
@@ -1236,14 +1236,14 @@ export function ProfilePreviewModal({
               ))}
             </div>
           ) : (
-            <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
+            <div style={{ padding: '8px 12px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px', fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
               Higher Secondary / Degree in Commerce or Maritime Logistics.
             </div>
           )}
         </div>
 
         {/* SECTION 3: Full Industry Certifications & Licences */}
-        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+        <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
             <Award size={14} color="var(--brand)" />
             <b style={{ fontSize: '12px', color: 'var(--ink)' }}>3. Certifications & Licences</b>
@@ -1255,7 +1255,7 @@ export function ProfilePreviewModal({
                   key={c.id || idx}
                   style={{
                     padding: '8px 12px',
-                    background: '#f8fafc',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     borderRadius: '6px',
                     border: '1px solid var(--line-light)',
                     display: 'flex',
@@ -1305,31 +1305,31 @@ export function ProfilePreviewModal({
         </div>
 
         {/* SECTION 4: Corporate KYC & Statutory Trade Filings */}
-        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+        <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <ShieldCheck size={14} color="var(--brand)" />
             <b style={{ fontSize: '12px', color: 'var(--ink)' }}>4. Corporate KYC & Filings</b>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '6px' }}>
-            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '6px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
               <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>GSTIN Status</small>
               <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
                 {effectiveUser?.gstn ? (isStatutoryVisible ? effectiveUser.gstn : maskStatutory(effectiveUser.gstn)) : 'Active Verified'}
               </b>
             </div>
-            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '6px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
               <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>PAN Docket</small>
               <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
                 {effectiveUser?.pan ? (isStatutoryVisible ? effectiveUser.pan : maskStatutory(effectiveUser.pan)) : 'Verified Corporate'}
               </b>
             </div>
-            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '6px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
               <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>DGFT IEC</small>
               <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
                 {effectiveUser?.iec ? (isStatutoryVisible ? effectiveUser.iec : maskStatutory(effectiveUser.iec)) : 'Import/Export Validated'}
               </b>
             </div>
-            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '6px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
               <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>MTO Transport</small>
               <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
                 {effectiveUser?.mto ? (isStatutoryVisible ? effectiveUser.mto : maskStatutory(effectiveUser.mto)) : 'Multimodal Licensed'}
@@ -1401,7 +1401,7 @@ export function ProfilePreviewModal({
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <UserAvatar
               name={resolvedName}
               avatarUrl={resolvedAvatar}

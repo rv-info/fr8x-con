@@ -38,9 +38,9 @@ export function EmptyState({
       style={{
         padding: '36px 20px',
         textAlign: 'center',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
         borderRadius: '8px',
-        border: '1px solid #E2E8F0',
+        border: '1px solid var(--border-subtle, #E5E7EB)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -52,7 +52,7 @@ export function EmptyState({
       {icon && (
         <div
           style={{
-            color: '#1B2B4B',
+            color: 'var(--text-primary, #1F2937)',
             opacity: 1,
             marginBottom: '4px',
             display: 'flex',
@@ -65,12 +65,11 @@ export function EmptyState({
         </div>
       )}
       <h3
-        className="text-slate-900"
         style={{
           margin: 0,
-          fontSize: '12px',
+          fontSize: '13px',
           fontWeight: 700,
-          color: '#1B2B4B',
+          color: 'var(--text-primary, #1F2937)',
         }}
       >
         {title}
@@ -80,7 +79,7 @@ export function EmptyState({
           style={{
             margin: '0 0 10px 0',
             fontSize: '12px',
-            color: '#1B2B4B',
+            color: 'var(--text-secondary, #64748B)',
             maxWidth: '380px',
             lineHeight: 1.5,
           }}
@@ -111,10 +110,10 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#47799E',
+                  background: 'var(--glass-primary, var(--accent-primary, #006B68))',
                   color: '#FFFFFF',
-                  border: '1px solid #47799E',
-                  borderRadius: '4px',
+                  border: '1px solid var(--accent-primary, #006B68)',
+                  borderRadius: '6px',
                 }}
               >
                 {actionLabel}
@@ -130,10 +129,10 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#47799E',
+                  background: 'var(--glass-primary, var(--accent-primary, #006B68))',
                   color: '#FFFFFF',
-                  border: '1px solid #47799E',
-                  borderRadius: '4px',
+                  border: '1px solid var(--accent-primary, #006B68)',
+                  borderRadius: '6px',
                 }}
               >
                 {actionLabel}

@@ -227,11 +227,11 @@ function SingleChatBox({
       {/* Linked Freight Record Context Bar */}
       {contact?.contextRecord && (
         <div className="freightcontextbar">
-          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#1b2b4b' }}>
-            <ShieldCheck size={12} color="#1b2b4b" />
+          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+            <ShieldCheck size={12} color="var(--accent-primary, #006B68)" />
             <span>Trade Context</span>
           </span>
-          <span className="conttitle" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px', fontSize: '11px', color: '#475569' }}>
+          <span className="conttitle" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px', fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
             {contact.contextRecord.title || 'Direct Freight Discussion'}
           </span>
         </div>
@@ -240,14 +240,14 @@ function SingleChatBox({
       {/* Messages Scroll Area */}
       <div className="chatbody messages" ref={chatBodyRef}>
         {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--mut)', fontSize: '11px' }}>
+          <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
             No messages yet. Send a trade message to start negotiation.
           </div>
         ) : (
           messages.map((m) => (
             <div key={m.id} className={`msg ${m.me ? 'me' : ''}`}>
-              <div style={{ color: m.me ? '#0f172a' : 'var(--fr8x-text, #1e293b)', fontWeight: 500 }}>{m.text}</div>
-              <small style={{ color: 'var(--fr8x-muted, #64748b)' }}>
+              <div style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 500 }}>{m.text}</div>
+              <small style={{ color: 'var(--text-secondary, #64748B)' }}>
                 {m.time} {m.me ? (m.status === 'read' ? ' ✓✓' : ' ✓') : ''}
               </small>
             </div>
@@ -376,7 +376,17 @@ export function TradeChat() {
               onClick={toggleLauncher}
               title="Close directory"
               className="actionicon"
-              style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '4px' }}
+              style={{
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
+                color: 'var(--text-secondary, #64748B)',
+                borderRadius: '6px',
+              }}
             >
               <X size={16} />
             </button>
@@ -448,8 +458,9 @@ export function TradeChat() {
                           style={{
                             display: 'inline-block',
                             fontSize: '9.5px',
-                            color: 'var(--brand)',
-                            background: '#e8f1fd',
+                            color: 'var(--accent-primary, #006B68)',
+                            background: 'var(--surface-secondary, #F8FAFC)',
+                            border: '1px solid var(--border-subtle, #E5E7EB)',
                             padding: '1px 5px',
                             borderRadius: '4px',
                             marginTop: '3px',

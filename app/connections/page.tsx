@@ -44,7 +44,7 @@ function ConnectionsRedirect() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '20px',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
       }}
     >
       <div className="fr8x-loader" aria-label="Loading Enterprise Network…" role="status" />
@@ -65,7 +65,7 @@ export default function ConnectionsPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#ffffff',
+            background: 'var(--surface-primary, #FFFFFF)',
           }}
         >
           <div className="fr8x-loader" />

@@ -93,13 +93,13 @@ import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
 const POST_TYPE_LABELS: Record<PostType, { label: string; color: string; bg: string }> = {
-  general: { label: 'General', color: '#53647a', bg: '#f1f5f9' },
-  job: { label: 'Job Opening', color: '#0891b2', bg: '#e0f2fe' },
-  business_update: { label: 'Business Update', color: '#7c3aed', bg: '#f3e8ff' },
-  rate_info: { label: 'Rate Intelligence', color: '#059669', bg: '#e6f4ea' },
-  auction_ref: { label: 'Reverse Auction', color: '#1168d7', bg: '#e8f1fd' },
-  logistics_discussion: { label: 'Discussion', color: '#d97706', bg: '#fef3c7' },
-  announcement: { label: 'Official Announcement', color: '#dc2626', bg: '#fee2e2' },
+  general: { label: 'General', color: 'var(--text-secondary, #64748B)', bg: 'var(--surface-secondary, #F8FAFC)' },
+  job: { label: 'Job Opening', color: '#0891b2', bg: 'rgba(8, 145, 178, 0.12)' },
+  business_update: { label: 'Business Update', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.12)' },
+  rate_info: { label: 'Rate Intelligence', color: '#059669', bg: 'rgba(5, 150, 105, 0.12)' },
+  auction_ref: { label: 'Reverse Auction', color: '#1168d7', bg: 'rgba(17, 104, 215, 0.12)' },
+  logistics_discussion: { label: 'Discussion', color: '#d97706', bg: 'rgba(217, 119, 6, 0.12)' },
+  announcement: { label: 'Official Announcement', color: '#dc2626', bg: 'rgba(220, 38, 38, 0.12)' },
 };
 
 interface BookedAd {
@@ -243,9 +243,9 @@ const AI_SUGGESTION_CATEGORIES: { label: string; color: string; chips: string[] 
 function AiJobSuggestions({ onAppend }: { onAppend: (text: string) => void }) {
   const [activeTab, setActiveTab] = React.useState(0);
   return (
-    <div style={{ border: '1px solid #c8e0fe', borderRadius: '8px', background: '#f0f7ff', overflow: 'hidden' }}>
+    <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', background: 'var(--surface-elevated, #F8FAFC)', overflow: 'hidden' }}>
       {/* Tab bar */}
-      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid #c8e0fe', background: '#e8f1fd' }}>
+      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
         {AI_SUGGESTION_CATEGORIES.map((cat, i) => (
           <button
             key={cat.label}
@@ -255,9 +255,10 @@ function AiJobSuggestions({ onAppend }: { onAppend: (text: string) => void }) {
               padding: '6px 12px',
               fontSize: '10.5px',
               fontWeight: activeTab === i ? 700 : 500,
-              color: activeTab === i ? cat.color : '#53647a',
-              background: activeTab === i ? '#fff' : 'transparent',
+              color: activeTab === i ? cat.color : 'var(--text-secondary, #64748B)',
+              background: activeTab === i ? 'var(--surface-elevated, #F8FAFC)' : 'transparent',
               border: 'none',
+              borderRight: '1px solid var(--border-subtle, #E5E7EB)',
               borderBottom: activeTab === i ? `2px solid ${cat.color}` : '2px solid transparent',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
@@ -270,7 +271,7 @@ function AiJobSuggestions({ onAppend }: { onAppend: (text: string) => void }) {
       </div>
       {/* Chips */}
       <div style={{ padding: '8px 10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-        <span style={{ fontSize: '10px', color: '#53647a', alignSelf: 'center', marginRight: '2px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', alignSelf: 'center', marginRight: '2px' }}>
           ✦ Click to add:
         </span>
         {AI_SUGGESTION_CATEGORIES[activeTab].chips.map((chip) => (
@@ -282,15 +283,15 @@ function AiJobSuggestions({ onAppend }: { onAppend: (text: string) => void }) {
               fontSize: '10.5px',
               padding: '3px 9px',
               borderRadius: '20px',
-              border: `1px solid ${AI_SUGGESTION_CATEGORIES[activeTab].color}30`,
-              background: '#fff',
+              border: `1px solid ${AI_SUGGESTION_CATEGORIES[activeTab].color}40`,
+              background: 'var(--surface-primary, #FFFFFF)',
               color: AI_SUGGESTION_CATEGORIES[activeTab].color,
               cursor: 'pointer',
               fontWeight: 500,
               transition: 'background 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = `${AI_SUGGESTION_CATEGORIES[activeTab].color}12`)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = `${AI_SUGGESTION_CATEGORIES[activeTab].color}16`)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface-primary, #FFFFFF)')}
           >
             + {chip}
           </button>
@@ -568,12 +569,12 @@ export default function FeedsPage() {
             alignItems: 'center',
             gap: '2px',
             padding: '1px 5px',
-            color: '#1985a1',
+            color: 'var(--accent-primary, #006B68)',
             fontWeight: 700,
-            background: '#e0f2fe',
-            borderRadius: '3px',
+            background: 'var(--surface-elevated, #F8FAFC)',
+            borderRadius: '4px',
             cursor: 'pointer',
-            border: '1px solid #c5c3c6',
+            border: '1px solid var(--border-default, #D9DEE5)',
             fontSize: '11px',
             marginRight: '3px',
           }}
@@ -993,7 +994,8 @@ export default function FeedsPage() {
               position: 'relative',
               width: '100%',
               maxHeight: '240px',
-              background: '#f8fafc',
+              background: 'var(--surface-elevated, #F8FAFC)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               borderRadius: '6px',
               overflow: 'hidden',
               display: 'flex',
@@ -1269,7 +1271,7 @@ export default function FeedsPage() {
             </div>
 
             {fullAdPreviewModal.creativeUrl && (
-              <div style={{ width: '100%', maxHeight: '420px', background: '#f8fafc', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line)' }}>
+              <div style={{ width: '100%', maxHeight: '420px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
                 <img
                   src={fullAdPreviewModal.creativeUrl}
                   alt={fullAdPreviewModal.headline}
@@ -1546,10 +1548,10 @@ export default function FeedsPage() {
                   width: '100%',
                   marginBottom: '8px',
                   padding: '6px 8px',
-                  background: '#eff6ff',
-                  border: '1.5px solid #bfdbfe',
-                  borderRadius: '5px',
-                  color: '#1e40af',
+                  background: 'var(--surface-elevated, #F8FAFC)',
+                  border: '1px solid var(--accent-primary, #006B68)',
+                  borderRadius: '6px',
+                  color: 'var(--accent-primary, #006B68)',
                   fontSize: '11px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -1559,7 +1561,7 @@ export default function FeedsPage() {
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <UserPlus size={12} color="#0284c7" /> CONNECTION REQUEST RECEIVED
+                  <UserPlus size={12} color="var(--accent-primary, #006B68)" /> CONNECTION REQUEST RECEIVED
                 </span>
                 <span className="badge blue" style={{ fontSize: '9px', fontWeight: 800 }}>
                   {connRequests.incoming.length} New
@@ -1569,7 +1571,7 @@ export default function FeedsPage() {
 
             {/* Filter contacts input */}
             <div className="search-icon-wrap" style={{ position: 'relative', marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
-              <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fr8x-muted)', pointerEvents: 'none', zIndex: 2 }} />
+              <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary, #64748B)', pointerEvents: 'none', zIndex: 2 }} />
               <input
                 type="text"
                 className="search-input-field has-leading-icon"
@@ -1581,10 +1583,10 @@ export default function FeedsPage() {
                   boxSizing: 'border-box',
                   padding: '5px 6px 5px 28px',
                   fontSize: '11px',
-                  borderRadius: '5px',
-                  border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                  background: '#f8fafc',
-                  color: 'var(--fr8x-text)',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-default, #D9DEE5)',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  color: 'var(--text-primary, #1F2937)',
                 }}
               />
             </div>
@@ -1592,7 +1594,7 @@ export default function FeedsPage() {
             {/* Scrollable list of verified trade contacts */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '260px', overflowY: 'auto' }}>
               {displayedRailContacts.length === 0 ? (
-                <div style={{ padding: '16px 8px', textAlign: 'center', fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                <div style={{ padding: '16px 8px', textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                   No contacts added yet
                 </div>
               ) : (
@@ -1604,9 +1606,9 @@ export default function FeedsPage() {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '6px 8px',
-                    borderRadius: '5px',
-                    border: '1px solid var(--fr8x-outline, #e2e8f0)',
-                    background: '#ffffff',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle, #E5E7EB)',
+                    background: 'var(--surface-primary, #FFFFFF)',
                   }}
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -1627,7 +1629,7 @@ export default function FeedsPage() {
                           height: '7px',
                           borderRadius: '50%',
                           background: '#16a34a',
-                          border: '1.5px solid #ffffff',
+                          border: '1.5px solid var(--surface-primary, #FFFFFF)',
                         }}
                         title="Online"
                       />
@@ -1641,7 +1643,7 @@ export default function FeedsPage() {
                         style={{
                           fontSize: '11px',
                           fontWeight: 700,
-                          color: 'var(--fr8x-text)',
+                          color: 'var(--text-primary, #1F2937)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -1657,7 +1659,7 @@ export default function FeedsPage() {
                       style={{
                         display: 'block',
                         fontSize: '9.5px',
-                        color: 'var(--fr8x-muted)',
+                        color: 'var(--text-secondary, #64748B)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -1672,14 +1674,14 @@ export default function FeedsPage() {
                     onClick={() => openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` })}
                     title={`Send Trade Message to ${contact.name}`}
                     style={{
-                      background: '#f1f5f9',
-                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                      borderRadius: '4px',
-                      padding: '3px 5px',
+                      background: 'var(--surface-elevated, #F8FAFC)',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      borderRadius: '5px',
+                      padding: '4px 6px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      color: 'var(--brand)',
+                      color: 'var(--accent-primary, #006B68)',
                     }}
                   >
                     <MessageCircle size={11} />
@@ -1690,7 +1692,7 @@ export default function FeedsPage() {
             </div>
 
             {/* View All & Discover Contacts triggers */}
-            <div style={{ marginTop: '8px', borderTop: '1px solid var(--fr8x-outline, #e2e8f0)', paddingTop: '6px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <div style={{ marginTop: '8px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', paddingTop: '6px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <button
                 type="button"
                 onClick={() => {
@@ -1698,7 +1700,7 @@ export default function FeedsPage() {
                   setShowManageContactsModal(true);
                 }}
                 className="btn secondary sm"
-                style={{ width: '100%', justifyContent: 'center', fontSize: '10.5px' }}
+                style={{ width: '100%', justifyContent: 'center', fontSize: '10.5px', borderRadius: '6px' }}
               >
                 View All &amp; Manage Contacts
               </button>
@@ -1712,9 +1714,9 @@ export default function FeedsPage() {
                   width: '100%',
                   justifyContent: 'center',
                   fontSize: '10.5px',
-                  color: 'var(--brand)',
-                  borderColor: 'var(--brand)',
-                  background: 'rgba(0, 163, 196, 0.05)',
+                  color: 'var(--accent-primary, #006B68)',
+                  borderColor: 'var(--border-interactive, #D1D5DB)',
+                  borderRadius: '6px',
                   fontWeight: 600,
                 }}
               >
@@ -1781,7 +1783,7 @@ export default function FeedsPage() {
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', flexWrap: 'wrap' }}>
             {/* Quick Discover & Search Connections Button */}
             <button
               type="button"
@@ -1799,6 +1801,8 @@ export default function FeedsPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               <UserPlus size={13} /> Find Connections
@@ -1818,6 +1822,7 @@ export default function FeedsPage() {
                 background: 'var(--surface-primary, #FFFFFF)',
                 color: 'var(--text-primary, #1F2937)',
                 cursor: 'pointer',
+                flexShrink: 0,
               }}
             >
               <option value="all">All Categories</option>
@@ -2471,10 +2476,10 @@ export default function FeedsPage() {
                       style={{
                         marginBottom: '16px',
                         padding: '16px 18px',
-                        background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 60%, #e0f2fe 100%)',
-                        border: '1.5px solid #0284c7',
+                        background: 'var(--surface-primary, #FFFFFF)',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         borderRadius: '10px',
-                        boxShadow: '0 4px 14px rgba(2, 132, 199, 0.12)',
+                        boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.05))',
                         position: 'relative',
                       }}
                     >
@@ -2482,7 +2487,7 @@ export default function FeedsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span
                             style={{
-                              background: '#0284c7',
+                              background: 'var(--accent-primary, #006B68)',
                               color: '#ffffff',
                               fontSize: '9px',
                               fontWeight: 800,
@@ -2494,11 +2499,11 @@ export default function FeedsPage() {
                           >
                             Sponsored Partner Showcase
                           </span>
-                          <span style={{ fontSize: '10.5px', color: '#0369a1', fontWeight: 600 }}>
+                          <span style={{ fontSize: '10.5px', color: 'var(--accent-primary, #006B68)', fontWeight: 600 }}>
                             ✦ Verified Freight Enterprise
                           </span>
                         </div>
-                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>
                           Ad · Direct Liner Placement
                         </span>
                       </div>
@@ -2509,7 +2514,7 @@ export default function FeedsPage() {
                             width: '36px',
                             height: '36px',
                             borderRadius: '8px',
-                            background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 100%)',
+                            background: 'var(--glass-primary, var(--accent-primary, #006B68))',
                             color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
@@ -2523,19 +2528,19 @@ export default function FeedsPage() {
                         </div>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <b style={{ fontSize: '13.5px', color: '#0f172a' }}>{adCompany}</b>
+                            <b style={{ fontSize: '13.5px', color: 'var(--text-primary, #1F2937)' }}>{adCompany}</b>
                             <GoldenTick size={14} />
                           </div>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                             {companyAd.sponsorName} · {companyAd.sponsorRole}
                           </div>
                         </div>
                       </div>
 
-                      <b style={{ display: 'block', fontSize: '13px', color: '#0f172a', marginBottom: '5px', lineHeight: 1.35 }}>
+                      <b style={{ display: 'block', fontSize: '13px', color: 'var(--text-primary, #1F2937)', marginBottom: '5px', lineHeight: 1.35 }}>
                         {adTitle}
                       </b>
-                      <p style={{ fontSize: '11.5px', color: '#334155', lineHeight: 1.45, marginBottom: '10px' }}>
+                      <p style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.45, marginBottom: '10px' }}>
                         {adBody}
                       </p>
 
@@ -2544,13 +2549,13 @@ export default function FeedsPage() {
                           <span
                             key={lane}
                             style={{
-                              background: '#e0f2fe',
-                              color: '#0369a1',
+                              background: 'var(--surface-elevated, #F8FAFC)',
+                              color: 'var(--text-primary, #1F2937)',
                               fontSize: '10px',
                               fontWeight: 600,
                               padding: '2px 8px',
                               borderRadius: '4px',
-                              border: '1px solid #bae6fd',
+                              border: '1px solid var(--border-subtle, #E5E7EB)',
                             }}
                           >
                             {lane}
@@ -2563,8 +2568,8 @@ export default function FeedsPage() {
                           display: 'grid',
                           gridTemplateColumns: 'repeat(3, 1fr)',
                           gap: '8px',
-                          background: 'rgba(255, 255, 255, 0.9)',
-                          border: '1px solid #bae6fd',
+                          background: 'var(--surface-elevated, #F8FAFC)',
+                          border: '1px solid var(--border-subtle, #E5E7EB)',
                           borderRadius: '6px',
                           padding: '8px 10px',
                           marginBottom: '12px',
@@ -2573,8 +2578,8 @@ export default function FeedsPage() {
                       >
                         {companyAd.metrics.map((m) => (
                           <div key={m.label}>
-                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#0284c7' }}>{m.value}</div>
-                            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '1px' }}>{m.label}</div>
+                            <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--accent-primary, #006B68)' }}>{m.value}</div>
+                            <div style={{ fontSize: '9px', color: 'var(--text-secondary, #64748B)', marginTop: '1px' }}>{m.label}</div>
                           </div>
                         ))}
                       </div>
@@ -2584,8 +2589,6 @@ export default function FeedsPage() {
                           type="button"
                           className="btn primary sm"
                           style={{
-                            background: '#0284c7',
-                            borderColor: '#0284c7',
                             fontSize: '11px',
                             padding: '5px 12px',
                             display: 'inline-flex',
@@ -2626,10 +2629,10 @@ export default function FeedsPage() {
                       style={{
                         marginBottom: '16px',
                         padding: '16px 18px',
-                        background: 'linear-gradient(135deg, #fff7ed 0%, #ffffff 60%, #ffedd5 100%)',
-                        border: '1.5px solid #f97316',
+                        background: 'var(--surface-primary, #FFFFFF)',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         borderRadius: '10px',
-                        boxShadow: '0 4px 14px rgba(249, 115, 22, 0.12)',
+                        boxShadow: 'var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.05))',
                         position: 'relative',
                       }}
                     >
@@ -2637,7 +2640,7 @@ export default function FeedsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span
                             style={{
-                              background: '#f97316',
+                              background: '#ea580c',
                               color: '#ffffff',
                               fontSize: '9px',
                               fontWeight: 800,
@@ -2653,14 +2656,14 @@ export default function FeedsPage() {
                             ⚡ Hot Hiring Opening
                           </span>
                         </div>
-                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>
                           Ad · Verified Employer
                         </span>
                       </div>
 
                       <div style={{ marginBottom: '6px' }}>
-                        <b style={{ fontSize: '13.5px', color: '#0f172a', display: 'block' }}>{jobAd.jobTitle}</b>
-                        <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <b style={{ fontSize: '13.5px', color: 'var(--text-primary, #1F2937)', display: 'block' }}>{jobAd.jobTitle}</b>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <b>{jobAd.companyName}</b>
                           <span>·</span>
                           <span>{jobAd.location}</span>
@@ -2670,15 +2673,15 @@ export default function FeedsPage() {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0', flexWrap: 'wrap' }}>
-                        <span style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#059669', fontSize: '11px', fontWeight: 800, padding: '3px 8px', borderRadius: '4px' }}>
+                        <span style={{ background: 'rgba(5, 150, 105, 0.1)', border: '1px solid rgba(5, 150, 105, 0.3)', color: '#059669', fontSize: '11px', fontWeight: 800, padding: '3px 8px', borderRadius: '4px' }}>
                           💰 {jobAd.salaryPackage}
                         </span>
-                        <span style={{ background: '#f1f5f9', color: '#475569', fontSize: '10.5px', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>
+                        <span style={{ background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-secondary, #64748B)', fontSize: '10.5px', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>
                           ⏳ {jobAd.experience}
                         </span>
                       </div>
 
-                      <p style={{ fontSize: '11.5px', color: '#334155', lineHeight: 1.45, marginBottom: '8px' }}>
+                      <p style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.45, marginBottom: '8px' }}>
                         {jobAd.headline}
                       </p>
 
@@ -2692,13 +2695,13 @@ export default function FeedsPage() {
                           <span
                             key={skill}
                             style={{
-                              background: '#ffedd5',
-                              color: '#c2410c',
+                              background: 'var(--surface-elevated, #F8FAFC)',
+                              color: 'var(--text-primary, #1F2937)',
                               fontSize: '10px',
                               fontWeight: 600,
                               padding: '2px 7px',
                               borderRadius: '4px',
-                              border: '1px solid #fed7aa',
+                              border: '1px solid var(--border-subtle, #E5E7EB)',
                             }}
                           >
                             {skill}
@@ -2711,8 +2714,6 @@ export default function FeedsPage() {
                           type="button"
                           className="btn primary sm"
                           style={{
-                            background: '#f97316',
-                            borderColor: '#f97316',
                             fontSize: '11px',
                             padding: '5px 14px',
                           }}
@@ -2776,14 +2777,14 @@ export default function FeedsPage() {
       <aside className="feed-right-rail">
         {/* Active Jobs Card */}
         <div className="card side-card" style={{ background: 'var(--surface-primary, #ffffff)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px' }}>
-          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
-            <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)', fontWeight: 700 }}>Trade Careers &amp; Jobs</b>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', padding: '10px 10px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
+            <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', fontWeight: 700, whiteSpace: 'nowrap' }}>Trade Careers &amp; Jobs</b>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexShrink: 0 }}>
               <button
                 type="button"
                 style={{
-                  height: '28px',
-                  padding: '0 10px',
+                  height: '26px',
+                  padding: '0 8px',
                   fontSize: '11px',
                   fontWeight: 700,
                   backgroundColor: 'var(--accent-primary, #006B68)',
@@ -2793,18 +2794,19 @@ export default function FeedsPage() {
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '3px',
+                  whiteSpace: 'nowrap',
                   boxShadow: '0 1px 2px rgba(0, 107, 104, 0.2)',
                 }}
                 onClick={() => setShowJobCreateModal(true)}
               >
-                + POST JOB
+                + Post
               </button>
               <Link
                 href="/jobs"
                 style={{
-                  height: '28px',
-                  padding: '0 10px',
+                  height: '26px',
+                  padding: '0 8px',
                   fontSize: '11px',
                   fontWeight: 600,
                   backgroundColor: 'var(--surface-primary, #FFFFFF)',
@@ -2814,16 +2816,17 @@ export default function FeedsPage() {
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  whiteSpace: 'nowrap',
                   transition: 'background-color 0.15s ease',
                 }}
               >
-                VIEW ALL
+                View All
               </Link>
             </div>
           </div>
 
           {jobs.length === 0 ? (
-            <div style={{ padding: '16px 12px', textAlign: 'center', background: '#f8fafc', borderRadius: '0 0 8px 8px' }}>
+            <div style={{ padding: '16px 12px', textAlign: 'center', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '0 0 8px 8px' }}>
               <Briefcase size={22} style={{ color: 'var(--brand)', margin: '0 auto 6px', opacity: 0.8 }} />
               <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 10px', lineHeight: 1.4 }}>
                 Looking for logistics talent? Post your open roles across the FR8X network.
@@ -2940,8 +2943,8 @@ export default function FeedsPage() {
             {/* Post Preview Snippet */}
             <div
               style={{
-                background: '#f8fafc',
-                border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
                 padding: '8px 10px',
                 fontSize: '11.5px',
@@ -2985,9 +2988,9 @@ export default function FeedsPage() {
                     padding: '6px 10px 6px 32px',
                     fontSize: '12px',
                     borderRadius: '6px',
-                    border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                    background: '#ffffff',
-                    color: 'var(--fr8x-text)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
+                    background: 'var(--surface-primary, #FFFFFF)',
+                    color: 'var(--text-primary, #1F2937)',
                   }}
                 />
               </div>
@@ -2996,7 +2999,7 @@ export default function FeedsPage() {
             {/* Checkable contact list */}
             <div
               style={{
-                border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
                 maxHeight: '200px',
                 overflowY: 'auto',
@@ -3004,11 +3007,11 @@ export default function FeedsPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '2px',
-                background: '#ffffff',
+                background: 'var(--surface-primary, #FFFFFF)',
               }}
             >
               {filteredSendContacts.length === 0 ? (
-                <div style={{ padding: '14px', textAlign: 'center', color: 'var(--fr8x-muted)', fontSize: '11.5px' }}>
+                <div style={{ padding: '14px', textAlign: 'center', color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>
                   No contacts found matching &ldquo;{sendContactSearch}&rdquo;
                 </div>
               ) : (
@@ -3023,7 +3026,7 @@ export default function FeedsPage() {
                         gap: '10px',
                         padding: '6px 8px',
                         borderRadius: '4px',
-                        background: isSelected ? '#f0f9ff' : 'transparent',
+                        background: isSelected ? 'var(--surface-secondary, #F8FAFC)' : 'transparent',
                         cursor: 'pointer',
                         transition: 'background 0.1s ease',
                       }}
@@ -3179,7 +3182,7 @@ export default function FeedsPage() {
               >
                 <Clock size={13} /> Sent Requests
                 {connRequests.outgoing.length > 0 && (
-                  <span style={{ fontSize: '9px', background: '#f1f5f9', color: '#475569', borderRadius: '10px', padding: '1px 5px', fontWeight: 700 }}>
+                  <span style={{ fontSize: '9px', background: 'var(--surface-secondary, #F8FAFC)', color: 'var(--text-secondary, #64748B)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '10px', padding: '1px 5px', fontWeight: 700 }}>
                     {connRequests.outgoing.length}
                   </span>
                 )}
@@ -3232,7 +3235,7 @@ export default function FeedsPage() {
             {manageContactsTab === 'received' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <UserCheck size={13} /> CONNECTION REQUEST RECEIVED ({connRequests.incoming.length})
                   </div>
                   {isSyncingContacts && (
@@ -3243,8 +3246,8 @@ export default function FeedsPage() {
                 </div>
 
                 {syncContactsError && (
-                  <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <span style={{ fontSize: '11px', color: '#b91c1c' }}>{syncContactsError}</span>
+                  <div style={{ padding: '8px 12px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.3)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', color: '#dc2626' }}>{syncContactsError}</span>
                     <button type="button" className="btn secondary sm" onClick={refreshContactsState} style={{ fontSize: '10px', padding: '2px 8px' }}>
                       Retry Query
                     </button>
@@ -3257,9 +3260,9 @@ export default function FeedsPage() {
                     Loading incoming connection requests...
                   </div>
                 ) : connRequests.incoming.length === 0 ? (
-                  <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
-                    <UserPlus size={26} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <b style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No incoming connection requests received.</b>
+                  <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', background: 'var(--surface-secondary, #F8FAFC)', borderRadius: '6px', border: '1px dashed var(--border-default, #D9DEE5)' }}>
+                    <UserPlus size={26} style={{ color: 'var(--text-secondary, #64748B)', display: 'block', margin: '0 auto 8px' }} />
+                    <b style={{ fontSize: '12.5px', color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>No incoming connection requests received.</b>
                     <span>When other freight companies and logistics partners invite you to connect, they will appear here.</span>
                   </div>
                 ) : (
@@ -3274,13 +3277,13 @@ export default function FeedsPage() {
                           key={req.id}
                           style={{
                             padding: '10px 12px',
-                            background: '#ffffff',
-                            border: '1.5px solid #bae6fd',
+                            background: 'var(--surface-primary, #FFFFFF)',
+                            border: '1px solid var(--border-default, #D9DEE5)',
                             borderRadius: '6px',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '8px',
-                            boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
+                            boxShadow: 'var(--shadow-card)',
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -3299,22 +3302,22 @@ export default function FeedsPage() {
                                     setSelectedProfileUid(req.fromUid);
                                     setSelectedProfileName(req.senderName);
                                   }}
-                                  style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
+                                  style={{ fontSize: '12.5px', color: 'var(--text-primary, #1F2937)', cursor: 'pointer' }}
                                 >
                                   {req.senderName}
                                 </b>
-                                <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
-                                  {req.senderRole || 'Freight Member'} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{req.senderCompany || 'Enterprise Partner'}</span>
+                                <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
+                                  {req.senderRole || 'Freight Member'} · <span style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>{req.senderCompany || 'Enterprise Partner'}</span>
                                 </small>
                               </div>
                             </div>
-                            <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)' }}>
+                            <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>
                               Sent {new Date(req.createdAt).toLocaleDateString()}
                             </span>
                           </div>
 
                           {req.note && (
-                            <div style={{ padding: '6px 8px', background: '#f8fafc', borderLeft: '3px solid #0284c7', fontSize: '11px', color: '#334155', fontStyle: 'italic', borderRadius: '0 4px 4px 0' }}>
+                            <div style={{ padding: '6px 8px', background: 'var(--surface-secondary, #F8FAFC)', borderLeft: '3px solid var(--accent-primary, #006B68)', fontSize: '11px', color: 'var(--text-primary, #1F2937)', fontStyle: 'italic', borderRadius: '0 4px 4px 0' }}>
                               &ldquo;{req.note}&rdquo;
                             </div>
                           )}
@@ -3368,7 +3371,7 @@ export default function FeedsPage() {
                                   setActioningType(null);
                                 }
                               }}
-                              style={{ fontSize: '11px', padding: '4px 12px', background: '#099889', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              style={{ fontSize: '11px', padding: '4px 12px', background: 'var(--accent-primary, #006B68)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
                               {isAccepting ? (
                                 <>
@@ -3392,14 +3395,14 @@ export default function FeedsPage() {
             {/* TAB 2: SENT REQUESTS */}
             {manageContactsTab === 'sent' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Clock size={12} /> Sent Invitations Pending ({connRequests.outgoing.length})
                 </div>
 
                 {connRequests.outgoing.length === 0 ? (
-                  <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
-                    <Clock size={26} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <b style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No outgoing pending requests.</b>
+                  <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', background: 'var(--surface-secondary, #F8FAFC)', borderRadius: '6px', border: '1px dashed var(--border-default, #D9DEE5)' }}>
+                    <Clock size={26} style={{ color: 'var(--text-secondary, #64748B)', display: 'block', margin: '0 auto 8px' }} />
+                    <b style={{ fontSize: '12.5px', color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>No outgoing pending requests.</b>
                     <span>When you invite colleagues or partners, your pending requests will be listed here.</span>
                   </div>
                 ) : (
@@ -3413,8 +3416,8 @@ export default function FeedsPage() {
                           key={req.id}
                           style={{
                             padding: '8px 10px',
-                            background: '#ffffff',
-                            border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                            background: 'var(--surface-primary, #FFFFFF)',
+                            border: '1px solid var(--border-subtle, #E5E7EB)',
                             borderRadius: '6px',
                             display: 'flex',
                             alignItems: 'center',
@@ -3422,10 +3425,10 @@ export default function FeedsPage() {
                           }}
                         >
                           <div>
-                            <b style={{ fontSize: '12px', color: 'var(--fr8x-text)' }}>
+                            <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                               {req.recipientName || 'Trade Partner'}
                             </b>
-                            <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+                            <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
                               {req.recipientCompany || 'Enterprise Member'} · <Clock size={10} style={{ verticalAlign: '-1px' }} /> REQUEST SENT · Waiting for response
                             </small>
                           </div>
@@ -3468,14 +3471,14 @@ export default function FeedsPage() {
             {/* TAB 3: CONNECTED CONTACTS */}
             {manageContactsTab === 'contacts' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Users size={12} /> Connected Members ({workspaceContacts.length})
                 </div>
 
                 {workspaceContacts.length === 0 ? (
-                  <div style={{ padding: '36px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
-                    <Users size={28} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
-                    <b style={{ fontSize: '13px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No direct contacts connected yet.</b>
+                  <div style={{ padding: '36px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', background: 'var(--surface-secondary, #F8FAFC)', borderRadius: '6px', border: '1px dashed var(--border-default, #D9DEE5)' }}>
+                    <Users size={28} style={{ color: 'var(--text-secondary, #64748B)', display: 'block', margin: '0 auto 8px' }} />
+                    <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>No direct contacts connected yet.</b>
                     <span>Accept incoming requests or explore the Global Directory to establish verified freight partnerships.</span>
                   </div>
                 ) : (
@@ -3489,12 +3492,12 @@ export default function FeedsPage() {
                           justifyContent: 'space-between',
                           padding: '10px 12px',
                           borderRadius: '6px',
-                          border: '1px solid var(--fr8x-outline, #e2e8f0)',
-                          background: '#ffffff',
+                          border: '1px solid var(--border-subtle, #E5E7EB)',
+                          background: 'var(--surface-primary, #FFFFFF)',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800 }}>
+                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent-primary, #006B68), var(--accent-hover, #005653))', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800 }}>
                             {c.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -3504,13 +3507,13 @@ export default function FeedsPage() {
                                 setSelectedProfileUid(c.uid);
                                 setSelectedProfileName(c.name);
                               }}
-                              style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              style={{ fontSize: '12.5px', color: 'var(--text-primary, #1F2937)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                             >
                               {c.name}
                               {c.hasGoldenTick && <GoldenTick size={12} />}
                             </b>
-                            <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
-                              {c.role || 'Enterprise Member'} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{c.company || 'Enterprise Partner'}</span>
+                            <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', display: 'block' }}>
+                              {c.role || 'Enterprise Member'} · <span style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>{c.company || 'Enterprise Partner'}</span>
                             </small>
                           </div>
                         </div>
@@ -3535,7 +3538,7 @@ export default function FeedsPage() {
                               setShowManageContactsModal(false);
                               openChatWith(c.uid, { type: 'company', id: c.uid, title: `Chat with ${c.name}` });
                             }}
-                            style={{ fontSize: '10.5px', background: '#099889' }}
+                            style={{ fontSize: '10.5px', background: 'var(--accent-primary, #006B68)' }}
                           >
                             <MessageCircle size={11} /> Chat
                           </button>
@@ -3552,7 +3555,7 @@ export default function FeedsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0 }}>
                 {/* Search Bar */}
                 <div className="search-icon-wrap" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fr8x-muted)', pointerEvents: 'none', zIndex: 2 }} />
+                  <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary, #64748B)', pointerEvents: 'none', zIndex: 2 }} />
                   <input
                     type="text"
                     className="search-input-field has-leading-icon"
@@ -3565,8 +3568,9 @@ export default function FeedsPage() {
                       padding: '7px 8px 7px 32px',
                       fontSize: '12px',
                       borderRadius: '6px',
-                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                      background: '#ffffff',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      background: 'var(--surface-primary, #FFFFFF)',
+                      color: 'var(--text-primary, #1F2937)',
                     }}
                   />
                 </div>
@@ -3604,7 +3608,7 @@ export default function FeedsPage() {
 
                     if (candidates.length === 0) {
                       return (
-                        <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: '12px', color: 'var(--fr8x-muted)' }}>
+                        <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
                           No members matching &ldquo;{discoverMemberSearch}&rdquo;
                         </div>
                       );
@@ -3623,8 +3627,8 @@ export default function FeedsPage() {
                             justifyContent: 'space-between',
                             padding: '8px 10px',
                             borderRadius: '6px',
-                            border: '1px solid var(--fr8x-outline, #e2e8f0)',
-                            background: '#ffffff',
+                            border: '1px solid var(--border-subtle, #E5E7EB)',
+                            background: 'var(--surface-primary, #FFFFFF)',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -3762,7 +3766,7 @@ export default function FeedsPage() {
           maxWidth="540px"
         >
           <form onSubmit={handleSaveQuickContact} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid var(--fr8x-outline, #e2e8f0)', fontSize: '11.5px', color: 'var(--fr8x-muted)' }}>
+            <div style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)' }}>
               Changes made here are saved to your verified profile and synchronize instantly across Feeds, Profile, and B2B Networking across all your devices.
             </div>
 
@@ -3922,7 +3926,8 @@ export default function FeedsPage() {
               position: 'relative',
               maxWidth: '90vw',
               maxHeight: '90vh',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               borderRadius: '10px',
               padding: '12px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',

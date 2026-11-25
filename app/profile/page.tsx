@@ -1748,7 +1748,7 @@ export default function ProfilePage() {
           maxWidth="520px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
-            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', color: '#0369a1', lineHeight: 1.4 }}>
+            <div style={{ padding: '12px 14px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', color: 'var(--accent-primary, #006B68)', lineHeight: 1.4 }}>
               Share this official verified enterprise link with logistics partners, shippers, and carriers.
             </div>
 
@@ -1757,7 +1757,7 @@ export default function ProfilePage() {
                 Company Reference Code
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ padding: '8px 12px', background: '#f8fafc', border: '1.5px dashed #cbd5e1', borderRadius: '6px', fontWeight: 800, fontSize: '14px', letterSpacing: '1px', color: '#0f172a', flex: 1 }}>
+                <div style={{ padding: '8px 12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1.5px dashed #cbd5e1', borderRadius: '6px', fontWeight: 800, fontSize: '14px', letterSpacing: '1px', color: 'var(--text-primary, #1F2937)', flex: 1 }}>
                   {companyRefNo}
                 </div>
                 <button
@@ -1782,7 +1782,7 @@ export default function ProfilePage() {
                   className="input"
                   readOnly
                   value={companyShareUrl}
-                  style={{ fontSize: '12px', height: '36px', background: '#f8fafc', color: '#0284c7', fontWeight: 600 }}
+                  style={{ fontSize: '12px', height: '36px', background: 'var(--surface-secondary, #F9FAFB)', color: 'var(--accent-primary, #006B68)', fontWeight: 600 }}
                 />
                 <button
                   type="button"
@@ -1816,15 +1816,15 @@ export default function ProfilePage() {
         >
           {resetStep === 'request' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
-              <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', color: '#0369a1', lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Mail size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
+              <div style={{ padding: '12px 14px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', color: 'var(--accent-primary, #006B68)', lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Mail size={18} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
                 <span>
                   Click below to dispatch a secure 6-digit recovery OTP code to your registered corporate email (<strong>{user.email}</strong>).
                 </span>
               </div>
 
               {resetError && (
-                <div style={{ padding: '8px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '11.5px' }}>
+                <div style={{ padding: '8px 10px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '6px', color: '#dc2626', fontSize: '11.5px' }}>
                   {resetError}
                 </div>
               )}
@@ -1845,13 +1845,13 @@ export default function ProfilePage() {
             </div>
           ) : (
             <form onSubmit={handleConfirmProfileReset} style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
-              <div style={{ padding: '10px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', color: '#15803d', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ padding: '10px 12px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: '6px', color: '#059669', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
                 <span>6-digit OTP code dispatched to <strong>{user.email}</strong>. Enter it below to set your new password.</span>
               </div>
 
               {resetError && (
-                <div style={{ padding: '8px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '11.5px' }}>
+                <div style={{ padding: '8px 10px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '6px', color: '#dc2626', fontSize: '11.5px' }}>
                   {resetError}
                 </div>
               )}
@@ -1896,7 +1896,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowResetPass(!showResetPass)}
-                    style={{ position: 'absolute', right: '8px', top: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                    style={{ position: 'absolute', right: '8px', top: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, #64748B)' }}
                   >
                     {showResetPass ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -1918,7 +1918,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setShowResetConfirmPass(!showResetConfirmPass)}
-                    style={{ position: 'absolute', right: '8px', top: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                    style={{ position: 'absolute', right: '8px', top: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, #64748B)' }}
                   >
                     {showResetConfirmPass ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -2054,14 +2054,14 @@ export default function ProfilePage() {
 
       {/* Corporate Transfer Status Banner if Pending Godfather Review */}
       {user.companyTransferStatus === 'pending_godfather_approval' && (
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ background: 'rgba(217, 119, 6, 0.08)', border: '1px solid rgba(217, 119, 6, 0.35)', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Building2 size={18} color="#d97706" />
             <div>
-              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#92400e' }}>
+              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#d97706' }}>
                 Corporate Affiliation Transfer Pending Godfather Review
               </div>
-              <div style={{ fontSize: '11px', color: '#b45309' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
                 Requested transfer to <b>{user.pendingCompany}</b> with corporate email <b>{user.pendingEmail}</b>. Docket Ticket: <code>{user.transferRequestId}</code>
               </div>
             </div>
@@ -2095,7 +2095,7 @@ export default function ProfilePage() {
                     height: '88px',
                     borderRadius: '8px',
                     border: '1.5px solid #E2E8F0',
-                    background: '#FAFBFD',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2121,10 +2121,10 @@ export default function ProfilePage() {
                         height: '80px',
                         fontSize: '22px',
                         borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #1B2B4B, #47799E)',
+                        background: 'linear-gradient(135deg, var(--accent-primary, #006B68), var(--accent-hover, #005653))',
                         display: 'grid',
                         placeItems: 'center',
-                        color: '#fff',
+                        color: '#ffffff',
                         fontWeight: 800,
                       }}
                     >
@@ -2152,7 +2152,7 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Profile Photo
                 </span>
 
@@ -2165,13 +2165,13 @@ export default function ProfilePage() {
                       gap: '4px',
                       cursor: 'pointer',
                       padding: '3px 8px',
-                      borderRadius: '4px',
-                      border: '1px solid #CBD5E1',
-                      background: '#F8FAFC',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-interactive, #D1D5DB)',
+                      background: 'var(--surface-primary, #FFFFFF)',
                       fontSize: '11px',
                       fontWeight: 600,
-                      color: '#1E293B',
-                      fontFamily: 'Calibri, sans-serif',
+                      color: 'var(--text-primary, #1F2937)',
+                      fontFamily: 'var(--font-family-primary)',
                     }}
                   >
                     <Camera size={11} /> {effectiveAvatarUrl ? 'Change' : 'Upload'}
@@ -2215,9 +2215,9 @@ export default function ProfilePage() {
                         cursor: 'pointer',
                         padding: '3px 6px',
                         borderRadius: '4px',
-                        border: '1px solid #FECACA',
-                        background: '#FEF2F2',
-                        color: '#DC2626',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#dc2626',
                       }}
                     >
                       <Trash2 size={11} />
@@ -2235,7 +2235,7 @@ export default function ProfilePage() {
                     height: '88px',
                     borderRadius: '8px',
                     border: '1.5px solid #E2E8F0',
-                    background: '#FAFBFD',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2264,18 +2264,18 @@ export default function ProfilePage() {
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#64748B',
+                        color: 'var(--text-secondary, #64748B)',
                       }}
                     >
-                      <Building2 size={28} color="#47799E" />
-                      <span style={{ fontSize: '9px', fontWeight: 800, marginTop: '2px', color: '#1B2B4B' }}>
+                      <Building2 size={28} style={{ color: 'var(--accent-primary, #006B68)' }} />
+                      <span style={{ fontSize: '9px', fontWeight: 800, marginTop: '2px', color: 'var(--text-primary, #1F2937)' }}>
                         {company ? company.substring(0, 3).toUpperCase() : 'CO'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Company Logo
                 </span>
 
@@ -2289,8 +2289,8 @@ export default function ProfilePage() {
                       cursor: 'pointer',
                       padding: '3px 8px',
                       borderRadius: '4px',
-                      border: '1px solid #CBD5E1',
-                      background: '#F8FAFC',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      background: 'var(--surface-secondary, #F9FAFB)',
                       fontSize: '11px',
                       fontWeight: 600,
                       color: '#1E293B',
@@ -2338,9 +2338,9 @@ export default function ProfilePage() {
                         cursor: 'pointer',
                         padding: '3px 6px',
                         borderRadius: '4px',
-                        border: '1px solid #FECACA',
-                        background: '#FEF2F2',
-                        color: '#DC2626',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#dc2626',
                       }}
                     >
                       <Trash2 size={11} />
@@ -2377,7 +2377,7 @@ export default function ProfilePage() {
                     fontWeight: 700,
                     borderColor: 'var(--brand)',
                     color: 'var(--brand)',
-                    background: '#f0f9ff',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                   }}
                   title="Edit Mobile Number, Designation, Location & Visual Identity"
                 >
@@ -2406,7 +2406,7 @@ export default function ProfilePage() {
                   })()}
                 </span>
                 {(user.department || editDepartment) && (
-                  <span className="badge gray" style={{ fontSize: '10.5px', padding: '1px 7px', fontWeight: 600, color: '#334155' }}>
+                  <span className="badge gray" style={{ fontSize: '10.5px', padding: '1px 7px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                     {user.department || editDepartment}
                   </span>
                 )}
@@ -2425,7 +2425,7 @@ export default function ProfilePage() {
                     <Phone size={12} color="var(--brand)" />
                     <span>{mobile || user.mobile || (user as any).phone}</span>
                     {editWhatsapp && (
-                      <span style={{ color: '#15803d', fontWeight: 700, fontSize: '10px', background: '#dcfce7', border: '1px solid #bbf7d0', padding: '1px 5px', borderRadius: '3px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ color: '#15803d', fontWeight: 700, fontSize: '10px', background: '#dcfce7', border: '1px solid rgba(16, 185, 129, 0.35)', padding: '1px 5px', borderRadius: '3px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                         WhatsApp ✓
                       </span>
                     )}
@@ -2433,18 +2433,18 @@ export default function ProfilePage() {
                 )}
                 {/* Additional Channels */}
                 {additionalEmails.map((ae) => ae.email && (
-                  <span key={ae.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)', background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
+                  <span key={ae.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)', background: 'var(--surface-secondary, #F9FAFB)', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
                     <Mail size={11} color="#64748b" />
                     <span>{ae.email}</span>
-                    <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 600 }}>({ae.label || 'Alt'})</span>
+                    <span style={{ fontSize: '9.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>({ae.label || 'Alt'})</span>
                   </span>
                 ))}
                 {additionalPhones.map((ap) => ap.phone && (
-                  <span key={ap.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)', background: '#f1f5f9', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
+                  <span key={ap.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)', background: 'var(--surface-secondary, #F9FAFB)', padding: '1px 6px', borderRadius: '4px', fontSize: '11px' }}>
                     <Phone size={11} color="#64748b" />
                     <span>{ap.phone}</span>
                     {ap.isWhatsApp && <span style={{ color: '#15803d', fontWeight: 700, fontSize: '9px' }}>WA</span>}
-                    <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 600 }}>({ap.label || 'Alt'})</span>
+                    <span style={{ fontSize: '9.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>({ap.label || 'Alt'})</span>
                   </span>
                 ))}
               </div>
@@ -2466,8 +2466,8 @@ export default function ProfilePage() {
               </div>
 
               {/* Enterprise Profile Identity Notice */}
-              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: 'var(--surface-secondary, #F9FAFB)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--accent-primary, #006B68)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <ShieldCheck size={12} color="#0284c7" />
                   <span>Enterprise Profile Identity:</span>
                 </span>
@@ -2481,7 +2481,7 @@ export default function ProfilePage() {
 
           {/* Profile Completeness Score */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: '190px', background: '#ffffff', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
+            <div style={{ minWidth: '190px', background: 'var(--surface-primary, #FFFFFF)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--fr8x-text)' }}>Profile Completeness</span>
                 <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-text)' }}>{completeness}%</span>
@@ -2569,10 +2569,10 @@ export default function ProfilePage() {
       {activeProfileTab === 'overview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Executive Summary & Professional Bio */}
-          <div className="card" style={{ padding: '20px 24px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+          <div className="card" style={{ padding: '20px 24px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <FileText size={17} color="var(--brand, #0284c7)" />
                 </div>
                 <div>
@@ -2595,7 +2595,7 @@ export default function ProfilePage() {
                 {summary}
               </p>
             ) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)' }}>
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--mut)', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)' }}>
                 No executive summary published yet. Click &quot;Edit Bio & Details&quot; to describe your freight capabilities and market presence.
               </div>
             )}
@@ -2603,7 +2603,7 @@ export default function ProfilePage() {
 
           {/* Quick Metrics & Operational Capabilities Strip */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
-            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
               <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Corporate KYC Status
               </div>
@@ -2616,7 +2616,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
               <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Accreditation & Filings
               </div>
@@ -2628,7 +2628,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
               <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Verified Credentials
               </div>
@@ -2642,18 +2642,18 @@ export default function ProfilePage() {
           </div>
 
           {/* Operational Headquarters & Association Affiliation */}
-          <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+          <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
             <b style={{ fontSize: '14.5px', color: 'var(--ink)' }}>Corporate Headquarters & Geographic Operations</b>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginTop: '14px' }}>
-              <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
+              <div style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
                 <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Primary City & Country</span>
                 <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{[city || user.city, stateName || user.state, country || user.country].filter(Boolean).join(', ') || 'Not specified'}</b>
               </div>
-              <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
+              <div style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
                 <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Local Timezone</span>
                 <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{timezone || 'Asia/Kolkata'}</b>
               </div>
-              <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
+              <div style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
                 <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Trade Association</span>
                 <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{associationName || 'Independent Multimodal Operator'}</b>
               </div>
@@ -2666,10 +2666,10 @@ export default function ProfilePage() {
       {activeProfileTab === 'experience' && (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* SECTION 1: Professional Work Experience */}
-        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Briefcase size={16} color="var(--brand, #0284c7)" />
               </div>
               <div>
@@ -2686,7 +2686,7 @@ export default function ProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {experiences.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
                 No experience records added yet. Click &quot;+ Add Experience&quot; to showcase your career.
               </div>
             ) : (
@@ -2695,7 +2695,7 @@ export default function ProfilePage() {
                   key={exp.id}
                   style={{
                     padding: '16px 18px',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     borderRadius: 'var(--r, 8px)',
                     border: '1px solid var(--line, #e2e8f0)',
                     boxShadow: 'var(--sh-sm)',
@@ -2712,7 +2712,7 @@ export default function ProfilePage() {
                           {exp.company} · <span style={{ color: 'var(--mut)' }}>{exp.location}</span>
                         </div>
                       </div>
-                      <span className="badge" style={{ fontSize: '9.5px', background: '#f1f5f9', color: 'var(--ink)', borderRadius: 'var(--r-xs, 4px)', border: '1px solid var(--line, #e2e8f0)' }}>
+                      <span className="badge" style={{ fontSize: '9.5px', background: 'var(--surface-secondary, #F9FAFB)', color: 'var(--ink)', borderRadius: 'var(--r-xs, 4px)', border: '1px solid var(--line, #e2e8f0)' }}>
                         {exp.employmentType || (exp as any).type || 'Full-time'}
                       </span>
                     </div>
@@ -2740,7 +2740,7 @@ export default function ProfilePage() {
                       return (
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '8px 0' }}>
                           {skillsList.map((s, idx) => (
-                            <span key={idx} style={{ fontSize: '10px', background: '#f8fafc', padding: '2px 6px', borderRadius: 'var(--r-xs, 4px)', border: '1px solid var(--line, #e2e8f0)', color: 'var(--ink)' }}>
+                            <span key={idx} style={{ fontSize: '10px', background: 'var(--surface-secondary, #F9FAFB)', padding: '2px 6px', borderRadius: 'var(--r-xs, 4px)', border: '1px solid var(--line, #e2e8f0)', color: 'var(--ink)' }}>
                               {s}
                             </span>
                           ))}
@@ -2771,10 +2771,10 @@ export default function ProfilePage() {
         </div>
 
         {/* SECTION 2: Academic & Maritime Education */}
-        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <GraduationCap size={16} color="var(--brand, #0284c7)" />
               </div>
               <div>
@@ -2791,7 +2791,7 @@ export default function ProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {educations.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
                 No education records added yet. Click &quot;+ Add Education&quot; to add degree credentials.
               </div>
             ) : (
@@ -2800,7 +2800,7 @@ export default function ProfilePage() {
                   key={edu.id}
                   style={{
                     padding: '16px 18px',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     borderRadius: 'var(--r, 8px)',
                     border: '1px solid var(--line, #e2e8f0)',
                     boxShadow: 'var(--sh-sm)',
@@ -2852,10 +2852,10 @@ export default function ProfilePage() {
       {activeProfileTab === 'certifications' && (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* SECTION 3: Industry Certifications & Licences */}
-        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Award size={16} color="var(--brand, #0284c7)" />
               </div>
               <div>
@@ -2872,7 +2872,7 @@ export default function ProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {certifications.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
                 No certifications added yet. Click &quot;+ Add Certification&quot; to add your accredited licenses.
               </div>
             ) : (
@@ -2881,7 +2881,7 @@ export default function ProfilePage() {
                   key={cert.id}
                   style={{
                     padding: '16px 18px',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     borderRadius: 'var(--r, 8px)',
                     border: '1px solid var(--line, #e2e8f0)',
                     boxShadow: 'var(--sh-sm)',
@@ -2893,7 +2893,7 @@ export default function ProfilePage() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{cert.title}</b>
-                      <span className="badge" style={{ fontSize: '9px', fontWeight: 800, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 'var(--r-xs, 4px)' }}>
+                      <span className="badge" style={{ fontSize: '9px', fontWeight: 800, background: 'rgba(16, 185, 129, 0.1)', color: '#16a34a', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: 'var(--r-xs, 4px)' }}>
                         <CheckCircle2 size={10} /> VERIFIED
                       </span>
                     </div>
@@ -2948,7 +2948,7 @@ export default function ProfilePage() {
         (() => {
           const activeProfile = kycProfile;
           return (
-            <div className="card" style={{ padding: '20px 24px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+            <div className="card" style={{ padding: '20px 24px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: 'var(--surface-primary, #FFFFFF)', boxShadow: 'var(--sh-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -2981,7 +2981,7 @@ export default function ProfilePage() {
 
             <div className="grid g2" style={{ gap: '12px' }}>
               {/* 1. Primary Tax ID */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>{activeProfile.primaryTaxId.label}</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {(taxId || (activeProfile.countryCode === 'IN' ? gstn : '')) ? (
@@ -2993,7 +2993,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 2. Corporate Reg */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>{activeProfile.corporateReg.label}</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {(corporateReg || (activeProfile.countryCode === 'IN' ? pan : '')) ? (
@@ -3005,7 +3005,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 3. Trade / Customs Code */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>{activeProfile.tradeCustomsCode.label}</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {(tradeCustoms || (activeProfile.countryCode === 'IN' ? iec : '')) ? (
@@ -3017,7 +3017,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 4. Logistics / Operating License */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>{activeProfile.logisticsLicense.label}</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {(logisticsLicense || (activeProfile.countryCode === 'IN' ? mto : '')) ? (
@@ -3029,7 +3029,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 5. IATA Cargo Numeric Code */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>IATA Cargo Numeric Code</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {iataCode ? (
@@ -3041,7 +3041,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 6. FIATA Registration */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>FIATA Registration</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {fiataReg ? (
@@ -3053,7 +3053,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 7. FMC OTI License */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>FMC OTI License</span>
                 <b style={{ fontFamily: 'var(--font-mono)' }}>
                   {fmcNumber ? (
@@ -3065,7 +3065,7 @@ export default function ProfilePage() {
               </div>
 
               {/* 8. Authorized Economic Operator */}
-              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div className="kv" style={{ padding: '12px 16px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <span>Authorized Economic Operator</span>
                 <b style={{ color: aeoTier && aeoTier !== 'Not Applicable' ? 'var(--brand)' : 'var(--mut)', fontWeight: aeoTier && aeoTier !== 'Not Applicable' ? 700 : 400 }}>
                   {aeoTier || 'Standard Non-AEO'}
@@ -3157,7 +3157,7 @@ export default function ProfilePage() {
           {/* Controls Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Setting 1: Direct Work Email */}
-            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line-light)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
@@ -3201,7 +3201,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Setting 2: Mobile / WhatsApp Phone */}
-            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line-light)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
@@ -3245,7 +3245,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Setting 3: Statutory Tax & Regulatory IDs */}
-            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line-light)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
@@ -3289,7 +3289,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Setting 4: Connection Requests Inbound */}
-            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--line-light)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
@@ -3353,7 +3353,7 @@ export default function ProfilePage() {
             style={{
               padding: '16px 18px',
               borderRadius: '8px',
-              background: '#ffffff',
+              background: 'var(--surface-primary, #FFFFFF)',
               border: '1.5px solid var(--fr8x-outline)',
               display: 'flex',
               flexDirection: 'column',
@@ -3369,7 +3369,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Toggle: Public vs Contact */}
-              <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '3px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+              <div style={{ display: 'inline-flex', background: 'var(--surface-secondary, #F9FAFB)', padding: '3px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
                 <button
                   type="button"
                   onClick={() => setPrivacyPreviewMode('public')}
@@ -3469,7 +3469,7 @@ export default function ProfilePage() {
               {/* Data Rows */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
                 {/* Email Item */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
                   <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Mail size={12} /> Work Email:
                   </span>
@@ -3492,7 +3492,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Phone Item */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
                   <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Phone size={12} /> Mobile / WhatsApp:
                   </span>
@@ -3533,7 +3533,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Statutory Filing Item */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
                   <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <ShieldCheck size={12} /> Statutory Tax / Reg:
                   </span>
@@ -3613,7 +3613,7 @@ export default function ProfilePage() {
                   <p style={{ fontSize: '12px', color: '#9a3412', margin: '4px 0 8px 0', lineHeight: 1.4 }}>
                     Your FR8X account is currently deactivated and scheduled for <b>permanent deletion on {user.deletionEffectiveAt ? new Date(user.deletionEffectiveAt).toLocaleDateString(undefined, { dateStyle: 'full' }) : '5 days from request'}</b>. Your profile, company links, and quotations are hidden from the platform. You can cancel this deletion at any time during the 5-day grace period.
                   </p>
-                  <div style={{ fontSize: '11px', color: '#c2410c', background: '#ffedd5', padding: '6px 10px', borderRadius: '4px', border: '1px solid #fed7aa', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '11px', color: '#c2410c', background: '#ffedd5', padding: '6px 10px', borderRadius: '4px', border: '1px solid rgba(217, 119, 6, 0.35)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <Clock size={12} />
                     <span>Scheduled on: {user.deletionScheduledAt ? new Date(user.deletionScheduledAt).toLocaleString() : 'Recently'}</span>
                   </div>
@@ -3658,7 +3658,7 @@ export default function ProfilePage() {
                   style={{
                     color: '#dc2626',
                     borderColor: '#fca5a5',
-                    background: '#fff5f5',
+                    background: 'rgba(239, 68, 68, 0.08)',
                     fontWeight: 700,
                     fontSize: '12px',
                     display: 'inline-flex',
@@ -3828,7 +3828,7 @@ export default function ProfilePage() {
               style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
             >
               {/* Top Anchor: Company Registered Address & Statutory Jurisdiction */}
-              <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
                   <div>
                     <span style={{ fontSize: '11px', color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
@@ -4074,7 +4074,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Dynamic Non-Repudiation Terms Consent Checkbox */}
-              <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+              <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
                 <label className="check" style={{ fontSize: '11px', display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', margin: 0 }}>
                   <input
                     type="checkbox"
@@ -4268,20 +4268,20 @@ export default function ProfilePage() {
             style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
             {/* 1. Visual Identity & Brand Assets (Profile Picture + Company Logo) */}
-            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
               <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '10px' }}>
                 1. Visual Identity & Brand Assets
               </span>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 {/* Profile Photo */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', background: '#fff', border: '1px solid var(--line-light)', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)', borderRadius: '6px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>User Profile Photo</span>
                   <div style={{ position: 'relative', width: '64px', height: '64px' }}>
                     {editAvatarUrl ? (
                       <img src={editAvatarUrl} alt="Profile" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--brand)' }} />
                     ) : (
-                      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#e2e8f0', display: 'grid', placeItems: 'center', fontWeight: 700, color: '#475569' }}>
+                      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--border-subtle, #E5E7EB)', display: 'grid', placeItems: 'center', fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>
                         {editFirstName[0] || 'U'}{editLastName[0] || ''}
                       </div>
                     )}
@@ -4317,13 +4317,13 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Company Logo */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', background: '#fff', border: '1px solid var(--line-light)', borderRadius: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)', borderRadius: '6px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>Company Corporate Logo</span>
                   <div style={{ position: 'relative', width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {editCompanyLogoUrl ? (
-                      <img src={editCompanyLogoUrl} alt="Logo" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'contain', border: '1px solid var(--brand)', padding: '2px', background: '#fff' }} />
+                      <img src={editCompanyLogoUrl} alt="Logo" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'contain', border: '1px solid var(--brand)', padding: '2px', background: 'var(--surface-primary, #FFFFFF)' }} />
                     ) : (
-                      <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: '#f1f5f9', border: '1px dashed var(--brand)', display: 'grid', placeItems: 'center', color: 'var(--mut)' }}>
+                      <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px dashed var(--brand)', display: 'grid', placeItems: 'center', color: 'var(--mut)' }}>
                         <Building2 size={24} />
                       </div>
                     )}
@@ -4446,7 +4446,7 @@ export default function ProfilePage() {
             </div>
 
             {/* 3. Enterprise Geographic Location & Operating Hub */}
-            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   3. Enterprise Operating Hub & Geographic Location
@@ -4462,9 +4462,9 @@ export default function ProfilePage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     border: '1px solid #0284c7',
-                    color: '#0284c7',
+                    color: 'var(--accent-primary, #006B68)',
                     fontWeight: 700,
                     borderRadius: '4px',
                     cursor: isDetectingLocation ? 'wait' : 'pointer',
@@ -4584,7 +4584,7 @@ export default function ProfilePage() {
                       background: 'none',
                       border: 'none',
                       padding: 0,
-                      color: '#0284c7',
+                      color: 'var(--accent-primary, #006B68)',
                       fontSize: '11px',
                       fontWeight: 600,
                       cursor: isDetectingLocation ? 'wait' : 'pointer',
@@ -4629,12 +4629,12 @@ export default function ProfilePage() {
                         type="button"
                         onClick={() => setEditFormattedAddress(sug)}
                         style={{
-                          background: '#f1f5f9',
-                          border: '1px solid #cbd5e1',
+                          background: 'var(--surface-secondary, #F9FAFB)',
+                          border: '1px solid var(--border-default, #D9DEE5)',
                           borderRadius: '4px',
                           padding: '3px 8px',
                           fontSize: '11px',
-                          color: '#0f172a',
+                          color: 'var(--text-primary, #1F2937)',
                           cursor: 'pointer',
                           textAlign: 'left',
                         }}
@@ -4648,7 +4648,7 @@ export default function ProfilePage() {
             </div>
 
             {/* 4. Company Link & Affiliation Governance (User Requirement 2: Company Profile is Fixed, Person ID changes) */}
-            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', padding: '16px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
@@ -4669,11 +4669,11 @@ export default function ProfilePage() {
               </div>
 
               {/* EDITABLE COMPANY / ENTERPRISE LEGAL ENTITY CARD */}
-              <div style={{ background: '#ffffff', border: '1.5px solid #0284c7', borderRadius: '8px', padding: '14px' }}>
+              <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1.5px solid #0284c7', borderRadius: '8px', padding: '14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Building2 size={16} color="#0284c7" />
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Company / Legal Entity Name
                     </span>
                   </div>
@@ -4685,9 +4685,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="field">
-                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                     <span>Authorized Company Name <span className="req">*</span></span>
-                    <span style={{ fontSize: '9.5px', color: '#0284c7' }}>Visible Across Network & Search</span>
+                    <span style={{ fontSize: '9.5px', color: 'var(--accent-primary, #006B68)' }}>Visible Across Network & Search</span>
                   </label>
                   <input
                     className="input"
@@ -4697,18 +4697,18 @@ export default function ProfilePage() {
                     required
                     style={{ fontWeight: 600, fontSize: '13px' }}
                   />
-                  <small style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', display: 'block' }}>
+                  <small style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', marginTop: '3px', display: 'block' }}>
                     Enter your verified legal entity name (e.g. SYB INTERNATIONAL). Internal system IDs ({user.companyId || 'CMP-XXXXX'}) are reserved for database indexing.
                   </small>
                 </div>
               </div>
 
               {/* CHANGEABLE PERSON ID & MEMBER AFFILIATION CREDENTIALS */}
-              <div style={{ background: '#ffffff', border: '1.5px solid #0284c7', borderRadius: '8px', padding: '12px 14px' }}>
+              <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1.5px solid #0284c7', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <UserCheck size={15} color="#0284c7" />
-                    <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <span style={{ fontSize: '11.5px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       Member Person ID & Staff Credentials (Editable & Changeable)
                     </span>
                   </div>
@@ -4721,7 +4721,7 @@ export default function ProfilePage() {
                   <div className="field">
                     <label style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Person ID / Corporate Staff Code <span className="req">*</span></span>
-                      <span style={{ fontSize: '9.5px', color: '#0284c7' }}>Unique Person Identifier</span>
+                      <span style={{ fontSize: '9.5px', color: 'var(--accent-primary, #006B68)' }}>Unique Person Identifier</span>
                     </label>
                     <input
                       className="input"
@@ -4732,7 +4732,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="field">
-                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                       Department / Operational Division
                     </label>
                     <input
@@ -4741,7 +4741,7 @@ export default function ProfilePage() {
                       onChange={(e) => setEditDepartment(e.target.value)}
                       placeholder="e.g. Ocean Freight Operations, Air Cargo, Customs, Pricing"
                     />
-                    <small style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', display: 'block' }}>
                       Operational desk or functional division within your freight enterprise.
                     </small>
                   </div>
@@ -4770,9 +4770,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Structured Multi-Email & Multi-Phone Contact Channel Manager */}
-                <div style={{ marginTop: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ marginTop: '12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '12px 14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <b style={{ fontSize: '12px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <Mail size={13} color="#0284c7" /> Additional Corporate & Branch Emails
                     </b>
                     <button
@@ -4785,7 +4785,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
                   {additionalEmails.length === 0 ? (
-                    <small style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>
+                    <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', display: 'block' }}>
                       No secondary emails added. Click &ldquo;+ Add Email&rdquo; to register operational, finance or branch desk emails.
                     </small>
                   ) : (
@@ -4837,8 +4837,8 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', marginBottom: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-                    <b style={{ fontSize: '12px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', marginBottom: '8px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', paddingTop: '10px' }}>
+                    <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <Phone size={13} color="#16a34a" /> Additional Direct Lines & WhatsApp Numbers
                     </b>
                     <button
@@ -4851,7 +4851,7 @@ export default function ProfilePage() {
                     </button>
                   </div>
                   {additionalPhones.length === 0 ? (
-                    <small style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>
+                    <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', display: 'block' }}>
                       No secondary lines added. Click &ldquo;+ Add Phone&rdquo; to add alternate mobile, WhatsApp or emergency trade numbers.
                     </small>
                   ) : (
@@ -4912,7 +4912,7 @@ export default function ProfilePage() {
               </div>
 
               {isChangingCompany && (
-                <div style={{ background: '#fff', border: '1px solid var(--line-light)', borderRadius: '6px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line-light)', borderRadius: '6px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
                   <div style={{ fontSize: '11px', color: 'var(--mut)', lineHeight: 1.4 }}>
                     <b>Enterprise Governance Policy:</b> When switching organizations, your account profile can be transferred to the new company domain, updating your corporate login email ID. Choose between instant domain self-link or submitting for official Godfather regulatory clearance.
                   </div>
@@ -4955,7 +4955,7 @@ export default function ProfilePage() {
                             left: 0,
                             right: 0,
                             zIndex: 99999,
-                            background: '#ffffff',
+                            background: 'var(--surface-primary, #FFFFFF)',
                             border: '1.5px solid #0284c7',
                             borderRadius: '6px',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
@@ -4966,11 +4966,11 @@ export default function ProfilePage() {
                           <div
                             style={{
                               padding: '5px 8px',
-                              background: '#f8fafc',
-                              borderBottom: '1px solid #e2e8f0',
+                              background: 'var(--surface-secondary, #F9FAFB)',
+                              borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                               fontSize: '9.5px',
                               fontWeight: 800,
-                              color: '#64748b',
+                              color: 'var(--text-secondary, #64748B)',
                               textTransform: 'uppercase',
                               display: 'flex',
                               justifyContent: 'space-between',
@@ -4980,7 +4980,7 @@ export default function ProfilePage() {
                             <button
                               type="button"
                               onClick={() => setIsProfileCompanyDropdownOpen(false)}
-                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                              style={{ background: 'none', border: 'none', color: 'var(--text-secondary, #64748B)', cursor: 'pointer', padding: 0 }}
                             >
                               <X size={11} />
                             </button>
@@ -4996,7 +4996,7 @@ export default function ProfilePage() {
                               }}
                               style={{
                                 padding: '6px 10px',
-                                borderBottom: '1px solid #f1f5f9',
+                                borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                                 cursor: 'pointer',
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -5006,10 +5006,10 @@ export default function ProfilePage() {
                               onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>{comp.legalName}</span>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{comp.legalName}</span>
                                 {comp.verified && <span className="badge green" style={{ fontSize: '8.5px', padding: '0 4px' }}>VERIFIED</span>}
                               </div>
-                              <span style={{ fontSize: '10px', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                              <span style={{ fontSize: '10px', color: 'var(--accent-primary, #006B68)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <MapPin size={10} /> {comp.locationLabel} {comp.registeredAddress ? `· ${comp.registeredAddress}` : ''}
                               </span>
                             </div>
@@ -5023,11 +5023,11 @@ export default function ProfilePage() {
                           style={{
                             marginTop: '4px',
                             padding: '6px 8px',
-                            background: '#fffbeb',
+                            background: 'rgba(217, 119, 6, 0.1)',
                             border: '1px solid #fde68a',
                             borderRadius: '4px',
                             fontSize: '10.5px',
-                            color: '#92400e',
+                            color: '#d97706',
                             lineHeight: 1.3,
                           }}
                         >
@@ -5213,7 +5213,7 @@ export default function ProfilePage() {
             </div>
 
             {deleteMode === 'permanent' && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 12px', borderRadius: '6px' }}>
+              <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '10px 12px', borderRadius: '6px' }}>
                 <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#991b1b', display: 'block', marginBottom: '4px' }}>
                   To confirm permanent deletion, type &quot;DELETE&quot; below:
                 </label>
@@ -5319,7 +5319,7 @@ export default function ProfilePage() {
             }}
             style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
           >
-            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', padding: '10px 12px', borderRadius: '6px', fontSize: '11.5px', color: '#0369a1', lineHeight: 1.4 }}>
+            <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', padding: '10px 12px', borderRadius: '6px', fontSize: '11.5px', color: 'var(--accent-primary, #006B68)', lineHeight: 1.4 }}>
               <b>Compliance Verification Notice:</b> Mobile number, official job designation, and terminal operating hub are KYC-audited identity attributes under FR8X multimodal freight rules. If you have an issue with your current details or need corrections, our Compliance Professionals will verify and resolve it.
             </div>
 

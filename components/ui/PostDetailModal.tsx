@@ -30,13 +30,13 @@ import {
 } from 'lucide-react';
 
 const POST_TYPE_CONFIG: Record<PostType, { label: string; color: string; bg: string; icon: any }> = {
-  general: { label: 'General Trade Post', color: '#53647a', bg: '#f1f5f9', icon: Tag },
-  job: { label: 'Trade Career Opening', color: '#0891b2', bg: '#e0f2fe', icon: Building2 },
-  business_update: { label: 'Business Update', color: '#7c3aed', bg: '#f3e8ff', icon: TrendingUp },
-  rate_info: { label: 'Rate Intelligence', color: '#059669', bg: '#e6f4ea', icon: TrendingUp },
-  auction_ref: { label: 'Reverse Auction Inquiry', color: '#1168d7', bg: '#e8f1fd', icon: Gavel },
-  logistics_discussion: { label: 'Logistics Roundtable', color: '#d97706', bg: '#fef3c7', icon: MessageCircle },
-  announcement: { label: 'Official Network Bulletin', color: '#dc2626', bg: '#fee2e2', icon: Sparkles },
+  general: { label: 'General Trade Post', color: 'var(--text-secondary, #64748B)', bg: 'var(--surface-elevated, #F8FAFC)', icon: Tag },
+  job: { label: 'Trade Career Opening', color: '#0891b2', bg: 'rgba(8, 145, 178, 0.12)', icon: Building2 },
+  business_update: { label: 'Business Update', color: '#7c3aed', bg: 'rgba(124, 58, 237, 0.12)', icon: TrendingUp },
+  rate_info: { label: 'Rate Intelligence', color: '#059669', bg: 'rgba(5, 150, 105, 0.12)', icon: TrendingUp },
+  auction_ref: { label: 'Reverse Auction Inquiry', color: '#1168d7', bg: 'rgba(17, 104, 215, 0.12)', icon: Gavel },
+  logistics_discussion: { label: 'Logistics Roundtable', color: '#d97706', bg: 'rgba(217, 119, 6, 0.12)', icon: MessageCircle },
+  announcement: { label: 'Official Network Bulletin', color: '#dc2626', bg: 'rgba(220, 38, 38, 0.12)', icon: Sparkles },
 };
 
 interface PostDetailModalProps {
@@ -156,12 +156,12 @@ export function PostDetailModal({
             alignItems: 'center',
             gap: '2px',
             padding: '1px 5px',
-            color: '#1985a1',
+            color: 'var(--accent-primary, #006B68)',
             fontWeight: 700,
-            background: '#e0f2fe',
-            borderRadius: '3px',
+            background: 'var(--surface-elevated, #F8FAFC)',
+            borderRadius: '4px',
             cursor: 'pointer',
-            border: '1px solid #c5c3c6',
+            border: '1px solid var(--border-default, #D9DEE5)',
             fontSize: '11px',
             marginRight: '3px',
           }}
@@ -193,10 +193,10 @@ export function PostDetailModal({
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: '16px',
-            background: '#fafcff',
+            background: 'var(--surface-elevated, #F8FAFC)',
             padding: '18px 20px',
-            borderRadius: '12px',
-            border: '1px solid var(--line)',
+            borderRadius: '10px',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
             flexWrap: 'wrap',
           }}
         >
@@ -307,8 +307,8 @@ export function PostDetailModal({
               style={{
                 marginTop: '18px',
                 padding: '16px 20px',
-                background: '#f0f7ff',
-                border: '1px solid #c7dffd',
+                background: 'var(--surface-elevated, #F8FAFC)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '10px',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -365,8 +365,8 @@ export function PostDetailModal({
         {/* Discussion Section */}
         <div
           style={{
-            background: '#fafcff',
-            border: '1px solid var(--line)',
+            background: 'var(--surface-elevated, #F8FAFC)',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
             borderRadius: '12px',
             padding: '20px',
           }}
@@ -399,7 +399,7 @@ export function PostDetailModal({
           {/* Comments List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {post.comments.length === 0 ? (
-              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--mut)', fontSize: '13px', background: '#fff', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--mut)', fontSize: '13px', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
                 No replies posted yet. Be the first verified member to contribute!
               </div>
             ) : (
@@ -483,15 +483,15 @@ export function PostDetailModal({
 
                   {/* Tier 2 Nested Replies */}
                   {comment.replies && comment.replies.length > 0 && (
-                    <div style={{ marginTop: '12px', marginLeft: '18px', paddingLeft: '14px', borderLeft: '2px solid var(--line)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ marginTop: '12px', marginLeft: '18px', paddingLeft: '14px', borderLeft: '2px solid var(--border-default, #D9DEE5)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {comment.replies.map((reply) => (
                         <div
                           key={reply.id}
                           style={{
-                            background: '#f8fafc',
+                            background: 'var(--surface-elevated, #F8FAFC)',
                             padding: '10px 12px',
                             borderRadius: '8px',
-                            border: '1px solid var(--line-light)',
+                            border: '1px solid var(--border-subtle, #E5E7EB)',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -557,9 +557,9 @@ export function PostDetailModal({
 
                           {/* Tier 3 Nested Replies */}
                           {reply.replies && reply.replies.length > 0 && (
-                            <div style={{ marginTop: '8px', marginLeft: '14px', paddingLeft: '10px', borderLeft: '2px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ marginTop: '8px', marginLeft: '14px', paddingLeft: '10px', borderLeft: '2px solid var(--border-default, #D9DEE5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                               {reply.replies.map((nested) => (
-                                <div key={nested.id} style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+                                <div key={nested.id} style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <UserAvatar
                                       avatarUrl={nested.author === user?.displayName ? user?.avatarUrl : (nested as any).authorPhotoUrl || (nested as any).avatarUrl}

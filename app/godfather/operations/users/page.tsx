@@ -476,9 +476,9 @@ export default function UsersGovernancePage() {
                             fontSize: '11px',
                             padding: '3px 8px',
                             height: '26px',
-                            background: '#ecfdf5',
-                            color: '#065f46',
-                            border: '1px solid #a7f3d0',
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            color: '#059669',
+                            border: '1px solid rgba(16, 185, 129, 0.35)',
                             fontWeight: 800,
                           }}
                           title="Grant 100% Free Promotional Period (Internal Override)"
@@ -494,7 +494,7 @@ export default function UsersGovernancePage() {
                           style={{ fontSize: '11px', padding: '3px 7px', height: '26px' }}
                           title="Correct Profile Data"
                         >
-                          <Edit style={{ width: '13px', height: '13px', color: '#475569' }} />
+                          <Edit style={{ width: '13px', height: '13px', color: 'var(--text-secondary, #64748B)' }} />
                         </button>
 
                         {/* Toggle Verification */}
@@ -771,7 +771,7 @@ export default function UsersGovernancePage() {
               className="gf-modal-body"
               style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}
             >
-              <div style={{ padding: '10px 12px', borderRadius: '6px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', fontSize: '12px', lineHeight: '1.5' }}>
+              <div style={{ padding: '10px 12px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#059669', fontSize: '12px', lineHeight: '1.5' }}>
                 <strong style={{ display: 'block', fontWeight: 800, marginBottom: '2px', color: '#064e3b' }}>
                   Internal Sovereign Exemption & Privilege Details:
                 </strong>
@@ -806,7 +806,7 @@ export default function UsersGovernancePage() {
                     disabled
                     value="Premium Gold Enterprise"
                     className="gf-input"
-                    style={{ fontWeight: 800, background: '#f1f5f9', color: '#334155' }}
+                    style={{ fontWeight: 800, background: 'var(--surface-secondary, #F9FAFB)', color: 'var(--text-primary, #1F2937)' }}
                   />
                 </div>
               </div>
@@ -822,7 +822,7 @@ export default function UsersGovernancePage() {
                 />
               </div>
 
-              <div className="gf-modal-footer" style={{ padding: '12px 0 0', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <div className="gf-modal-footer" style={{ padding: '12px 0 0', borderTop: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button type="button" onClick={() => setIsTrialModalOpen(false)} className="gf-btn gf-btn-secondary">
                   Cancel
                 </button>

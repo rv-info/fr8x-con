@@ -231,19 +231,19 @@ export default function GodfatherAdsManagerPage() {
   });
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1440px', margin: '0 auto', background: '#FFFFFF' }}>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1440px', margin: '0 auto', background: 'var(--surface-primary, #FFFFFF)' }}>
       {/* Header Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#172B45', margin: 0 }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0 }}>
               Advertisement Central Governance &amp; Moderation
             </h1>
-            <span className="badge green" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '3px 8px', background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6', borderRadius: '4px' }}>
+            <span className="badge green" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '3px 8px', background: 'rgba(16, 185, 129, 0.12)', color: '#137333', border: '1px solid #CEEAD6', borderRadius: '4px' }}>
               <ShieldCheck size={12} /> Godfather Clearance Tier 1
             </span>
           </div>
-          <p style={{ fontSize: '12.5px', color: '#526174', marginTop: '4px', margin: 0 }}>
+          <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', marginTop: '4px', margin: 0 }}>
             Authoritative lifecycle control: inspect creatives, verify actionable CTA buttons, enforce geographic boundaries, and adjudicate Worldwide distribution requests.
           </p>
         </div>
@@ -253,7 +253,7 @@ export default function GodfatherAdsManagerPage() {
             type="button"
             className="btn secondary sm"
             onClick={() => setShowAuditModal(true)}
-            style={{ height: '32px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px' }}
+            style={{ height: '32px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px' }}
           >
             <History size={13} color="#075B5B" /> Audit Trail ({auditLogs.length})
           </button>
@@ -265,7 +265,7 @@ export default function GodfatherAdsManagerPage() {
               setAuditLogs(getAuditLogs());
               toast('Live advertising catalog synced with Supabase storage.');
             }}
-            style={{ height: '32px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px' }}
+            style={{ height: '32px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px' }}
           >
             <RefreshCw size={13} /> Refresh
           </button>
@@ -274,50 +274,50 @@ export default function GodfatherAdsManagerPage() {
 
       {/* PHASE 6.1: 10 KEY PERFORMANCE INDICATORS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#526174', textTransform: 'uppercase' }}>Total Ads</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#172B45', marginTop: '4px' }}>{totalAds}</div>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>Total Ads</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', marginTop: '4px' }}>{totalAds}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#B45309', textTransform: 'uppercase' }}>Pending Review</span>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#B45309', marginTop: '4px' }}>{pendingApproval}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Worldwide Req</span>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>{pendingWorldwide}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#137333', textTransform: 'uppercase' }}>Active</span>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#137333', marginTop: '4px' }}>{activeCampaigns}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#075B5B', textTransform: 'uppercase' }}>Approved</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#075B5B', marginTop: '4px' }}>{approvedAds}</div>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase' }}>Approved</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-primary, #006B68)', marginTop: '4px' }}>{approvedAds}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#526174', textTransform: 'uppercase' }}>Scheduled</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#172B45', marginTop: '4px' }}>{scheduledCampaigns}</div>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>Scheduled</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', marginTop: '4px' }}>{scheduledCampaigns}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#526174', textTransform: 'uppercase' }}>Paused</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#526174', marginTop: '4px' }}>{pausedCampaigns}</div>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>Paused</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-secondary, #64748B)', marginTop: '4px' }}>{pausedCampaigns}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
           <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#DC2626', textTransform: 'uppercase' }}>Rejected</span>
           <div style={{ fontSize: '20px', fontWeight: 800, color: '#DC2626', marginTop: '4px' }}>{rejectedAds}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#526174', textTransform: 'uppercase' }}>Expired</span>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: '#526174', marginTop: '4px' }}>{expiredCampaigns}</div>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>Expired</span>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-secondary, #64748B)', marginTop: '4px' }}>{expiredCampaigns}</div>
         </div>
-        <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#075B5B', textTransform: 'uppercase' }}>Settled Revenue</span>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#075B5B', marginTop: '4px' }}>₹{totalRevenueINR.toLocaleString('en-IN')}</div>
+        <div style={{ padding: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', boxShadow: '2px 2px 6px rgba(0,0,0,0.03)' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase' }}>Settled Revenue</span>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--accent-primary, #006B68)', marginTop: '4px' }}>₹{totalRevenueINR.toLocaleString('en-IN')}</div>
         </div>
       </div>
 
       {/* Filter Tabs & Search Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', padding: '8px 12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '8px 12px' }}>
         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
           {[
             { id: 'all', label: `All (${totalAds})` },
@@ -340,7 +340,7 @@ export default function GodfatherAdsManagerPage() {
                   fontWeight: active ? 700 : 500,
                   background: active ? '#075B5B' : '#FFFFFF',
                   color: active ? '#FFFFFF' : '#526174',
-                  border: active ? '1px solid #075B5B' : '1px solid #D9E0E8',
+                  border: active ? '1px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '4px',
                   cursor: 'pointer',
                 }}
@@ -358,16 +358,16 @@ export default function GodfatherAdsManagerPage() {
             placeholder="Search by ID, title, advertiser..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ width: '100%', height: '28px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+            style={{ width: '100%', height: '28px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
           />
         </div>
       </div>
 
       {/* PHASE 6.2: CAMPAIGNS MANAGEMENT TABLE */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', overflow: 'hidden', boxShadow: '2px 2px 8px rgba(0,0,0,0.03)' }}>
+      <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', overflow: 'hidden', boxShadow: '2px 2px 8px rgba(0,0,0,0.03)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
           <thead>
-            <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #D9E0E8', color: '#172B45', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>
+            <tr style={{ background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>
               <th style={{ padding: '10px 12px' }}>Campaign &amp; Creative</th>
               <th style={{ padding: '10px 12px' }}>Advertiser / Contact</th>
               <th style={{ padding: '10px 12px' }}>Geographic Scope</th>
@@ -380,13 +380,13 @@ export default function GodfatherAdsManagerPage() {
           <tbody>
             {filteredAds.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: '#526174' }}>
+                <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary, #64748B)' }}>
                   No advertisement campaigns found matching the selected filter.
                 </td>
               </tr>
             ) : (
               filteredAds.map((ad) => (
-                <tr key={ad.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                <tr key={ad.id} style={{ borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
                   {/* Campaign & Creative */}
                   <td style={{ padding: '10px 12px', verticalAlign: 'top', maxWidth: '240px' }}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
@@ -395,8 +395,8 @@ export default function GodfatherAdsManagerPage() {
                           width: '44px',
                           height: '44px',
                           borderRadius: '4px',
-                          background: '#F4F6F8',
-                          border: '1px solid #D9E0E8',
+                          background: 'var(--surface-secondary, #F9FAFB)',
+                          border: '1px solid var(--border-default, #D9DEE5)',
                           overflow: 'hidden',
                           flexShrink: 0,
                           display: 'flex',
@@ -411,10 +411,10 @@ export default function GodfatherAdsManagerPage() {
                         )}
                       </div>
                       <div style={{ minWidth: 0 }}>
-                        <strong style={{ fontSize: '12px', color: '#172B45', display: 'block', lineHeight: 1.3 }}>
+                        <strong style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', display: 'block', lineHeight: 1.3 }}>
                           {ad.headline}
                         </strong>
-                        <span style={{ fontSize: '10.5px', color: '#526174', fontFamily: 'monospace' }}>
+                        <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontFamily: 'monospace' }}>
                           {ad.id} · {ad.category}
                         </span>
                       </div>
@@ -423,13 +423,13 @@ export default function GodfatherAdsManagerPage() {
 
                   {/* Advertiser */}
                   <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
-                    <strong style={{ fontSize: '11.5px', color: '#172B45', display: 'block' }}>
+                    <strong style={{ fontSize: '11.5px', color: 'var(--text-primary, #1F2937)', display: 'block' }}>
                       {ad.businessName}
                     </strong>
-                    <span style={{ fontSize: '10.5px', color: '#526174', display: 'block' }}>
+                    <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', display: 'block' }}>
                       {ad.contactPerson}
                     </span>
-                    <a href={`mailto:${ad.contactEmail}`} style={{ fontSize: '10.5px', color: '#075B5B', textDecoration: 'none' }}>
+                    <a href={`mailto:${ad.contactEmail}`} style={{ fontSize: '10.5px', color: 'var(--accent-primary, #006B68)', textDecoration: 'none' }}>
                       {ad.contactEmail}
                     </a>
                   </td>
@@ -438,7 +438,7 @@ export default function GodfatherAdsManagerPage() {
                   <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
                     {ad.isWorldwideRequested ? (
                       <div>
-                        <span className="badge amber" style={{ fontSize: '9px', fontWeight: 700, padding: '1px 5px', background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B', borderRadius: '3px' }}>
+                        <span className="badge amber" style={{ fontSize: '9px', fontWeight: 700, padding: '1px 5px', background: 'rgba(217, 119, 6, 0.1)', color: '#d97706', border: '1px solid #F59E0B', borderRadius: '3px' }}>
                           WORLDWIDE REQUESTED
                         </span>
                         <small style={{ display: 'block', fontSize: '9.5px', color: ad.worldwideApprovalStatus === 'approved' ? '#137333' : '#B45309', marginTop: '2px', fontWeight: 600 }}>
@@ -447,10 +447,10 @@ export default function GodfatherAdsManagerPage() {
                       </div>
                     ) : (
                       <div>
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#172B45' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                           {ad.targetContinents.join(', ')}
                         </span>
-                        <small style={{ display: 'block', fontSize: '10px', color: '#526174' }}>
+                        <small style={{ display: 'block', fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>
                           {ad.targetCountries.slice(0, 2).join(', ')}{ad.targetCountries.length > 2 ? ` +${ad.targetCountries.length - 2}` : ''}
                         </small>
                       </div>
@@ -459,10 +459,10 @@ export default function GodfatherAdsManagerPage() {
 
                   {/* Duration & Tariff */}
                   <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
-                    <strong style={{ fontSize: '11.5px', color: '#075B5B' }}>
+                    <strong style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)' }}>
                       ₹{ad.costINR.toLocaleString('en-IN')}
                     </strong>
-                    <span style={{ display: 'block', fontSize: '10.5px', color: '#526174' }}>
+                    <span style={{ display: 'block', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
                       {ad.durationDays} Days ({ad.duration})
                     </span>
                     <span style={{ fontSize: '9px', color: ad.paymentStatus === 'paid' ? '#137333' : '#B45309', fontWeight: 600 }}>
@@ -474,7 +474,7 @@ export default function GodfatherAdsManagerPage() {
                   <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       {ad.ctaButtons.map((btn) => (
-                        <span key={btn.id} style={{ fontSize: '10px', background: '#F4F6F8', border: '1px solid #D9E0E8', padding: '1px 5px', borderRadius: '3px', color: '#172B45' }}>
+                        <span key={btn.id} style={{ fontSize: '10px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 5px', borderRadius: '3px', color: 'var(--text-primary, #1F2937)' }}>
                           {btn.label} ({btn.type})
                         </span>
                       ))}
@@ -490,12 +490,12 @@ export default function GodfatherAdsManagerPage() {
                         padding: '2px 6px',
                         borderRadius: '4px',
                         ...(ad.status === 'active'
-                          ? { background: '#E6F4EA', color: '#137333', border: '1px solid #CEEAD6' }
+                          ? { background: 'rgba(16, 185, 129, 0.12)', color: '#137333', border: '1px solid #CEEAD6' }
                           : ad.status === 'pending_godfather_approval' || ad.status === 'submitted'
-                          ? { background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B' }
+                          ? { background: 'rgba(217, 119, 6, 0.1)', color: '#d97706', border: '1px solid #F59E0B' }
                           : ad.status === 'rejected'
-                          ? { background: '#FEE2E2', color: '#991B1B', border: '1px solid #F87171' }
-                          : { background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1' }),
+                          ? { background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid #F87171' }
+                          : { background: 'var(--surface-secondary, #F9FAFB)', color: 'var(--text-secondary, #64748B)', border: '1px solid var(--border-default, #D9DEE5)' }),
                       }}
                     >
                       {ad.status.toUpperCase()}
@@ -508,7 +508,7 @@ export default function GodfatherAdsManagerPage() {
                       <button
                         type="button"
                         onClick={() => setSelectedAdForInspect(ad)}
-                        style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', color: '#075B5B', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+                        style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--accent-primary, #006B68)', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
                       >
                         Inspect &amp; Preview
                       </button>
@@ -519,7 +519,7 @@ export default function GodfatherAdsManagerPage() {
                             <button
                               type="button"
                               onClick={() => handleApproveWorldwide(ad)}
-                              style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: '#075B5B', border: '1px solid #075B5B', color: '#FFFFFF', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+                              style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: '#075B5B', border: '1px solid var(--accent-primary, #006B68)', color: '#FFFFFF', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
                               title="Approve Worldwide Targeting"
                             >
                               Approve Worldwide
@@ -536,7 +536,7 @@ export default function GodfatherAdsManagerPage() {
                           <button
                             type="button"
                             onClick={() => setRejectingAd(ad)}
-                            style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: '#FFFFFF', border: '1px solid #DC2626', color: '#DC2626', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+                            style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid #DC2626', color: '#DC2626', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
                           >
                             Reject
                           </button>
@@ -545,7 +545,7 @@ export default function GodfatherAdsManagerPage() {
                         <button
                           type="button"
                           onClick={() => handleTogglePause(ad)}
-                          style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', color: '#172B45', borderRadius: '4px', cursor: 'pointer' }}
+                          style={{ height: '26px', padding: '0 8px', fontSize: '10.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px', cursor: 'pointer' }}
                         >
                           {ad.status === 'active' ? 'Pause' : 'Resume'}
                         </button>
@@ -567,15 +567,15 @@ export default function GodfatherAdsManagerPage() {
           title={`Ad Inspection & Governance: ${selectedAdForInspect.id}`}
           maxWidth="780px"
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '16px', background: '#FFFFFF' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '16px', background: 'var(--surface-primary, #FFFFFF)' }}>
             {/* Left: Administrative Metadata & Controls */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ background: '#F8FAFC', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '10px', fontSize: '11.5px' }}>
-                <b style={{ color: '#075B5B', display: 'block', marginBottom: '4px' }}>Advertiser Dossier</b>
+              <div style={{ background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '10px', fontSize: '11.5px' }}>
+                <b style={{ color: 'var(--accent-primary, #006B68)', display: 'block', marginBottom: '4px' }}>Advertiser Dossier</b>
                 <div><strong>Business:</strong> {selectedAdForInspect.businessName}</div>
                 <div><strong>Lead Contact:</strong> {selectedAdForInspect.contactPerson} ({selectedAdForInspect.contactEmail})</div>
                 <div><strong>Phone / WhatsApp:</strong> {selectedAdForInspect.contactPhone}</div>
-                <div><strong>Destination URL:</strong> <a href={selectedAdForInspect.destUrl} target="_blank" rel="noreferrer" style={{ color: '#075B5B' }}>{selectedAdForInspect.destUrl}</a></div>
+                <div><strong>Destination URL:</strong> <a href={selectedAdForInspect.destUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary, #006B68)' }}>{selectedAdForInspect.destUrl}</a></div>
                 <div><strong>Target Corridor:</strong> {selectedAdForInspect.isWorldwideRequested ? 'Worldwide (Global)' : selectedAdForInspect.targetContinents.join(', ')}</div>
                 <div><strong>Duration / Tariff:</strong> {selectedAdForInspect.durationDays} Days (₹{selectedAdForInspect.costINR.toLocaleString('en-IN')})</div>
                 <div><strong>Payment Status:</strong> {selectedAdForInspect.paymentStatus.toUpperCase()}</div>
@@ -583,7 +583,7 @@ export default function GodfatherAdsManagerPage() {
 
               {/* Worldwide Clearance Decision */}
               {selectedAdForInspect.isWorldwideRequested && (
-                <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '6px', padding: '10px', fontSize: '11.5px', color: '#92400E' }}>
+                <div style={{ background: 'rgba(217, 119, 6, 0.1)', border: '1px solid #F59E0B', borderRadius: '6px', padding: '10px', fontSize: '11.5px', color: '#d97706' }}>
                   <b style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
                     <AlertTriangle size={13} /> Worldwide Clearance Pending
                   </b>
@@ -614,14 +614,14 @@ export default function GodfatherAdsManagerPage() {
                 <button
                   type="button"
                   onClick={() => setRejectingAd(selectedAdForInspect)}
-                  style={{ height: '30px', padding: '0 12px', background: '#FFFFFF', color: '#DC2626', border: '1px solid #DC2626', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ height: '30px', padding: '0 12px', background: 'var(--surface-primary, #FFFFFF)', color: '#DC2626', border: '1px solid #DC2626', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Reject with Reason
                 </button>
                 <button
                   type="button"
                   onClick={() => setExtendingAd(selectedAdForInspect)}
-                  style={{ height: '30px', padding: '0 12px', background: '#FFFFFF', color: '#172B45', border: '1px solid #D9E0E8', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                  style={{ height: '30px', padding: '0 12px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   Extend Duration
                 </button>
@@ -629,16 +629,16 @@ export default function GodfatherAdsManagerPage() {
             </div>
 
             {/* Right: Live Card Preview */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderLeft: '1px solid #D9E0E8', paddingLeft: '14px' }}>
-              <span style={{ fontSize: '10.5px', color: '#526174', fontWeight: 600, marginBottom: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderLeft: '1px solid var(--border-default, #D9DEE5)', paddingLeft: '14px' }}>
+              <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginBottom: '6px' }}>
                 Live Feed Banner Preview (237 × 299 px)
               </span>
               <div
                 style={{
                   width: '237px',
                   minHeight: '299px',
-                  background: '#FFFFFF',
-                  border: '1px solid #D9E0E8',
+                  background: 'var(--surface-primary, #FFFFFF)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '8px',
                   padding: '10px',
                   boxShadow: '4px 4px 10px rgba(0,0,0,0.06), -4px -4px 10px rgba(255,255,255,0.95)',
@@ -649,8 +649,8 @@ export default function GodfatherAdsManagerPage() {
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#526174' }}>SPONSORED</span>
-                    <span style={{ fontSize: '9px', color: '#075B5B', fontWeight: 600 }}>
+                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>SPONSORED</span>
+                    <span style={{ fontSize: '9px', color: 'var(--accent-primary, #006B68)', fontWeight: 600 }}>
                       {selectedAdForInspect.isWorldwideRequested ? 'WORLDWIDE' : 'REGIONAL'}
                     </span>
                   </div>
@@ -659,12 +659,12 @@ export default function GodfatherAdsManagerPage() {
                       width: '100%',
                       height: '130px',
                       borderRadius: '6px',
-                      background: '#F4F6F8',
+                      background: 'var(--surface-secondary, #F9FAFB)',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      border: '1px solid #D9E0E8',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                     }}
                   >
                     {selectedAdForInspect.creativeUrl ? (
@@ -673,15 +673,15 @@ export default function GodfatherAdsManagerPage() {
                       <Globe size={24} color="#075B5B" />
                     )}
                   </div>
-                  <h4 style={{ margin: '8px 0 4px', fontSize: '12px', fontWeight: 700, color: '#172B45', lineHeight: 1.3 }}>
+                  <h4 style={{ margin: '8px 0 4px', fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', lineHeight: 1.3 }}>
                     {selectedAdForInspect.headline}
                   </h4>
-                  <p style={{ margin: 0, fontSize: '10.5px', color: '#526174', lineHeight: 1.4 }}>
+                  <p style={{ margin: 0, fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.4 }}>
                     {selectedAdForInspect.description}
                   </p>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px', borderTop: '1px solid #D9E0E8', paddingTop: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px', borderTop: '1px solid var(--border-default, #D9DEE5)', paddingTop: '6px' }}>
                   {selectedAdForInspect.ctaButtons.map((btn) => (
                     <div
                       key={btn.id}
@@ -697,7 +697,7 @@ export default function GodfatherAdsManagerPage() {
                         gap: '4px',
                         background: btn.style === 'primary' ? '#075B5B' : '#FFFFFF',
                         color: btn.style === 'primary' ? '#FFFFFF' : '#172B45',
-                        border: '1px solid #D9E0E8',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                       }}
                     >
                       <ExternalLink size={10} /> {btn.label}
@@ -719,11 +719,11 @@ export default function GodfatherAdsManagerPage() {
           maxWidth="480px"
         >
           <form onSubmit={handleRejectConfirm} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontSize: '12px', color: '#526174', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: 0 }}>
               Specify the compliance or editorial violation reason. This will be transmitted to the advertiser and recorded in the immutable Godfather audit log.
             </p>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '3px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '3px' }}>
                 Rejection Reason <span style={{ color: '#DC2626' }}>*</span>
               </label>
               <textarea
@@ -732,7 +732,7 @@ export default function GodfatherAdsManagerPage() {
                 placeholder="e.g. Unverified shipping rates or misleading demurrage guarantee; please update destination URL to certified tariff schedule..."
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                style={{ width: '100%', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '6px 8px' }}
+                style={{ width: '100%', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '6px 8px' }}
                 required
               />
             </div>
@@ -764,17 +764,17 @@ export default function GodfatherAdsManagerPage() {
           maxWidth="440px"
         >
           <form onSubmit={handleExtendDuration} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontSize: '12px', color: '#526174', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: 0 }}>
               Add additional active days to <strong>{extendingAd.headline}</strong> ({extendingAd.businessName}).
             </p>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#172B45', display: 'block', marginBottom: '3px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '3px' }}>
                 Extra Runtime (Days)
               </label>
               <select
                 value={extraDays}
                 onChange={(e) => setExtraDays(parseInt(e.target.value, 10))}
-                style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                style={{ width: '100%', height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
               >
                 <option value={3}>+3 Days</option>
                 <option value={7}>+7 Days (1 Week)</option>
@@ -811,7 +811,7 @@ export default function GodfatherAdsManagerPage() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '60vh', overflowY: 'auto' }}>
             {auditLogs.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#526174', textAlign: 'center', padding: '20px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', textAlign: 'center', padding: '20px' }}>
                 No audit entries recorded yet.
               </p>
             ) : (
@@ -819,31 +819,31 @@ export default function GodfatherAdsManagerPage() {
                 <div
                   key={log.id}
                   style={{
-                    background: '#F8FAFC',
-                    border: '1px solid #D9E0E8',
+                    background: 'var(--surface-secondary, #F9FAFB)',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     padding: '10px 12px',
                     fontSize: '11.5px',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ color: '#075B5B' }}>
+                    <strong style={{ color: 'var(--accent-primary, #006B68)' }}>
                       {log.action.toUpperCase()} · Campaign {log.campaignId}
                     </strong>
-                    <span style={{ fontSize: '10px', color: '#526174' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>
                       {new Date(log.timestamp).toLocaleString()}
                     </span>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#172B45', marginTop: '3px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', marginTop: '3px' }}>
                     <strong>Admin:</strong> {log.adminEmail} ({log.adminId})
                   </div>
                   {log.previousStatus && (
-                    <div style={{ fontSize: '10.5px', color: '#526174' }}>
+                    <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
                       Status transition: <code>{log.previousStatus}</code> → <code>{log.newStatus}</code>
                     </div>
                   )}
                   {log.reason && (
-                    <div style={{ fontSize: '11px', color: '#526174', marginTop: '4px', background: '#FFFFFF', padding: '4px 8px', borderRadius: '4px', border: '1px solid #D9E0E8' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '4px', background: 'var(--surface-primary, #FFFFFF)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-default, #D9DEE5)' }}>
                       <strong>Note:</strong> {log.reason}
                     </div>
                   )}

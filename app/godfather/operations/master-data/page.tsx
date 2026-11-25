@@ -937,98 +937,98 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
           onClick={() => setActiveTab('locations')}
           className={`gf-stat-box ${activeTab === 'locations' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Locations</span>
-            <Anchor style={{ width: '15px', height: '15px', color: '#0284c7' }} />
+            <Anchor style={{ width: '15px', height: '15px', color: 'var(--accent-primary, #006B68)' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             {masterLocations.length}
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>POR / POL / POD / FPOD</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>POR / POL / POD / FPOD</div>
         </div>
 
         <div
           onClick={() => setActiveTab('carriers')}
           className={`gf-stat-box ${activeTab === 'carriers' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Carriers</span>
             <Ship style={{ width: '15px', height: '15px', color: '#4f46e5' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             {masterCarriers.length}
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>MLO · NVOCC · Feeder</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>MLO · NVOCC · Feeder</div>
         </div>
 
         <div
           onClick={() => setActiveTab('equipment')}
           className={`gf-stat-box ${activeTab === 'equipment' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Equipment</span>
             <Box style={{ width: '15px', height: '15px', color: '#059669' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             {masterEquipment.length}
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>ISO Dry · Reefer · OOG</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>ISO Dry · Reefer · OOG</div>
         </div>
 
         <div
           onClick={() => setActiveTab('commodities')}
           className={`gf-stat-box ${activeTab === 'commodities' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>HS Codes</span>
             <FileCode2 style={{ width: '15px', height: '15px', color: '#d97706' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             {masterCommodities.length}
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Harmonized Tariff & Haz</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>Harmonized Tariff & Haz</div>
         </div>
 
         <div
           onClick={() => setActiveTab('incoterms')}
           className={`gf-stat-box ${activeTab === 'incoterms' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Incoterms</span>
             <Scale style={{ width: '15px', height: '15px', color: '#7c3aed' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             {masterIncoterms.length}
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Incoterms 2020 Rules</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>Incoterms 2020 Rules</div>
         </div>
 
         <div
           onClick={() => setActiveTab('tax')}
           className={`gf-stat-box ${activeTab === 'tax' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tax & SAC</span>
             <Receipt style={{ width: '15px', height: '15px', color: '#dc2626' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             {masterTaxCodes.length}
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Statutory GST & RCM</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>Statutory GST & RCM</div>
         </div>
 
         <div
           onClick={() => setActiveTab('cities')}
           className={`gf-stat-box ${activeTab === 'cities' ? 'active' : ''}`}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'var(--text-secondary, #64748B)', marginBottom: '4px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Global Cities</span>
-            <Globe style={{ width: '15px', height: '15px', color: '#0284c7' }} />
+            <Globe style={{ width: '15px', height: '15px', color: 'var(--accent-primary, #006B68)' }} />
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
             150,000+
           </div>
-          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>250 Countries · Postal/ZIP</div>
+          <div style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 600, marginTop: '2px' }}>250 Countries · Postal/ZIP</div>
         </div>
       </div>
 

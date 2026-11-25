@@ -52,11 +52,11 @@ export default function SitemapPage() {
   return (
     <div
       style={{
-        backgroundColor: '#F8FAFD',
+        backgroundColor: 'var(--app-bg, #FFFFFF)',
         minHeight: '100vh',
-        fontFamily: 'Calibri, Arial, sans-serif',
+        fontFamily: 'var(--font-family-primary)',
         fontSize: '12px',
-        color: '#1A2332',
+        color: 'var(--text-primary, #1F2937)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -65,8 +65,8 @@ export default function SitemapPage() {
       {/* Top Header */}
       <header
         style={{
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #E2E8F0',
+          backgroundColor: 'var(--surface-primary, #FFFFFF)',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
           padding: '16px 24px',
           position: 'sticky',
           top: 0,
@@ -76,7 +76,7 @@ export default function SitemapPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             <img src="/ART/LOGOS/logo_primary.png" alt="FR8X" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-            <span style={{ fontSize: '13px', fontWeight: 800, color: '#1B2B4B', letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em' }}>
               FR8X
             </span>
           </Link>
@@ -86,9 +86,10 @@ export default function SitemapPage() {
               href="/dashboard"
               style={{
                 padding: '6px 14px',
-                backgroundColor: '#1B2B4B',
+                backgroundColor: 'var(--accent-primary, #006B68)',
+                border: '1px solid var(--accent-primary, #006B68)',
                 color: '#FFFFFF',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 textDecoration: 'none',
                 fontWeight: 600,
                 fontSize: '12px',
@@ -106,22 +107,22 @@ export default function SitemapPage() {
           <span
             style={{
               padding: '3px 8px',
-              backgroundColor: '#EEF1F7',
-              color: '#1B2B4B',
+              backgroundColor: 'var(--surface-secondary, #F8FAFC)',
+              color: 'var(--text-primary, #1F2937)',
               borderRadius: '4px',
               fontSize: '11px',
               fontWeight: 700,
-              border: '1px solid #CBD5E0',
+              border: '1px solid var(--border-default, #D9DEE5)',
               display: 'inline-block',
               marginBottom: '8px',
             }}
           >
             SYSTEM INDEX
           </span>
-          <h1 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800, color: '#1B2B4B' }}>
+          <h1 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary, #1F2937)' }}>
             FR8X Platform Sitemap &amp; Public Destination Index
           </h1>
-          <p style={{ margin: 0, color: '#4A5568', fontSize: '12px', maxWidth: '720px', lineHeight: 1.5 }}>
+          <p style={{ margin: 0, color: 'var(--text-secondary, #64748B)', fontSize: '12px', maxWidth: '720px', lineHeight: 1.5 }}>
             This sitemap lists publicly indexable destinations, core logistics modules, and compliance resources across the
             FR8X enterprise freight ecosystem. Private workspaces, administrative modules, and tenant-restricted endpoints
             are strictly segregated from this public directory.
@@ -134,18 +135,18 @@ export default function SitemapPage() {
             <div
               key={sec.title}
               style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '6px',
+                backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
+                borderRadius: '8px',
                 padding: '24px',
-                boxShadow: '0 1px 3px rgba(27, 43, 75, 0.04)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
-              <div style={{ borderBottom: '1px solid #CBD5E0', paddingBottom: '12px', marginBottom: '16px' }}>
-                <h2 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#1B2B4B' }}>
+              <div style={{ borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '12px', marginBottom: '16px' }}>
+                <h2 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
                   {sec.title}
                 </h2>
-                <p style={{ margin: 0, color: '#718096', fontSize: '12px' }}>{sec.description}</p>
+                <p style={{ margin: 0, color: 'var(--text-secondary, #64748B)', fontSize: '12px' }}>{sec.description}</p>
               </div>
 
               <div
@@ -162,20 +163,20 @@ export default function SitemapPage() {
                     style={{
                       display: 'block',
                       padding: '12px 14px',
-                      backgroundColor: '#F8FAFD',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: '4px',
+                      backgroundColor: 'var(--surface-secondary, #F8FAFC)',
+                      border: '1px solid var(--border-subtle, #E5E7EB)',
+                      borderRadius: '6px',
                       textDecoration: 'none',
                       transition: 'border-color 0.15s ease',
                     }}
                   >
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#1B2B4B', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                       {link.label}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#4A5568', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.4 }}>
                       {link.desc}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#47799E', fontWeight: 600, marginTop: '6px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--accent-primary, #006B68)', fontWeight: 600, marginTop: '6px' }}>
                       {link.href} &rarr;
                     </div>
                   </Link>

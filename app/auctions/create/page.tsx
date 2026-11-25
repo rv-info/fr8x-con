@@ -660,11 +660,11 @@ export default function CreateReverseAuctionPage() {
                 key={plan.id}
                 onClick={() => setSelectedPlan(plan.id)}
                 style={{
-                  border: `2px solid ${selectedPlan === plan.id ? 'var(--brand)' : 'var(--line)'}`,
+                  border: `1.5px solid ${selectedPlan === plan.id ? 'var(--accent-primary, #006B68)' : 'var(--border-default, #D9DEE5)'}`,
                   borderRadius: '10px', padding: '18px 16px', cursor: 'pointer',
-                  background: selectedPlan === plan.id ? '#eff6ff' : '#fff',
+                  background: selectedPlan === plan.id ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
                   transition: 'all 0.15s ease',
-                  boxShadow: selectedPlan === plan.id ? '0 2px 10px rgba(59,130,246,0.15)' : 'none',
+                  boxShadow: selectedPlan === plan.id ? 'var(--glass-shadow, 0 2px 10px rgba(0, 107, 104, 0.15))' : 'none',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -679,9 +679,9 @@ export default function CreateReverseAuctionPage() {
               </div>
             ))}
           </div>
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 16px', fontSize: '12px' }}>
-            <b style={{ color: '#166534' }}>💳 Secure Payment via Razorpay / UPI / Net Banking</b>
-            <p style={{ margin: '4px 0 0', color: '#15803d' }}>Your listing goes live immediately after payment confirmation. All assigned bidders are notified instantly.</p>
+          <div style={{ background: 'rgba(21, 128, 61, 0.08)', border: '1px solid rgba(21, 128, 61, 0.3)', borderRadius: '8px', padding: '12px 16px', fontSize: '12px' }}>
+            <b style={{ color: 'var(--glass-accent-green, #15803D)' }}>💳 Secure Payment via Razorpay / UPI / Net Banking</b>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-secondary, #64748B)' }}>Your listing goes live immediately after payment confirmation. All assigned bidders are notified instantly.</p>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
             <button className="btn secondary" onClick={() => setShowPaymentModal(false)}>Cancel</button>
@@ -1154,9 +1154,9 @@ export default function CreateReverseAuctionPage() {
               <div className="auctions-create-mobile-cards">
                 {containers.map((row, idx) => (
                   <div key={row.id} className="auctions-create-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 800, background: '#E8F7EF', color: '#12372A', border: '1px solid #3FA66B', borderRadius: '4px', padding: '2px 6px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 800, background: 'var(--surface-elevated, #F8FAFC)', color: 'var(--accent-primary, #006B68)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '2px 6px' }}>
                           #{idx + 1}
                         </span>
                         <b style={{ fontSize: '12px', color: 'var(--ink)' }}>{row.equipmentType.split(' (')[0]}</b>
@@ -1367,10 +1367,10 @@ export default function CreateReverseAuctionPage() {
 
                   {/* Operational Freight Forwarder FOB Scope of Work Checklist */}
                   {incoterm.toUpperCase().includes('FOB') && (
-                    <div className="subbox" style={{ marginTop: '12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px 14px' }}>
+                    <div className="subbox" style={{ marginTop: '12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', padding: '12px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                         <ShieldCheck size={14} color="#0284c7" />
-                        <b style={{ fontSize: '11.5px', color: '#0369a1' }}>FOB Operational Freight Forwarder Scope of Work</b>
+                        <b style={{ fontSize: '11.5px', color: 'var(--accent-primary, #006B68)' }}>FOB Operational Freight Forwarder Scope of Work</b>
                       </div>
                       <p style={{ fontSize: '11px', color: '#0c4a6e', margin: '0 0 8px' }}>
                         Explicit forwarder responsibilities required at origin port before ocean vessel departure:
@@ -1570,7 +1570,7 @@ export default function CreateReverseAuctionPage() {
                       className="input"
                       value={preferredShippingLine}
                       onChange={(e) => setPreferredShippingLine(e.target.value)}
-                      style={customCarriers.some((c) => c.name === preferredShippingLine) ? { borderColor: '#800000', color: '#800000', fontWeight: 'bold', background: '#fff5f5' } : {}}
+                      style={customCarriers.some((c) => c.name === preferredShippingLine) ? { borderColor: '#800000', color: '#800000', fontWeight: 'bold', background: 'rgba(239, 68, 68, 0.08)' } : {}}
                     >
                       <option value="">-- Select --</option>
                       <optgroup label="Standard Master Carriers">
@@ -1659,7 +1659,7 @@ export default function CreateReverseAuctionPage() {
                       </div>
                     ))}
                     {specialFreeTime.length === 0 && (
-                      <p style={{ fontSize: '11px', color: 'var(--mut)', textAlign: 'center', padding: '12px', background: '#f8fafc', borderRadius: '6px' }}>
+                      <p style={{ fontSize: '11px', color: 'var(--mut)', textAlign: 'center', padding: '12px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px' }}>
                         No special free time entries. Click + Add Row.
                       </p>
                     )}
@@ -1758,9 +1758,9 @@ export default function CreateReverseAuctionPage() {
                                 padding: '8px 10px',
                                 marginBottom: '8px',
                                 borderRadius: '4px',
-                                backgroundColor: '#FEF2F2',
-                                border: '1px solid #FECACA',
-                                color: '#991B1B',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.35)',
+                                color: '#dc2626',
                                 fontSize: '11px',
                                 lineHeight: '1.4',
                               }}
@@ -1788,7 +1788,7 @@ export default function CreateReverseAuctionPage() {
                               <div
                                 key={b.id}
                                 className="record"
-                                style={{ padding: '6px 4px', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                style={{ padding: '6px 4px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                               >
                                 <div style={{ minWidth: 0, flex: 1 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -2122,7 +2122,7 @@ export default function CreateReverseAuctionPage() {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ padding: '10px 12px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px', color: '#1e40af' }}>
+          <div style={{ padding: '10px 12px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
             <FileCheck size={14} style={{ display: 'inline', marginRight: '6px' }} />
             Provide compliant IMDG Dangerous Goods details for carrier stowage declaration.
           </div>
@@ -2225,8 +2225,8 @@ export default function CreateReverseAuctionPage() {
           </div>
 
           {/* Confirm Text Box */}
-          <div style={{ padding: '12px', background: '#f8fafc', border: '1.5px solid #0284c7', borderRadius: '6px' }}>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: '#0f172a' }}>
+          <div style={{ padding: '12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1.5px solid #0284c7', borderRadius: '6px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
               <input
                 type="checkbox"
                 checked={msdsData.isConfirmed}
@@ -2275,7 +2275,7 @@ export default function CreateReverseAuctionPage() {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ padding: '10px 12px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px', color: '#1e40af' }}>
+          <div style={{ padding: '10px 12px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
             <Layers size={14} style={{ display: 'inline', marginRight: '6px' }} />
             Configure individual package dimensions and unit weights to compute total container volume (CBM) and payload.
           </div>
@@ -2370,24 +2370,24 @@ export default function CreateReverseAuctionPage() {
           </div>
 
           {/* Auto-Calculated Volume & Weight Summary Box */}
-          <div style={{ padding: '10px 14px', background: '#f1f5f9', borderRadius: '6px', border: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Calculated Total Volume:</span>
-              <b style={{ fontSize: '15px', color: '#0369a1' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', display: 'block' }}>Calculated Total Volume:</span>
+              <b style={{ fontSize: '15px', color: 'var(--accent-primary, #006B68)' }}>
                 {((packingDimsData.quantity * packingDimsData.lengthCm * packingDimsData.widthCm * packingDimsData.heightCm) / 1000000).toFixed(2)} CBM (m³)
               </b>
             </div>
             <div>
-              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Calculated Total Gross Weight:</span>
-              <b style={{ fontSize: '15px', color: '#0f172a' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', display: 'block' }}>Calculated Total Gross Weight:</span>
+              <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)' }}>
                 {(packingDimsData.quantity * packingDimsData.weightKg).toLocaleString()} kg
               </b>
             </div>
           </div>
 
           {/* Confirm Text Box */}
-          <div style={{ padding: '12px', background: '#f8fafc', border: '1.5px solid #0284c7', borderRadius: '6px' }}>
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: '#0f172a' }}>
+          <div style={{ padding: '12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1.5px solid #0284c7', borderRadius: '6px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
               <input
                 type="checkbox"
                 checked={packingDimsData.isConfirmed}
@@ -2494,7 +2494,7 @@ export default function CreateReverseAuctionPage() {
           maxWidth="560px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ padding: '14px 16px', background: '#eff6ff', borderRadius: '10px', border: '1px solid #bfdbfe' }}>
+            <div style={{ padding: '14px 16px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '10px', border: '1px solid var(--border-default, #D9DEE5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <small style={{ color: 'var(--brand)', fontSize: '10.5px', fontWeight: 800, textTransform: 'uppercase' }}>
@@ -2519,7 +2519,7 @@ export default function CreateReverseAuctionPage() {
             </div>
 
             {/* Posting vs Participation Fee Notice */}
-            <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: 1.55 }}>
+            <div style={{ padding: '12px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line)', fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: 1.55 }}>
               <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
                 💡 Transparent Fee Structure Policy:
               </b>

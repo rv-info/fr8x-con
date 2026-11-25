@@ -221,10 +221,10 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
           className="modal-card"
           onClick={(e) => e.stopPropagation()}
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface-primary, #FFFFFF)',
             borderRadius: '10px',
             boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.25), 0 0 1px 1px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #D9E0E8',
+            border: '1px solid var(--border-default, #D9DEE5)',
             width: '100%',
             maxWidth: '740px',
             maxHeight: '92vh',
@@ -238,14 +238,14 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
           <div
             style={{
               padding: '14px 20px',
-              borderBottom: '1px solid #D9E0E8',
+              borderBottom: '1px solid var(--border-default, #D9DEE5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-primary, #FFFFFF)',
             }}
           >
-            <b style={{ fontSize: '15px', color: '#172B45', fontWeight: 700 }}>
+            <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)', fontWeight: 700 }}>
               Post a Job Opportunity
             </b>
             <button
@@ -279,13 +279,13 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               display: 'flex',
               flexDirection: 'column',
               gap: '14px',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-primary, #FFFFFF)',
             }}
           >
             {/* Row 1: Title & Company */}
             <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Job Title <span style={{ color: '#DC2626' }}>*</span>
                 </label>
                 <input
@@ -293,19 +293,19 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   placeholder="e.g. Senior Freight Analyst"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                   required
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Company
                 </label>
                 <input
                   className="input"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
             </div>
@@ -313,14 +313,14 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
             {/* Row 2: Category & Vacancies */}
             <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Job Category / Department <span style={{ color: '#DC2626' }}>*</span>
                 </label>
                 <select
                   className="input"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 8px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 8px' }}
                 >
                   <option value="Ocean Freight & Liner Operations">Ocean Freight & Liner Operations</option>
                   <option value="Air Cargo & Charter Operations">Air Cargo & Charter Operations</option>
@@ -333,7 +333,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Number of Vacancies
                 </label>
                 <input
@@ -343,7 +343,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   className="input"
                   value={vacancies}
                   onChange={(e) => setVacancies(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
             </div>
@@ -351,7 +351,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
             {/* Row 3: Location & Employment Type */}
             <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Location
                 </label>
                 <input
@@ -359,18 +359,18 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   placeholder="e.g. Gurugram (Sikanderpur), India · On-site"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Employment Type
                 </label>
                 <select
                   className="input"
                   value={employmentType}
                   onChange={(e) => setEmploymentType(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 8px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 8px' }}
                 >
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
@@ -384,7 +384,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
             {/* Row 3: Experience & Package */}
             <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Experience
                 </label>
                 <input
@@ -392,11 +392,11 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   placeholder="e.g. 3–5 yrs experience"
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Package / Compensation
                 </label>
                 <input
@@ -404,7 +404,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   placeholder="e.g. ₹10–15 LPA"
                   value={packageDetails}
                   onChange={(e) => setPackageDetails(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
             </div>
@@ -412,7 +412,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
             {/* Row 4: Closing Date & Skills */}
             <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Closing Date
                 </label>
                 <input
@@ -420,11 +420,11 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   className="input"
                   value={closingDate}
                   onChange={(e) => setClosingDate(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                   Skills (comma-separated)
                 </label>
                 <input
@@ -432,14 +432,14 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   placeholder="FCL, Carrier Negotiations, INCOTERMS"
                   value={skills}
                   onChange={(e) => setSkills(e.target.value)}
-                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                 />
               </div>
             </div>
 
             {/* Row 5: Job Description */}
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                 Job Description
               </label>
               <textarea
@@ -448,13 +448,13 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 placeholder="Comprehensive overview of the role, team context, and objectives..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                style={{ width: '100%', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
+                style={{ width: '100%', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
               />
             </div>
 
             {/* Row 6: Requirements */}
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                 Requirements <span style={{ color: '#DC2626' }}>*</span>
               </label>
               <textarea
@@ -463,7 +463,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 placeholder="Key skills, tools, and experience required..."
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
-                style={{ width: '100%', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
+                style={{ width: '100%', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
                 required
               />
               <div style={{ marginTop: '6px' }}>
@@ -473,7 +473,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
 
             {/* Row 6: Responsibilities */}
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                 Responsibilities
               </label>
               <textarea
@@ -482,13 +482,13 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 placeholder="Day-to-day responsibilities..."
                 value={responsibilities}
                 onChange={(e) => setResponsibilities(e.target.value)}
-                style={{ width: '100%', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
+                style={{ width: '100%', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
               />
             </div>
 
             {/* Row 7: Qualifications */}
             <div>
-              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '4px' }}>
                 Qualifications
               </label>
               <textarea
@@ -497,15 +497,15 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 placeholder="Educational background, certifications..."
                 value={qualifications}
                 onChange={(e) => setQualifications(e.target.value)}
-                style={{ width: '100%', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
+                style={{ width: '100%', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
               />
             </div>
 
             {/* Row 8: Employer Contact Information (Mandatory Section) */}
             <div
               style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #D9E0E8',
+                backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 padding: '14px 16px',
                 display: 'flex',
@@ -514,11 +514,11 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 boxShadow: '2px 2px 8px rgba(0,0,0,0.03)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #D9E0E8', paddingBottom: '6px' }}>
-                <b style={{ fontSize: '12.5px', color: '#075B5B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-default, #D9DEE5)', paddingBottom: '6px' }}>
+                <b style={{ fontSize: '12.5px', color: 'var(--accent-primary, #006B68)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Mail size={14} /> Employer Contact Information
                 </b>
-                <span style={{ fontSize: '10.5px', color: '#526174' }}>
+                <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
                   Mandatory for application routing &amp; applicant verification
                 </span>
               </div>
@@ -526,7 +526,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               {/* Contact Person Name & Designation */}
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '3px' }}>
                     Contact Person Name <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
@@ -535,12 +535,12 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     value={contactPerson}
                     onChange={(e) => setContactPerson(e.target.value)}
                     placeholder="e.g. Rajat Kumar / Lead Recruiter"
-                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '3px' }}>
                     Designation
                   </label>
                   <input
@@ -549,7 +549,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     value={contactDesignation}
                     onChange={(e) => setContactDesignation(e.target.value)}
                     placeholder="e.g. Head of Talent Acquisition"
-                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                   />
                 </div>
               </div>
@@ -557,7 +557,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               {/* Official Email & Company Website */}
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '3px' }}>
                     Official Company Email Address <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
@@ -566,12 +566,12 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     value={primaryEmail}
                     onChange={(e) => setPrimaryEmail(e.target.value)}
                     placeholder="recruiter@company.com"
-                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                     required
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '3px' }}>
                     Company Website
                   </label>
                   <input
@@ -580,7 +580,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     value={companyWebsite}
                     onChange={(e) => setCompanyWebsite(e.target.value)}
                     placeholder="https://company.com"
-                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                   />
                 </div>
               </div>
@@ -588,7 +588,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               {/* Phone & WhatsApp Number */}
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '3px' }}>
                     Contact Phone Number <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -598,10 +598,10 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                       value={contactPhone}
                       onChange={(e) => setContactPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      style={{ flex: 1, height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                      style={{ flex: 1, height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                       required
                     />
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#172B45', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       <input
                         type="checkbox"
                         checked={hasWhatsApp}
@@ -612,7 +612,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '3px' }}>
                     Dedicated WhatsApp Number (International format)
                   </label>
                   <input
@@ -621,7 +621,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     value={whatsappNumber}
                     onChange={(e) => setWhatsappNumber(e.target.value)}
                     placeholder="+919876543210 (country code + number)"
-                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '0 10px' }}
                   />
                 </div>
               </div>
@@ -629,7 +629,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               {/* Additional Contact Emails list */}
               {additionalEmails.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
-                  <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#526174' }}>Secondary Notification Emails:</span>
+                  <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-secondary, #64748B)' }}>Secondary Notification Emails:</span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {additionalEmails.map((ae) => (
                       <span
@@ -638,15 +638,15 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          background: '#F4F6F8',
-                          border: '1px solid #D9E0E8',
+                          background: 'var(--surface-secondary, #F9FAFB)',
+                          border: '1px solid var(--border-default, #D9DEE5)',
                           borderRadius: '4px',
                           padding: '3px 8px',
                           fontSize: '11px',
-                          color: '#172B45',
+                          color: 'var(--text-primary, #1F2937)',
                         }}
                       >
-                        <span style={{ fontWeight: 600, color: '#075B5B' }}>[{ae.label}]</span>
+                        <span style={{ fontWeight: 600, color: 'var(--accent-primary, #006B68)' }}>[{ae.label}]</span>
                         {ae.email}
                         <button
                           type="button"
@@ -668,7 +668,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   <select
                     value={newEmailLabel}
                     onChange={(e) => setNewEmailLabel(e.target.value as any)}
-                    style={{ height: '30px', fontSize: '11px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 6px' }}
+                    style={{ height: '30px', fontSize: '11px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 6px' }}
                   >
                     <option value="Recruiter">Recruiter</option>
                     <option value="HR">HR</option>
@@ -681,7 +681,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     placeholder="additional.recruiter@company.com"
                     value={newEmailInput}
                     onChange={(e) => setNewEmailInput(e.target.value)}
-                    style={{ flex: 1, height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                    style={{ flex: 1, height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                   />
                   <button
                     type="button"
@@ -707,7 +707,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                       height: '30px',
                       padding: '0 8px',
                       background: 'none',
-                      border: '1px solid #D9E0E8',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       borderRadius: '4px',
                       fontSize: '11px',
                       cursor: 'pointer',
@@ -725,9 +725,9 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      background: '#FFFFFF',
-                      border: '1px dashed #075B5B',
-                      color: '#075B5B',
+                      background: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px dashed var(--accent-primary, #006B68)',
+                      color: 'var(--accent-primary, #006B68)',
                       padding: '3px 8px',
                       borderRadius: '4px',
                       fontSize: '11px',
@@ -742,7 +742,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
 
               {/* Application Instructions & Method */}
               <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#172B45' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                   Application Instructions &amp; Preference
                 </label>
                 <input
@@ -750,10 +750,10 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   value={applicationInstructions}
                   onChange={(e) => setApplicationInstructions(e.target.value)}
                   placeholder="e.g. Apply via portal or send resume to recruiter..."
-                  style={{ width: '100%', height: '30px', fontSize: '11.5px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '0 8px' }}
+                  style={{ width: '100%', height: '30px', fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '0 8px' }}
                 />
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginTop: '2px' }}>
-                  <label style={{ fontSize: '11px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                     <input
                       type="radio"
                       name="appMethod"
@@ -762,7 +762,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     />
                     Accept In-App &amp; Direct Email
                   </label>
-                  <label style={{ fontSize: '11px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                     <input
                       type="radio"
                       name="appMethod"
@@ -771,7 +771,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                     />
                     FR8X In-App Only
                   </label>
-                  <label style={{ fontSize: '11px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                     <input
                       type="radio"
                       name="appMethod"
@@ -787,8 +787,8 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
             {/* Row 9: Tariff & Duration Box (Screenshot 1 Reference) */}
             <div
               style={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #D9E0E8',
+                backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 padding: '14px',
                 display: 'flex',
@@ -797,10 +797,10 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ fontSize: '12px', color: '#075B5B', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <b style={{ fontSize: '12px', color: 'var(--accent-primary, #006B68)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <DollarSign size={13} /> Job Listing Tariff &amp; Duration
                 </b>
-                <span style={{ fontSize: '11px', color: '#526174' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                   ₹300 for 2 days · ₹180/day thereafter
                 </span>
               </div>
@@ -822,7 +822,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                       style={{
                         padding: '10px 8px',
                         borderRadius: '6px',
-                        border: isSelected ? '2px solid #075B5B' : '1px solid #D9E0E8',
+                        border: isSelected ? '2px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                         backgroundColor: isSelected ? '#F0FDF4' : '#FFFFFF',
                         cursor: 'pointer',
                         textAlign: 'center',
@@ -832,7 +832,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                       <b style={{ fontSize: '14px', color: isSelected ? '#075B5B' : '#172B45', display: 'block' }}>
                         ₹{tier.cost.toLocaleString('en-IN')}
                       </b>
-                      <small style={{ fontSize: '10.5px', color: '#526174', marginTop: '2px', display: 'block' }}>
+                      <small style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', display: 'block' }}>
                         {tier.label}
                       </small>
                     </div>
@@ -846,23 +846,23 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  borderTop: '1px solid #D9E0E8',
+                  borderTop: '1px solid var(--border-default, #D9DEE5)',
                   paddingTop: '12px',
                   marginTop: '6px',
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: 'var(--surface-secondary, #F9FAFB)',
                   padding: '10px 14px',
                   borderRadius: '6px',
-                  border: '1px solid #D9E0E8',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '11px', color: '#526174' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                     Job Listing Package: <strong>₹{totalCost.toLocaleString('en-IN')}</strong>
                   </span>
-                  <span style={{ fontSize: '11px', color: '#526174' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                     Duration: <strong>{durationDays} Days</strong>
                   </span>
-                  <label style={{ fontSize: '11px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', marginTop: '2px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', marginTop: '2px' }}>
                     <input
                       type="checkbox"
                       checked={autoRenew}
@@ -872,10 +872,10 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   </label>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '10.5px', color: '#526174', display: 'block', fontWeight: 600 }}>
+                  <span style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', display: 'block', fontWeight: 600 }}>
                     TOTAL PAYABLE
                   </span>
-                  <b style={{ fontSize: '18px', color: '#075B5B' }}>
+                  <b style={{ fontSize: '18px', color: 'var(--accent-primary, #006B68)' }}>
                     {isFreeWaiver ? '₹0 (Promotional Waiver)' : `₹${totalCost.toLocaleString('en-IN')}`}
                   </b>
                 </div>
@@ -898,9 +898,9 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 style={{
                   height: '34px',
                   padding: '0 16px',
-                  backgroundColor: '#FFFFFF',
-                  color: '#172B45',
-                  border: '1px solid #D9E0E8',
+                  backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                  color: 'var(--text-primary, #1F2937)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -918,7 +918,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   padding: '0 24px',
                   backgroundColor: '#075B5B',
                   color: '#FFFFFF',
-                  border: '1px solid #075B5B',
+                  border: '1px solid var(--accent-primary, #006B68)',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 700,

@@ -401,7 +401,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
     // 3. Format detailed HTML email message
     const htmlBody = `
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1e293b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1e293b; background: #ffffff; border: 1px solid var(--border-subtle, #E5E7EB); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
   <div style="background: #991b1b; padding: 20px 24px; color: #ffffff;">
     <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
       Moderation Alert
@@ -429,8 +429,8 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
     </div>
 
     <!-- Reported Topic Summary -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px;">
-      <h3 style="margin: 0 0 10px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+    <div style="background: #f8fafc; border: 1px solid var(--border-subtle, #E5E7EB); border-radius: 6px; padding: 16px;">
+      <h3 style="margin: 0 0 10px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid var(--border-subtle, #E5E7EB); padding-bottom: 6px;">
         Reported Topic Information
       </h3>
       <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -456,7 +456,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
         </tr>
       </table>
 
-      <div style="margin-top: 12px; padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;">
+      <div style="margin-top: 12px; padding: 12px; background: #ffffff; border: 1px solid var(--border-default, #D9DEE5); border-radius: 6px;">
         <b style="display: block; font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Topic Body Content:</b>
         <div style="font-size: 13px; color: #1e293b; line-height: 1.5; white-space: pre-wrap;">
           ${targetTopic?.text || '(No text body content)'}
@@ -465,8 +465,8 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
     </div>
 
     <!-- Reporter Profile -->
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px;">
-      <h3 style="margin: 0 0 10px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+    <div style="background: #f8fafc; border: 1px solid var(--border-subtle, #E5E7EB); border-radius: 6px; padding: 16px;">
+      <h3 style="margin: 0 0 10px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid var(--border-subtle, #E5E7EB); padding-bottom: 6px;">
         Reporter Audit Profile
       </h3>
       <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
@@ -494,7 +494,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
     </div>
 
     <!-- Footer Notice -->
-    <div style="text-align: center; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 11.5px; color: #94a3b8;">
+    <div style="text-align: center; padding-top: 8px; border-top: 1px solid var(--border-subtle, #E5E7EB); font-size: 11.5px; color: #94a3b8;">
       FR8X Freight Exchange Moderation Engine · Dispatched directly to support@fr8x.in
     </div>
   </div>
@@ -609,7 +609,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Header Alert */}
-            <div style={{ padding: '14px 16px', background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '14px 16px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span className="badge red" style={{ fontSize: '10.5px', fontWeight: 800 }}>
                   <ShieldAlert size={12} style={{ verticalAlign: '-2px', marginRight: '4px' }} />
@@ -630,7 +630,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
             {/* Infraction & Exposure Details */}
             <div className="grid g2" style={{ gap: '12px' }}>
-              <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <div style={{ padding: '12px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line)' }}>
                 <small style={{ color: 'var(--mut)', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 700 }}>
                   Infraction Category
                 </small>
@@ -642,7 +642,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                 </p>
               </div>
 
-              <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <div style={{ padding: '12px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line)' }}>
                 <small style={{ color: 'var(--mut)', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 700 }}>
                   Due Process & Compliance Status
                 </small>
@@ -657,20 +657,20 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
             </div>
 
             {/* Evidentiary Audit Trail */}
-            <div style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px', padding: '14px' }}>
+            <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--line)', borderRadius: '8px', padding: '14px' }}>
               <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                 <FileCheck size={15} color="var(--brand)" /> Auditable Evidentiary Dossier
               </b>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: '#f1f5f9', borderRadius: '6px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px', fontSize: '12px' }}>
                   <span>📄 Primary Verified Reference: <b>{selectedCaseDossier.evidenceRef}</b></span>
                   <span className="badge green" style={{ fontSize: '9px' }}>AUTHENTICATED</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: '#f1f5f9', borderRadius: '6px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px', fontSize: '12px' }}>
                   <span>📜 Bill of Lading & Commercial Shipping Invoices (OBL-9024)</span>
                   <span className="badge green" style={{ fontSize: '9px' }}>FILED</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: '#f1f5f9', borderRadius: '6px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '6px', fontSize: '12px' }}>
                   <span>⚖️ Advocate Demand Notice & Postal Speedpost AD Proof</span>
                   <span className="badge green" style={{ fontSize: '9px' }}>SERVED</span>
                 </div>
@@ -678,7 +678,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
             </div>
 
             {/* Global Consensus in Dossier (Requirement 9) */}
-            <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '12px 14px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <b style={{ fontSize: '12px', color: 'var(--ink)' }}>Global Consensus Status</b>
                 <small style={{ display: 'block', color: 'var(--mut)', fontSize: '11px' }}>
@@ -746,7 +746,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
           maxWidth="640px"
         >
           <form onSubmit={handleConfirmDispute} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '11.5px', color: '#991b1b' }}>
+            <div style={{ padding: '10px 12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '8px', fontSize: '11.5px', color: '#dc2626' }}>
               <b>Case Reference: {disputeModalTarget.id} · {disputeModalTarget.reason}</b>
               <p style={{ margin: '4px 0 0', color: 'var(--ink)' }}>
                 You are submitting formal counter-evidence to dispute this trade default entry on behalf of <b>{user.company}</b>.
@@ -881,7 +881,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                 <form
                   onSubmit={handleUpdateTopic}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     borderRadius: '8px',
                     border: '1px solid var(--line)',
                     padding: '20px',
@@ -952,7 +952,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                 /* Read View (Read Operation) */
                 <div
                   style={{
-                    background: '#f8fafc',
+                    background: 'var(--surface-secondary, #F9FAFB)',
                     borderRadius: '8px',
                     border: '1px solid var(--line)',
                     padding: '24px',
@@ -1028,7 +1028,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                 flexDirection: 'column',
                 gap: '12px',
                 height: '100%',
-                background: '#ffffff',
+                background: 'var(--surface-primary, #FFFFFF)',
                 border: '1px solid var(--line)',
                 borderRadius: '8px',
                 padding: '16px',
@@ -1047,7 +1047,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
               {/* Scrollable list of replies */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', paddingRight: '4px', minHeight: '260px' }}>
                 {selectedTopic.replies.length === 0 ? (
-                  <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px', border: '1px dashed var(--line)', fontSize: '13px', margin: 'auto 0' }}>
+                  <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--mut)', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px dashed var(--line)', fontSize: '13px', margin: 'auto 0' }}>
                     <MessagesSquare size={32} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.35 }} />
                     No responses yet. Post your professional insight below to participate.
                   </div>
@@ -1340,7 +1340,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                       left: 0,
                       right: 0,
                       zIndex: 100,
-                      background: '#ffffff',
+                      background: 'var(--surface-primary, #FFFFFF)',
                       border: '1.5px solid var(--brand)',
                       borderRadius: '6px',
                       boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
@@ -1349,7 +1349,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                       marginTop: '4px',
                     }}
                   >
-                    <div style={{ padding: '6px 10px', background: '#f8fafc', borderBottom: '1px solid var(--line)', fontSize: '10.5px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase' }}>
+                    <div style={{ padding: '6px 10px', background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--line)', fontSize: '10.5px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase' }}>
                       Disputed &amp; Verified Company Records
                     </div>
                     {filteredKnownCompanies.length === 0 ? (
@@ -1372,14 +1372,14 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                             style={{
                               padding: '8px 12px',
                               cursor: 'pointer',
-                              borderBottom: '1px solid #f1f5f9',
+                              borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
                               display: 'flex',
                               justifyContent: 'space-between',
                               alignItems: 'center',
                               fontSize: '12.5px',
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-elevated, #F8FAFC)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface-primary, #FFFFFF)')}
                           >
                             <div>
                               <b style={{ color: 'var(--ink)', display: 'block' }}>{comp.name}</b>
@@ -1401,7 +1401,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                             style={{
                               padding: '8px 12px',
                               cursor: 'pointer',
-                              background: '#faf5ff',
+                              background: 'rgba(139, 92, 246, 0.08)',
                               color: 'var(--brand)',
                               fontSize: '11.5px',
                               fontWeight: 600,
@@ -1580,7 +1580,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
       {activeTab === 'community' && (
         <div>
           {filteredTopics.length === 0 ? (
-            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '12px', border: '1px dashed var(--line)' }}>
               <MessagesSquare size={40} style={{ color: 'var(--mut)', margin: '0 auto 12px' }} />
               <h3 style={{ margin: '0 0 6px', fontSize: '16px', color: 'var(--ink)' }}>No discussions yet</h3>
               <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--mut)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -1605,7 +1605,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                     flexDirection: 'column',
                     gap: '10px',
                     transition: 'all 0.15s ease',
-                    background: '#ffffff',
+                    background: 'var(--surface-primary, #FFFFFF)',
                   }}
                   onClick={() => setSelectedTopic(topic)}
                 >
@@ -1673,7 +1673,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
       {activeTab === 'reviews' && (
         <div>
           {filteredReviews.length === 0 ? (
-            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '12px', border: '1px dashed var(--line)' }}>
               <Star size={40} style={{ color: 'var(--mut)', margin: '0 auto 12px' }} />
               <h3 style={{ margin: '0 0 6px', fontSize: '16px', color: 'var(--ink)' }}>No company reviews yet</h3>
               <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--mut)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -1695,7 +1695,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                       padding: '20px 22px',
                       borderRadius: '12px',
                       border: '1px solid var(--line)',
-                      background: '#ffffff',
+                      background: 'var(--surface-primary, #FFFFFF)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '12px',
@@ -1721,7 +1721,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                     </div>
 
                     {/* Star Distribution */}
-                    <div className="starbars" style={{ margin: '2px 0', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                    <div className="starbars" style={{ margin: '2px 0', padding: '10px 12px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
                       {[5, 4, 3, 2, 1].map((stars, idx) => (
                         <div key={stars} className="sr">
                           <label style={{ fontSize: '11px' }}>{stars}★</label>
@@ -1750,9 +1750,9 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
                       {/* Inline Quick Add Remark Drawer */}
                       {isAddingQuickRemark && (
-                        <div style={{ padding: '10px 12px', background: '#f0f9ff', border: '1.5px solid #bae6fd', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ padding: '10px 12px', background: 'var(--surface-secondary, #F9FAFB)', border: '1.5px solid #bae6fd', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0369a1' }}>
+                            <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--accent-primary, #006B68)' }}>
                               Rate {review.companyName}:
                             </span>
                             <div style={{ display: 'flex', gap: '4px' }}>
@@ -1780,7 +1780,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                             placeholder="Write your experience regarding documentation, payment, or container release..."
                             value={quickRemarkText}
                             onChange={(e) => setQuickRemarkText(e.target.value)}
-                            style={{ fontSize: '11.5px', background: '#ffffff' }}
+                            style={{ fontSize: '11.5px', background: 'var(--surface-primary, #FFFFFF)' }}
                           />
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                             <button className="btn secondary sm" onClick={() => setQuickReviewTargetId(null)}>
@@ -1811,7 +1811,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                               style={{
                                 padding: '12px 14px',
                                 border: '1.5px solid var(--brand)',
-                                background: '#f0f9ff',
+                                background: 'var(--surface-secondary, #F9FAFB)',
                                 borderRadius: '6px',
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -1847,7 +1847,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                                 rows={3}
                                 value={editingRemark.text}
                                 onChange={(e) => setEditingRemark((prev) => (prev ? { ...prev, text: e.target.value } : null))}
-                                style={{ fontSize: '12px', background: '#ffffff', lineHeight: 1.5 }}
+                                style={{ fontSize: '12px', background: 'var(--surface-primary, #FFFFFF)', lineHeight: 1.5 }}
                                 placeholder="Update your authentic trade experience..."
                               />
                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
@@ -1883,7 +1883,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                             style={{
                               padding: '10px 12px',
                               borderLeft: '3px solid var(--brand)',
-                              background: '#f8fafc',
+                              background: 'var(--surface-secondary, #F9FAFB)',
                               borderRadius: '4px',
                               fontSize: '12px',
                               display: 'flex',
@@ -1949,8 +1949,9 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                                   style={{
                                     fontSize: '10.5px',
                                     padding: '2px 6px',
-                                    background: r.liked ? '#eff6ff' : '#ffffff',
-                                    color: r.liked ? 'var(--brand)' : 'var(--ink-secondary)',
+                                    background: r.liked ? 'rgba(0, 107, 104, 0.1)' : 'var(--surface-primary, #FFFFFF)',
+                                    borderColor: r.liked ? 'var(--accent-primary, #006B68)' : 'var(--border-interactive, #D1D5DB)',
+                                    color: r.liked ? 'var(--accent-primary, #006B68)' : 'var(--text-secondary, #64748B)',
                                   }}
                                   onClick={() => reactReviewRemark(review.id, r.id, 'like')}
                                   title="Mark as helpful remark"
@@ -1989,7 +1990,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
       {activeTab === 'blacklist' && (
         <div>
           {filteredCases.length === 0 ? (
-            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '12px', border: '1px dashed var(--line)' }}>
               <ShieldCheck size={40} style={{ color: '#16a34a', margin: '0 auto 12px' }} />
               <h3 style={{ margin: '0 0 6px', fontSize: '16px', color: 'var(--ink)' }}>No active blacklist cases</h3>
               <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--mut)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
@@ -2008,8 +2009,8 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                   style={{
                     padding: '20px 22px',
                     borderRadius: '12px',
-                    border: '1.5px solid #fecaca',
-                    background: '#ffffff',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    background: 'var(--surface-primary, #FFFFFF)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '12px',
@@ -2040,21 +2041,21 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                   </div>
 
                   {/* Global Consensus Panel (Requirement 9) */}
-                  <div style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ padding: '10px 12px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
                       <span style={{ fontWeight: 700, color: 'var(--ink)' }}>Global Trade Consensus:</span>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <span style={{ color: '#15803d', fontWeight: 700 }}>
                           ✓ {c.agreedCount || 0} Agreed Defaults
                         </span>
-                        <span style={{ color: '#0369a1', fontWeight: 700 }}>
+                        <span style={{ color: 'var(--accent-primary, #006B68)', fontWeight: 700 }}>
                           ⚖️ {c.disputeCount || 0} Disputes
                         </span>
                       </div>
                     </div>
 
                     {/* Consensus Balance Meter */}
-                    <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ width: '100%', height: '6px', background: 'var(--border-subtle, #E5E7EB)', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
                       <div
                         style={{
                           height: '100%',
@@ -2073,7 +2074,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
                     {/* Active Dispute Counter-Claims */}
                     {c.disputes && c.disputes.length > 0 && (
-                      <div style={{ marginTop: '4px', padding: '6px 8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bae6fd', fontSize: '11px', color: '#0369a1' }}>
+                      <div style={{ marginTop: '4px', padding: '6px 8px', background: 'var(--surface-secondary, #F9FAFB)', borderRadius: '4px', border: '1px solid var(--border-default, #D9DEE5)', fontSize: '11px', color: 'var(--accent-primary, #006B68)' }}>
                         <b>Counter-Claim under review:</b> &quot;{c.disputes[0].text}&quot; — <i>{c.disputes[0].authorCompany || c.disputes[0].author}</i>
                       </div>
                     )}
@@ -2104,7 +2105,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
                     <button
                       className="btn secondary sm"
-                      style={{ borderColor: '#fca5a5', color: '#991b1b', background: '#fff5f5', fontWeight: 700, fontSize: '11px' }}
+                      style={{ borderColor: '#fca5a5', color: '#991b1b', background: 'rgba(239, 68, 68, 0.08)', fontWeight: 700, fontSize: '11px' }}
                       onClick={() => setSelectedCaseDossier(c)}
                     >
                       <ShieldAlert size={12} /> Inspect Dossier
@@ -2132,7 +2133,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
         >
           <form onSubmit={handleConfirmReport} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Target Summary Banner */}
-            <div style={{ padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
+            <div style={{ padding: '12px 14px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.35)', borderRadius: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#991b1b', fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 <Flag size={12} /> Flagging Topic For Review
               </div>
@@ -2140,7 +2141,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                 &quot;{reportModalTarget.title}&quot;
               </b>
               <small style={{ display: 'block', color: 'var(--mut)', fontSize: '11px', marginTop: '2px' }}>
-                Topic ID: <code style={{ fontFamily: 'var(--font-mono)' }}>{reportModalTarget.id}</code> · Report will be dispatched directly to <strong style={{ color: '#0369a1' }}>support@fr8x.in</strong>
+                Topic ID: <code style={{ fontFamily: 'var(--font-mono)' }}>{reportModalTarget.id}</code> · Report will be dispatched directly to <strong style={{ color: 'var(--accent-primary, #006B68)' }}>support@fr8x.in</strong>
               </small>
             </div>
 

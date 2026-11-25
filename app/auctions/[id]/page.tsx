@@ -493,7 +493,7 @@ export default function BidRoomPage() {
   if (!auction) {
     return (
       <div style={{ maxWidth: '720px', margin: '60px auto', padding: '0 16px' }}>
-        <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--line)' }}>
+        <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '12px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
           <AlertTriangle size={44} style={{ color: '#eab308', margin: '0 auto 14px' }} />
           <h2 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--ink)' }}>Reverse Auction Not Found</h2>
           <p style={{ margin: '0 0 20px', fontSize: '13px', color: 'var(--mut)' }}>
@@ -561,7 +561,7 @@ export default function BidRoomPage() {
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Countdown Clock */}
           <div style={{ borderRight: '1px solid rgba(255, 255, 255, 0.15)', paddingRight: '20px' }}>
-            <small style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Clock size={11} color="#38bdf8" /> Time Remaining in Event
             </small>
             <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-mono)', color: '#38bdf8', marginTop: '2px' }}>
@@ -571,7 +571,7 @@ export default function BidRoomPage() {
 
           {/* Sourcing Parameters */}
           <div>
-            <small style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
+            <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
               Procurement Category & Buyer
             </small>
             <div style={{ fontSize: '14px', fontWeight: 700, marginTop: '2px' }}>
@@ -587,7 +587,7 @@ export default function BidRoomPage() {
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-              <small style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                 {showCompetitionCeiling ? 'COMPETITION CEILING (REVERSE AUCTION)' : 'COMPETITION CEILING'}
               </small>
               <button
@@ -613,7 +613,7 @@ export default function BidRoomPage() {
                 ${ceiling.toFixed(2)} USD
               </div>
             ) : (
-              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#94a3b8', marginTop: '3px', background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', marginTop: '3px', background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
                 Blind Sourcing (Masked)
               </div>
             )}
@@ -671,81 +671,81 @@ export default function BidRoomPage() {
       {activeTab === 'console' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Top Title Bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', alignItems: 'center', background: '#f1f5f9', border: '1.5px solid #cbd5e1', borderRadius: '6px', padding: '6px 10px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ink)', textTransform: 'uppercase' }}>AUCTION TITLE</span>
-            <input className="input" readOnly value={auction.title} style={{ height: '30px', fontSize: '12.5px', background: '#ffffff', fontWeight: 700, color: 'var(--ink)' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', alignItems: 'center', background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '6px 10px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase' }}>AUCTION TITLE</span>
+            <input className="input" readOnly value={auction.title} style={{ height: '30px', fontSize: '12.5px', background: 'var(--surface-primary, #FFFFFF)', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }} />
           </div>
 
           {/* Top 5 Information Blocks */}
           <div className="bidding-info-blocks">
             {/* Box 1: AUCTION DETAILS */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>AUCTION DETAILS</div>
-              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--ink)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>AUCTION ID</span><b>{auction.id} 🔒</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>RFQ / QUERY ID</span><b>{auction.rfqId}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>AUCTION TYPE</span><b>{auction.auctionType}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>AUCTION STATUS</span><b style={{ color: '#15803d' }}>{auction.status}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>CREATED DATE</span><b>{auction.startDate || '2026-08-29'}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>START DATE</span><b>{auction.startDate} 10:00</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>END DATE</span><b>{auction.endDateTime || '2026-08-29 12:00'}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>TIME ZONE</span><b>{auction.timezone || 'Asia/Kolkata'}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>DURATION</span><b>{auction.durationMinutes}m</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>BID VISIBILITY</span><b>{auction.rules?.rankingVisible ? 'Visible' : 'Hidden'}</b></div>
+            <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>AUCTION DETAILS</div>
+              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>AUCTION ID</span><b>{auction.id} 🔒</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>RFQ / QUERY ID</span><b>{auction.rfqId}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>AUCTION TYPE</span><b>{auction.auctionType}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>AUCTION STATUS</span><b style={{ color: '#15803d' }}>{auction.status}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>CREATED DATE</span><b>{auction.startDate || '2026-08-29'}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>START DATE</span><b>{auction.startDate} 10:00</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>END DATE</span><b>{auction.endDateTime || '2026-08-29 12:00'}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>TIME ZONE</span><b>{auction.timezone || 'Asia/Kolkata'}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>DURATION</span><b>{auction.durationMinutes}m</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>BID VISIBILITY</span><b>{auction.rules?.rankingVisible ? 'Visible' : 'Hidden'}</b></div>
               </div>
             </div>
 
             {/* Box 2: SHIPMENT DETAILS */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>SHIPMENT DETAILS</div>
-              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--ink)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>POR</span><b>{auction.shipment.por || auction.shipment.pol}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>POL</span><b>{auction.shipment.pol}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>POD</span><b>{auction.shipment.pod}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>FINAL DEST</span><b>{auction.shipment.finalDestination || auction.shipment.pod}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>CARGO READY</span><b style={{ color: '#0284c7' }}>{auction.shipment.cargoReadyDate}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>SHIPMENT TYPE</span><b>{auction.shipment.shipmentType}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>MOVEMENT</span><b>Port to Port</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>INCOTERM</span><b>{auction.shipment.incoterm || 'FOB'}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>BL TYPE</span><b>Original BL</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>SERVICE</span><b>CY-CY</b></div>
+            <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>SHIPMENT DETAILS</div>
+              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>POR</span><b>{auction.shipment.por || auction.shipment.pol}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>POL</span><b>{auction.shipment.pol}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>POD</span><b>{auction.shipment.pod}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>FINAL DEST</span><b>{auction.shipment.finalDestination || auction.shipment.pod}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>CARGO READY</span><b style={{ color: 'var(--accent-primary, #006B68)' }}>{auction.shipment.cargoReadyDate}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>SHIPMENT TYPE</span><b>{auction.shipment.shipmentType}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>MOVEMENT</span><b>Port to Port</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>INCOTERM</span><b>{auction.shipment.incoterm || 'FOB'}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>BL TYPE</span><b>Original BL</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>SERVICE</span><b>CY-CY</b></div>
               </div>
             </div>
 
             {/* Box 3: CARGO DETAILS */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>CARGO DETAILS</div>
-              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--ink)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>COMMODITY</span><b>{auction.shipment.commodity}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>HS CODE</span><b>{auction.shipment.hsCode}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>CARGO TYPE</span><b>General</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>HAZARDOUS</span><b>{auction.shipment.isHazardous ? 'Hazardous' : 'Non-Hazardous'}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>TOTAL WEIGHT</span><b>{((auction.shipment.weightKg || 24000) / 1000).toFixed(1)} MT</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>TOTAL CBM</span><b>{auction.shipment.cbm || 68} CBM</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>PACKAGES</span><b>24 Pallets</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>PACK TYPE</span><b>Euro Pallets</b></div>
+            <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>CARGO DETAILS</div>
+              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>COMMODITY</span><b>{auction.shipment.commodity}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>HS CODE</span><b>{auction.shipment.hsCode}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>CARGO TYPE</span><b>General</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>HAZARDOUS</span><b>{auction.shipment.isHazardous ? 'Hazardous' : 'Non-Hazardous'}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>TOTAL WEIGHT</span><b>{((auction.shipment.weightKg || 24000) / 1000).toFixed(1)} MT</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>TOTAL CBM</span><b>{auction.shipment.cbm || 68} CBM</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>PACKAGES</span><b>24 Pallets</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>PACK TYPE</span><b>Euro Pallets</b></div>
               </div>
             </div>
 
             {/* Box 4: ROUTING REQUIREMENT */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>BUYER ROUTING TARGET</div>
-              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--ink)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>TARGET CARRIER</span><b>Tier-1 Lines</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>ROUTING</span><b>Direct Preferred</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>MAX TRANSIT</span><b>≤ 30 Days</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>TRANSSHIPMENT</span><b>Max 1 Hub</b></div>
+            <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>BUYER ROUTING TARGET</div>
+              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>TARGET CARRIER</span><b>Tier-1 Lines</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>ROUTING</span><b>Direct Preferred</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>MAX TRANSIT</span><b>≤ 30 Days</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>TRANSSHIPMENT</span><b>Max 1 Hub</b></div>
               </div>
             </div>
 
             {/* Box 5: FREE TIME REQUIREMENT */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>FREE TIME SPECIFICATION</div>
-              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--ink)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>ORIGIN FREE</span><b>14 DAYS COMBINED</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>DEST. FREE</span><b>21 DAYS COMBINED</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>DEMURRAGE CAP</span><b>$75/day after free</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>SETTLEMENT</span><b>Net 45 Days</b></div>
+            <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>FREE TIME SPECIFICATION</div>
+              <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>ORIGIN FREE</span><b>14 DAYS COMBINED</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>DEST. FREE</span><b>21 DAYS COMBINED</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>DEMURRAGE CAP</span><b>$75/day after free</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>SETTLEMENT</span><b>Net 45 Days</b></div>
               </div>
             </div>
           </div>
@@ -756,22 +756,22 @@ export default function BidRoomPage() {
               {/* Owner Governance Notice Banner */}
               <div
                 style={{
-                  backgroundColor: '#EEF2F7',
-                  border: '1.5px solid #CBD5E0',
-                  borderRadius: '6px',
+                  backgroundColor: 'var(--surface-elevated, #F8FAFC)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
+                  borderRadius: '8px',
                   padding: '14px 18px',
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '12px',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                  boxShadow: 'var(--shadow-subtle, 0 1px 3px rgba(0, 0, 0, 0.04))',
                 }}
               >
-                <ShieldCheck size={22} color="#1B2B4B" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <ShieldCheck size={22} color="var(--accent-primary, #006B68)" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div>
-                  <b style={{ color: '#1B2B4B', fontSize: '13px', display: 'block', marginBottom: '2px' }}>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '13px', display: 'block', marginBottom: '2px' }}>
                     AUCTION OWNER TENDER MANAGEMENT CONSOLE
                   </b>
-                  <p style={{ margin: 0, color: '#4A5568', fontSize: '12px', lineHeight: 1.45 }}>
+                  <p style={{ margin: 0, color: 'var(--text-secondary, #64748B)', fontSize: '12px', lineHeight: 1.45 }}>
                     You published this reverse auction on behalf of <b>{auction.creatorCompany || user?.company || 'Your Organization'}</b>. Under reverse-auction anti-collusion integrity rules, the auction creator and owning company members are strictly prohibited from submitting competing bids against their own auction. Use this console to evaluate incoming competitive offers from verified freight forwarders and award the tender.
                   </p>
                 </div>
@@ -779,43 +779,43 @@ export default function BidRoomPage() {
 
               {/* Owner Realtime Metric Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
-                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>INVITED BIDDERS</small>
-                  <b style={{ color: '#1B2B4B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '12px 14px' }}>
+                  <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>INVITED BIDDERS</small>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '18px', display: 'block', marginTop: '2px' }}>
                     {isGeneralBidding ? 'Open Network' : `${selectedBiddersList.length} Selected`}
                   </b>
-                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>{isGeneralBidding ? 'All verified freight forwarders' : 'Restricted invitation manifest'}</span>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>{isGeneralBidding ? 'All verified freight forwarders' : 'Restricted invitation manifest'}</span>
                 </div>
-                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
-                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>ACTIVE PARTICIPATING BIDDERS</small>
-                  <b style={{ color: '#1B2B4B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '12px 14px' }}>
+                  <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>ACTIVE PARTICIPATING BIDDERS</small>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '18px', display: 'block', marginTop: '2px' }}>
                     {new Set(currentBids.map((b) => b.bidderCompany || b.bidderUid)).size} Forwarders
                   </b>
-                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>Submitted at least one competitive offer</span>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>Submitted at least one competitive offer</span>
                 </div>
-                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
-                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>TOTAL BIDS RECEIVED</small>
-                  <b style={{ color: '#1B2B4B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '12px 14px' }}>
+                  <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>TOTAL BIDS RECEIVED</small>
+                  <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '18px', display: 'block', marginTop: '2px' }}>
                     {currentBids.length} Offers
                   </b>
-                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>Cryptographically signed audit entries</span>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>Cryptographically signed audit entries</span>
                 </div>
-                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
-                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>LEADING L1 TENDER OFFER</small>
-                  <b style={{ color: currentBids.length > 0 ? '#16A34A' : '#64748B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', padding: '12px 14px' }}>
+                  <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>LEADING L1 TENDER OFFER</small>
+                  <b style={{ color: currentBids.length > 0 ? '#16A34A' : 'var(--text-secondary, #64748B)', fontSize: '18px', display: 'block', marginTop: '2px' }}>
                     {currentBids.length > 0
                       ? `$${Math.min(...currentBids.map((b) => Number(b.grandTotalUSD || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
                       : 'Awaiting First Bid'}
                   </b>
-                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>Lowest evaluated price across network</span>
+                  <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>Lowest evaluated price across network</span>
                 </div>
               </div>
 
               {/* Tendered Bids & Standings Ledger */}
-              <div style={{ border: '1.5px solid #CBD5E0', borderRadius: '6px', background: '#FFFFFF', overflow: 'hidden' }}>
+              <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
                 <div
                   style={{
-                    background: '#1B2B4B',
+                    background: 'var(--accent-primary, #006B68)',
                     color: '#FFFFFF',
                     padding: '10px 14px',
                     display: 'flex',
@@ -835,12 +835,12 @@ export default function BidRoomPage() {
                 </div>
 
                 {currentBids.length === 0 ? (
-                  <div style={{ padding: '48px 20px', textAlign: 'center', color: '#64748B' }}>
-                    <Activity size={32} color="#94A3B8" style={{ margin: '0 auto 10px', display: 'block' }} />
-                    <b style={{ fontSize: '14px', color: '#1E293B', display: 'block', marginBottom: '4px' }}>
+                  <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-secondary, #64748B)' }}>
+                    <Activity size={32} color="var(--text-secondary, #64748B)" style={{ margin: '0 auto 10px', display: 'block' }} />
+                    <b style={{ fontSize: '14px', color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                       No Bids Received Yet
                     </b>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
+                    <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
                       This reverse auction is live on the network. Competitive bids from independent freight forwarders will populate here in real time.
                     </p>
                   </div>
@@ -848,13 +848,13 @@ export default function BidRoomPage() {
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                       <thead>
-                        <tr style={{ background: '#F8FAFD', borderBottom: '1px solid #CBD5E0', textAlign: 'left' }}>
-                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>RANK</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>BIDDER / FORWARDER</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>CARRIER</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B', textAlign: 'right' }}>OFFER AMOUNT (USD)</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>SUBMITTED</th>
-                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B', textAlign: 'right' }}>ACTIONS</th>
+                        <tr style={{ background: 'var(--surface-elevated, #F8FAFC)', borderBottom: '1px solid var(--border-default, #D9DEE5)', textAlign: 'left' }}>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>RANK</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>BIDDER / FORWARDER</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>CARRIER</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textAlign: 'right' }}>OFFER AMOUNT (USD)</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>SUBMITTED</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textAlign: 'right' }}>ACTIONS</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -862,7 +862,7 @@ export default function BidRoomPage() {
                           .slice()
                           .sort((a, b) => Number(a.grandTotalUSD || 0) - Number(b.grandTotalUSD || 0))
                           .map((b, idx) => (
-                            <tr key={b.id || idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx === 0 ? '#F0FDF4' : '#FFFFFF' }}>
+                            <tr key={b.id || idx} style={{ borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: idx === 0 ? 'rgba(22, 163, 74, 0.06)' : 'var(--surface-primary, #FFFFFF)' }}>
                               <td style={{ padding: '10px 12px' }}>
                                 <span
                                   style={{
@@ -871,7 +871,7 @@ export default function BidRoomPage() {
                                     borderRadius: '4px',
                                     fontWeight: 800,
                                     fontSize: '11px',
-                                    background: idx === 0 ? '#16A34A' : '#64748B',
+                                    background: idx === 0 ? '#16A34A' : 'var(--text-secondary, #64748B)',
                                     color: '#FFFFFF',
                                   }}
                                 >
@@ -884,13 +884,13 @@ export default function BidRoomPage() {
                                   <GoldenTick size={13} />
                                 </div>
                               </td>
-                              <td style={{ padding: '10px 12px', color: '#4A5568' }}>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary, #64748B)' }}>
                                 {b.evidenceDocket?.proposedCarrier || (b.charges?.[0] as any)?.carrier || 'Premier Carrier'}
                               </td>
-                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: '#1B2B4B', fontSize: '13px' }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--text-primary, #1F2937)', fontSize: '13px' }}>
                                 ${Number(b.grandTotalUSD || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </td>
-                              <td style={{ padding: '10px 12px', color: '#64748B' }}>
+                              <td style={{ padding: '10px 12px', color: 'var(--text-secondary, #64748B)' }}>
                                 {b.submittedAt ? new Date(b.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
                               </td>
                               <td style={{ padding: '10px 12px', textAlign: 'right' }}>
@@ -898,7 +898,7 @@ export default function BidRoomPage() {
                                   type="button"
                                   className="btn primary sm"
                                   onClick={() => toast(`Tender awarded to ${b.bidderCompany || 'L1 Bidder'}. Official contract generated.`)}
-                                  style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 700, background: '#1B2B4B', borderColor: '#1B2B4B' }}
+                                  style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 700 }}
                                 >
                                   Award Tender
                                 </button>
@@ -913,12 +913,12 @@ export default function BidRoomPage() {
             </div>
           ) : !isInvitedBidder ? (
             /* RESTRICTED ACCESS: Non-invited forwarders cannot view or bid on private auctions */
-            <div style={{ border: '1.5px solid #CBD5E0', borderRadius: '6px', background: '#FFFFFF', padding: '36px 24px', textAlign: 'center' }}>
+            <div style={{ border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)', padding: '36px 24px', textAlign: 'center' }}>
               <ShieldAlert size={36} color="#DC2626" style={{ margin: '0 auto 12px', display: 'block' }} />
-              <b style={{ color: '#1E293B', fontSize: '15px', display: 'block', marginBottom: '6px' }}>
+              <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '15px', display: 'block', marginBottom: '6px' }}>
                 Private Specific-Bidder Reverse Auction
               </b>
-              <p style={{ maxWidth: '480px', margin: '0 auto 16px', color: '#64748B', fontSize: '12.5px', lineHeight: 1.5 }}>
+              <p style={{ maxWidth: '480px', margin: '0 auto 16px', color: 'var(--text-secondary, #64748B)', fontSize: '12.5px', lineHeight: 1.5 }}>
                 This reverse auction tender is restricted exclusively to specifically selected logistics enterprises invited by <b>{auction.creatorCompany || 'the procurement issuer'}</b>. Your organization (<b>{user.company || 'Current User'}</b>) is not on the authorized bidder manifest.
               </p>
               <Link href="/auctions" className="btn secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -933,12 +933,12 @@ export default function BidRoomPage() {
                 const userActiveRank = userServerRank !== null ? userServerRank : (userPlacedBid ? sortedBids.findIndex((b) => b.bidderUid === user.uid) + 1 : null);
                 if (userActiveRank === 1) {
                   return (
-                    <div style={{ background: '#ECFDF5', border: '1.5px solid #10B981', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '20px' }}>🏆</span>
                         <div>
-                          <b style={{ color: '#065F46', fontSize: '13px', display: 'block' }}>You are currently Rank #1 (Lowest Valid Offer) — L1 Tender Leader</b>
-                          <span style={{ color: '#047857', fontSize: '11.5px' }}>Your commercial offer is the leading bid. You will be awarded the contract if your rank is maintained at close.</span>
+                          <b style={{ color: '#059669', fontSize: '13px', display: 'block' }}>You are currently Rank #1 (Lowest Valid Offer) — L1 Tender Leader</b>
+                          <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>Your commercial offer is the leading bid. You will be awarded the contract if your rank is maintained at close.</span>
                         </div>
                       </div>
                       <span style={{ background: '#10B981', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>RANK 1 (L1)</span>
@@ -946,12 +946,12 @@ export default function BidRoomPage() {
                   );
                 } else if (userActiveRank && userActiveRank > 1) {
                   return (
-                    <div style={{ background: '#FEF2F2', border: '1.5px solid #EF4444', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '20px' }}>⚠️</span>
                         <div>
-                          <b style={{ color: '#991B1B', fontSize: '13px', display: 'block' }}>You have been outbid (Current Standing: Rank #{userActiveRank})</b>
-                          <span style={{ color: '#B91C1C', fontSize: '11.5px' }}>Another verified forwarder has submitted a lower evaluated price. Decrease your offer below L1 to reclaim the lead.</span>
+                          <b style={{ color: '#dc2626', fontSize: '13px', display: 'block' }}>You have been outbid (Current Standing: Rank #{userActiveRank})</b>
+                          <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>Another verified forwarder has submitted a lower evaluated price. Decrease your offer below L1 to reclaim the lead.</span>
                         </div>
                       </div>
                       <span style={{ background: '#EF4444', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>RANK #{userActiveRank} (OUTBID)</span>
@@ -959,21 +959,21 @@ export default function BidRoomPage() {
                   );
                 } else {
                   return (
-                    <div style={{ background: '#F0F9FF', border: '1.5px solid #0EA5E9', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '20px' }}>🎯</span>
                         <div>
-                          <b style={{ color: '#075985', fontSize: '13px', display: 'block' }}>Authorized Participant — Ready for Tender Submission</b>
-                          <span style={{ color: '#0369A1', fontSize: '11.5px' }}>Configure your ocean routing, free time commitments, and line charges below to submit your competitive L1 bid.</span>
+                          <b style={{ color: 'var(--accent-primary, #006B68)', fontSize: '13px', display: 'block' }}>Authorized Participant — Ready for Tender Submission</b>
+                          <span style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>Configure your ocean routing, free time commitments, and line charges below to submit your competitive L1 bid.</span>
                         </div>
                       </div>
-                      <span style={{ background: '#0EA5E9', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>ELIGIBLE BIDDER</span>
+                      <span style={{ background: 'var(--accent-primary, #006B68)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>ELIGIBLE BIDDER</span>
                     </div>
                   );
                 }
               })()}
           {/* BIDDER PROPOSAL INPUTS: ROUTING & FREE TIME (Requirement 1) */}
-          <div className="card" style={{ padding: '14px 16px', background: '#ffffff', border: '1.5px solid #94a3b8' }}>
+          <div className="card" style={{ padding: '14px 16px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid var(--line)', paddingBottom: '8px' }}>
               <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Truck size={15} color="var(--brand)" /> 1. Bidder Routing Proposal & Free Time Commitment
@@ -1030,13 +1030,13 @@ export default function BidRoomPage() {
           </div>
 
           {/* Granular Charge Breakdown Table with Currency Selector & Tax Option */}
-          <div className="card" style={{ border: '1px solid var(--fr8x-outline)', overflowX: 'auto', background: '#ffffff', borderRadius: '0px' }}>
-            <div style={{ background: '#f8fafc', padding: '10px 14px', borderBottom: '1px solid var(--fr8x-outline)', color: 'var(--fr8x-text)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div className="card" style={{ border: '1px solid var(--border-subtle, #E5E7EB)', overflowX: 'auto', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '8px' }}>
+            <div style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', color: 'var(--text-primary, #1F2937)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <div>
-                <b style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--fr8x-text)', display: 'block' }}>
+                <b style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-primary, #1F2937)', display: 'block' }}>
                   2. Bidding Rate Matrix — Enter Component Breakdown
                 </b>
-                <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                   Live Forex Synced · Select applicable currency with each charge head
                 </span>
               </div>
@@ -1044,13 +1044,13 @@ export default function BidRoomPage() {
               {/* Currency & Tax Options Controls */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 {/* Tax Option */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#ffffff', padding: '4px 8px', border: '1px solid var(--fr8x-outline)' }}>
-                  <Receipt size={13} color="var(--fr8x-text)" />
-                  <span style={{ fontSize: '11px', color: 'var(--fr8x-text)', fontWeight: 600 }}>Tax Option:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--surface-primary, #FFFFFF)', padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border-default, #D9DEE5)' }}>
+                  <Receipt size={13} style={{ color: 'var(--text-primary, #1F2937)' }} />
+                  <span style={{ fontSize: '11px', color: 'var(--text-primary, #1F2937)', fontWeight: 600 }}>Tax Option:</span>
                   <select
                     value={taxOption}
                     onChange={(e) => setTaxOption(e.target.value as any)}
-                    style={{ background: '#ffffff', color: 'var(--fr8x-text)', fontWeight: 700, fontSize: '11px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', padding: '2px 6px' }}
+                    style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontWeight: 700, fontSize: '11px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '2px 6px' }}
                   >
                     <option value="exempt_as_applicable">Exempt / As Applicable (GST extra at actuals)</option>
                     <option value="tax_inclusive">Tax Inclusive (All-in rate)</option>
@@ -1063,85 +1063,85 @@ export default function BidRoomPage() {
             <div className="tablewrap bidding-desktop-matrix">
               <table className="table" style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', minWidth: '1350px' }}>
                 <thead>
-                  <tr style={{ background: '#f1f5f9', color: 'var(--fr8x-text)', borderBottom: '1px solid var(--fr8x-outline)' }}>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', width: asksContainerNo ? '130px' : '170px', borderRight: '1px solid var(--line-light)' }}>EQUIPMENT</th>
+                  <tr style={{ background: 'var(--surface-secondary, #F8FAFC)', color: 'var(--text-primary, #1F2937)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', width: asksContainerNo ? '130px' : '170px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>EQUIPMENT</th>
                     {asksContainerNo && (
-                      <th style={{ padding: '8px 6px', textAlign: 'left', width: '140px', borderRight: '1px solid var(--line-light)', background: '#f8fafc', color: 'var(--brand)' }}>
+                      <th style={{ padding: '8px 6px', textAlign: 'left', width: '140px', borderRight: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-secondary, #F8FAFC)', color: 'var(--accent-primary, #006B68)' }}>
                         CONTAINER NO.
                       </th>
                     )}
-                    <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px', borderRight: '1px solid var(--line-light)' }}>QTY</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>QTY</th>
 
                     {/* Ocean Charges Head with Currency */}
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <span style={{ fontWeight: 800 }}>OCEAN FREIGHT</span>
                         <select
                           value={oceanCurrency}
                           onChange={(e) => setOceanCurrency(e.target.value)}
-                          style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                          style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 4px', borderRadius: '4px' }}
                           title="Ocean Freight Currency"
                         >
                           {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       F/S ({oceanCurrency})
                     </th>
 
                     {/* Origin Charges Head with Currency */}
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <span style={{ fontWeight: 800 }}>ORIGIN TRANSPORT</span>
                         <select
                           value={originCurrency}
                           onChange={(e) => setOriginCurrency(e.target.value)}
-                          style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                          style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 4px', borderRadius: '4px' }}
                           title="Origin Charges Currency"
                         >
                           {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       ORIGIN CLEARANCE ({originCurrency})
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       ORIGIN LOCAL ({originCurrency})
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       ORIGIN ANCILLARY ({originCurrency})
                     </th>
 
                     {/* Destination Charges Head with Currency */}
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                         <span style={{ fontWeight: 800 }}>DEST. TRANSPORT</span>
                         <select
                           value={destCurrency}
                           onChange={(e) => setDestCurrency(e.target.value)}
-                          style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                          style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontSize: '10px', fontWeight: 800, border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 4px', borderRadius: '4px' }}
                           title="Destination Charges Currency"
                         >
                           {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       DEST. CLEARANCE ({destCurrency})
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       DEST. LOCAL ({destCurrency})
                     </th>
-                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '6px', textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       DEST. ANCILLARY ({destCurrency})
                     </th>
 
-                    <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    <th style={{ padding: '8px 6px', textAlign: 'right', background: 'var(--surface-secondary, #F8FAFC)', borderRight: '1px solid var(--border-subtle, #E5E7EB)', fontWeight: 800 }}>
                       ROW TOTAL (USD $)
                     </th>
-                    <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', fontWeight: 800 }}>
+                    <th style={{ padding: '8px 6px', textAlign: 'right', background: 'var(--surface-secondary, #F8FAFC)', fontWeight: 800 }}>
                       ROW TOTAL (EUR / INR)
                     </th>
                   </tr>
@@ -1153,16 +1153,16 @@ export default function BidRoomPage() {
                     const lineINR = convertUSDTo(lineUSD, 'INR');
 
                     return (
-                      <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid var(--line-light)' }}>
-                        <td style={{ fontWeight: 700, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                      <tr key={i} style={{ background: i % 2 === 0 ? 'var(--surface-primary, #FFFFFF)' : 'var(--surface-secondary, #F8FAFC)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                        <td style={{ fontWeight: 700, padding: '6px', color: 'var(--text-primary, #1F2937)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                           {r.equipment}
                         </td>
                         {asksContainerNo && (
-                          <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                             <input
                               type="text"
                               className="input"
-                              style={{ height: '28px', fontSize: '11px', textAlign: 'left', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
+                              style={{ height: '28px', fontSize: '11px', textAlign: 'left', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', fontWeight: 600, borderRadius: '4px' }}
                               placeholder="MSCU1234567"
                               value={r.containerNo || ''}
                               onChange={(e) => {
@@ -1173,61 +1173,61 @@ export default function BidRoomPage() {
                             />
                           </td>
                         )}
-                        <td style={{ textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                        <td style={{ textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--text-primary, #1F2937)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                           {r.qty}
                         </td>
 
                         {/* Ocean inputs */}
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', fontWeight: 700, borderRadius: '4px' }}
                             value={r.oceanFreight} onChange={(e) => updateCharge(i, 'oceanFreight', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', fontWeight: 700, borderRadius: '4px' }}
                             value={r.surcharges} onChange={(e) => updateCharge(i, 'surcharges', Number(e.target.value))} />
                         </td>
 
                         {/* Origin inputs */}
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={r.originTransport} onChange={(e) => updateCharge(i, 'originTransport', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={r.originClearance} onChange={(e) => updateCharge(i, 'originClearance', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={r.originLocal} onChange={(e) => updateCharge(i, 'originLocal', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={0} onChange={() => {}} />
                         </td>
 
                         {/* Destination inputs */}
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={r.destTransport} onChange={(e) => updateCharge(i, 'destTransport', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={r.destClearance} onChange={(e) => updateCharge(i, 'destClearance', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={r.destLocal} onChange={(e) => updateCharge(i, 'destLocal', Number(e.target.value))} />
                         </td>
-                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)', borderRadius: '4px' }}
                             value={0} onChange={() => {}} />
                         </td>
 
                         {/* Total cells */}
-                        <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                        <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}>
                           ${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
-                        <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: 'var(--fr8x-muted)', fontSize: '10.5px' }}>
+                        <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>
                           €{lineEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ₹{lineINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </td>
                       </tr>
@@ -1247,20 +1247,20 @@ export default function BidRoomPage() {
                 return (
                   <div key={i} className="auction-mobile-card" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {/* Header: Equipment, Quantity, Row Total */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '8px' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, background: '#0f172a', color: '#ffffff', borderRadius: '4px', padding: '2px 6px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, background: 'var(--accent-primary, #006B68)', color: '#ffffff', borderRadius: '4px', padding: '2px 6px' }}>
                             {r.qty}x Qty
                           </span>
-                          <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{r.equipment.split(' (')[0]}</b>
+                          <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)' }}>{r.equipment.split(' (')[0]}</b>
                         </div>
-                        <small style={{ fontSize: '10.5px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
+                        <small style={{ fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', display: 'block', marginTop: '2px' }}>
                           {r.equipment}
                         </small>
                         {asksContainerNo && (
                           <div style={{ marginTop: '6px' }}>
-                            <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ink)' }}>Container No. (Asked by Buyer)</label>
+                            <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>Container No. (Asked by Buyer)</label>
                             <input
                               type="text"
                               className="input"
@@ -1277,21 +1277,21 @@ export default function BidRoomPage() {
                         )}
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '9.5px', color: 'var(--mut)', fontWeight: 700, display: 'block' }}>ROW TOTAL</span>
-                        <b style={{ fontSize: '15px', color: 'var(--brand)' }}>${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                        <span style={{ fontSize: '9.5px', color: 'var(--text-secondary, #64748B)', fontWeight: 700, display: 'block' }}>ROW TOTAL</span>
+                        <b style={{ fontSize: '15px', color: 'var(--accent-primary, #006B68)' }}>${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                       </div>
                     </div>
 
                     {/* Ocean Freight Section */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px' }}>
+                    <div style={{ background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>🌊 Ocean Freight &amp; Surcharges</b>
+                        <b style={{ fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>🌊 Ocean Freight &amp; Surcharges</b>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', color: 'var(--mut)' }}>Curr:</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>Curr:</span>
                           <select
                             value={oceanCurrency}
                             onChange={(e) => setOceanCurrency(e.target.value)}
-                            style={{ background: '#ffffff', fontSize: '10.5px', fontWeight: 700, border: '1px solid #cbd5e1', padding: '1px 6px', borderRadius: '4px' }}
+                            style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontSize: '10.5px', fontWeight: 700, border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 6px', borderRadius: '4px' }}
                           >
                             {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                           </select>
@@ -1322,15 +1322,15 @@ export default function BidRoomPage() {
                     </div>
 
                     {/* Origin Local Charges Section */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px' }}>
+                    <div style={{ background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>📍 Origin Local Charges</b>
+                        <b style={{ fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>📍 Origin Local Charges</b>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', color: 'var(--mut)' }}>Curr:</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>Curr:</span>
                           <select
                             value={originCurrency}
                             onChange={(e) => setOriginCurrency(e.target.value)}
-                            style={{ background: '#ffffff', fontSize: '10.5px', fontWeight: 700, border: '1px solid #cbd5e1', padding: '1px 6px', borderRadius: '4px' }}
+                            style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontSize: '10.5px', fontWeight: 700, border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 6px', borderRadius: '4px' }}
                           >
                             {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                           </select>
@@ -1371,15 +1371,15 @@ export default function BidRoomPage() {
                     </div>
 
                     {/* Destination Local Charges Section */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px' }}>
+                    <div style={{ background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>🏁 Destination Local Charges</b>
+                        <b style={{ fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>🏁 Destination Local Charges</b>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', color: 'var(--mut)' }}>Curr:</span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>Curr:</span>
                           <select
                             value={destCurrency}
                             onChange={(e) => setDestCurrency(e.target.value)}
-                            style={{ background: '#ffffff', fontSize: '10.5px', fontWeight: 700, border: '1px solid #cbd5e1', padding: '1px 6px', borderRadius: '4px' }}
+                            style={{ background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)', fontSize: '10.5px', fontWeight: 700, border: '1px solid var(--border-default, #D9DEE5)', padding: '1px 6px', borderRadius: '4px' }}
                           >
                             {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                           </select>
@@ -1420,9 +1420,9 @@ export default function BidRoomPage() {
                     </div>
 
                     {/* Row Multi-Currency Subtotal Bar */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '6px 10px', borderRadius: '6px', fontSize: '11px' }}>
-                      <span style={{ color: 'var(--fr8x-muted)', fontWeight: 600 }}>Multi-Currency:</span>
-                      <b style={{ color: 'var(--ink)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', padding: '6px 10px', borderRadius: '6px', fontSize: '11px' }}>
+                      <span style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>Multi-Currency:</span>
+                      <b style={{ color: 'var(--text-primary, #1F2937)' }}>
                         €{lineEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR · ₹{lineINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })} INR
                       </b>
                     </div>
@@ -1432,34 +1432,34 @@ export default function BidRoomPage() {
             </div>
 
             {/* Live Exchange Engine & Grand Total in 4 Currencies Bar */}
-            <div style={{ padding: '10px 14px', background: '#f8fafc', borderTop: '1px solid var(--fr8x-outline)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+            <div style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F8FAFC)', borderTop: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '8px', height: '8px', background: '#16a34a', display: 'inline-block' }} />
-                  <b style={{ color: 'var(--fr8x-text)' }}>Live Interbank Rates (Google Database API):</b>
+                  <span style={{ width: '8px', height: '8px', background: '#16a34a', display: 'inline-block', borderRadius: '50%' }} />
+                  <b style={{ color: 'var(--text-primary, #1F2937)' }}>Live Interbank Rates (Google Database API):</b>
                   <span>
                     1 USD = ₹{(availableCurrencies['INR']?.rateFromUSD || 83.92).toFixed(2)} INR · 1 EUR = ${(1 / (availableCurrencies['EUR']?.rateFromUSD || 0.92)).toFixed(3)} USD · 1 GBP = ${(1 / (availableCurrencies['GBP']?.rateFromUSD || 0.78)).toFixed(3)} USD
                   </span>
                 </div>
-                <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', fontWeight: 600 }}>{lastUpdatedTime}</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>{lastUpdatedTime}</span>
               </div>
 
               <div className="bidding-currency-grid">
-                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
-                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN USD ($)</small>
-                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>${grandTotalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                <div style={{ padding: '8px 10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', display: 'block' }}>TOTAL IN USD ($)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)' }}>${grandTotalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
-                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
-                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN EUR (€)</small>
-                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>€{grandTotalEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                <div style={{ padding: '8px 10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', display: 'block' }}>TOTAL IN EUR (€)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)' }}>€{grandTotalEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
-                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
-                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN GBP (£)</small>
-                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>£{grandTotalGBP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                <div style={{ padding: '8px 10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', display: 'block' }}>TOTAL IN GBP (£)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)' }}>£{grandTotalGBP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
-                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
-                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN LOCAL (₹ INR)</small>
-                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>₹{grandTotalINR.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                <div style={{ padding: '8px 10px', background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', display: 'block' }}>TOTAL IN LOCAL (₹ INR)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)' }}>₹{grandTotalINR.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
                 </div>
               </div>
             </div>
@@ -1468,21 +1468,21 @@ export default function BidRoomPage() {
           {/* Bottom Grid: Audit + Conditions + Ranks (Lowest Offer L1) + Submission Actions */}
           <div className="bidding-footer-grid">
             {/* Audit Box */}
-            <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#f8fafc', color: 'var(--fr8x-text)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)' }}>
+            <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', color: 'var(--text-primary, #1F2937)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
                 AUDIT TRAIL
               </div>
-              <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '11px', color: 'var(--ink)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>BIDDER ORG</span><b>{user.company}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>CREATED DATE</span><b>{auction.startDate || '2026-08-29'}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>EMAIL ID</span><b>{user.email}</b></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>CONTACT DESK</span><b>{user.mobile || '+91 98111 22334'}</b></div>
+              <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>BIDDER ORG</span><b>{user.company}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>CREATED DATE</span><b>{auction.startDate || '2026-08-29'}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>EMAIL ID</span><b>{user.email}</b></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-secondary, #64748B)' }}>CONTACT DESK</span><b>{user.mobile || '+91 98111 22334'}</b></div>
               </div>
             </div>
 
             {/* Conditions & Information Box */}
-            <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ background: '#f8fafc', color: 'var(--fr8x-text)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)' }}>
+            <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', color: 'var(--text-primary, #1F2937)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
                 CONDITIONS &amp; INFORMATION
               </div>
               <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -1520,12 +1520,12 @@ export default function BidRoomPage() {
                   className="btn sm"
                   style={{
                     width: '100%',
-                    background: auctionConditionsAccepted ? '#16a34a' : 'var(--fr8x-outline)',
-                    borderColor: auctionConditionsAccepted ? '#16a34a' : 'var(--fr8x-outline)',
+                    background: auctionConditionsAccepted ? '#16a34a' : 'var(--accent-primary, #006B68)',
+                    borderColor: auctionConditionsAccepted ? '#16a34a' : 'var(--accent-primary, #006B68)',
                     color: '#ffffff',
                     fontSize: '11.5px',
                     fontWeight: 700,
-                    borderRadius: '0px',
+                    borderRadius: '6px',
                     transition: 'all 0.2s ease',
                     display: 'flex',
                     alignItems: 'center',
@@ -1546,19 +1546,19 @@ export default function BidRoomPage() {
             </div>
 
             {/* Reverse Auction Competition Ceiling L1 / L2 / L3 */}
-            <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '10px', alignItems: 'center' }}>
-                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '8px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
-                  <small style={{ fontSize: '9px', fontWeight: 800, color: 'var(--fr8x-text)', textTransform: 'uppercase' }}>YOUR RANK (LOWEST OFFER)</small>
-                  <div style={{ fontSize: '38px', fontWeight: 900, color: 'var(--fr8x-text)', lineHeight: 1, margin: '4px 0' }}>
+                <div style={{ textAlign: 'center', background: 'var(--surface-secondary, #F8FAFC)', padding: '8px', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px' }}>
+                  <small style={{ fontSize: '9px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase' }}>YOUR RANK (LOWEST OFFER)</small>
+                  <div style={{ fontSize: '38px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', lineHeight: 1, margin: '4px 0' }}>
                     {calculatedRank}
                   </div>
-                  <small style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 600 }}>Reverse Sourcing</small>
+                  <small style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>Reverse Sourcing</small>
                 </div>
 
-                <div style={{ background: '#ffffff', padding: '10px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', fontSize: '11px', color: 'var(--ink)' }}>
+                <div style={{ background: 'var(--surface-primary, #FFFFFF)', padding: '10px', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                    <b style={{ color: 'var(--fr8x-text)', textTransform: 'uppercase', fontSize: '10.5px' }}>
+                    <b style={{ color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', fontSize: '10.5px' }}>
                       COMPETITION CEILING (REVERSE AUCTION)
                     </b>
                     <button
@@ -1567,7 +1567,7 @@ export default function BidRoomPage() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: showCompetitionCeiling ? 'var(--brand)' : 'var(--mut)',
+                        color: showCompetitionCeiling ? 'var(--accent-primary, #006B68)' : 'var(--text-secondary, #64748B)',
                         fontSize: '9.5px',
                         cursor: 'pointer',
                         textDecoration: 'underline',
@@ -1581,24 +1581,24 @@ export default function BidRoomPage() {
                   </div>
                   {showCompetitionCeiling ? (
                     <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
-                        <span style={{ color: 'var(--fr8x-text)', fontWeight: 700 }}>L1 (Lowest / Best):</span>
-                        <b style={{ color: 'var(--fr8x-text)' }}>${l1Display.toFixed(2)} USD</b>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                        <span style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 700 }}>L1 (Lowest / Best):</span>
+                        <b style={{ color: 'var(--text-primary, #1F2937)' }}>${l1Display.toFixed(2)} USD</b>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
-                        <span style={{ color: 'var(--fr8x-muted)', fontWeight: 600 }}>L2 (2nd Lowest):</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                        <span style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>L2 (2nd Lowest):</span>
                         <b>${l2Display.toFixed(2)} USD</b>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                        <span style={{ color: 'var(--mut)' }}>L3 (3rd Lowest):</span>
-                        <b style={{ color: 'var(--mut)' }}>${l3Display.toFixed(2)} USD</b>
+                        <span style={{ color: 'var(--text-secondary, #64748B)' }}>L3 (3rd Lowest):</span>
+                        <b style={{ color: 'var(--text-secondary, #64748B)' }}>${l3Display.toFixed(2)} USD</b>
                       </div>
                       <div style={{ marginTop: '4px', fontSize: '9.5px', color: '#16a34a', fontWeight: 600 }}>
                         ✓ Fair Competition Active: Ceiling ${ceiling.toFixed(2)} USD
                       </div>
                     </>
                   ) : (
-                    <div style={{ padding: '6px 0', color: 'var(--mut)', fontSize: '10.5px' }}>
+                    <div style={{ padding: '6px 0', color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>
                       <i>Blind Reverse Auction Active · Competition Ceiling Hidden by Buyer to encourage aggressive pricing.</i>
                     </div>
                   )}
@@ -1606,25 +1606,25 @@ export default function BidRoomPage() {
               </div>
 
               {/* Total & Submit Action */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', background: '#f8fafc', padding: '8px 12px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', background: 'var(--surface-secondary, #F8FAFC)', padding: '8px 12px', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
-                  <small style={{ color: 'var(--mut)', fontSize: '10px', display: 'block', fontWeight: 700 }}>TOTAL BID OFFER</small>
-                  <b style={{ fontSize: '16px', color: 'var(--fr8x-text)' }}>
+                  <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', display: 'block', fontWeight: 700 }}>TOTAL BID OFFER</small>
+                  <b style={{ fontSize: '16px', color: 'var(--text-primary, #1F2937)' }}>
                     ${grandTotalUSD.toFixed(2)} USD
                   </b>
-                  <small style={{ display: 'block', color: 'var(--fr8x-muted)', fontSize: '10.5px', fontWeight: 600 }}>
+                  <small style={{ display: 'block', color: 'var(--text-secondary, #64748B)', fontSize: '10.5px', fontWeight: 600 }}>
                     (€{grandTotalEUR.toFixed(2)} EUR · ₹{grandTotalINR.toFixed(2)} INR)
                   </small>
-                  <small style={{ display: 'block', color: bidsRemaining ? 'var(--teal)' : 'var(--red)', fontSize: '10.5px', fontWeight: 800, marginTop: '3px' }}>
+                  <small style={{ display: 'block', color: bidsRemaining ? 'var(--accent-primary, #006B68)' : '#dc2626', fontSize: '10.5px', fontWeight: 800, marginTop: '3px' }}>
                     {bidsRemaining} of {bidLimit} bid submission{bidLimit === 1 ? '' : 's'} remaining
                   </small>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '4px' }} onClick={() => toast('Edit mode active.')}>
+                  <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '6px' }} onClick={() => toast('Edit mode active.')}>
                     EDIT
                   </button>
-                  <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? '#1B2B4B' : '#94a3b8', borderRadius: '4px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
+                  <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? 'var(--accent-primary, #006B68)' : '#94a3b8', borderRadius: '6px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
                     <Gavel size={13} /> Confirm &amp; Submit Bid
                   </button>
                 </div>
@@ -1641,11 +1641,11 @@ export default function BidRoomPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div className="grid g2">
             {/* Origin & Port Details */}
-            <div className="card cardbody" style={{ background: '#ffffff', border: '1.5px solid var(--line)' }}>
-              <small style={{ color: 'var(--mut)', fontWeight: 700, fontSize: '10.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Anchor size={13} color="var(--brand)" /> Origin Logistics & Handover
+            <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '10.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Anchor size={13} style={{ color: 'var(--accent-primary, #006B68)' }} /> Origin Logistics & Handover
               </small>
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: 'var(--ink)' }}>
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                 <div className="kv">
                   <span>Place of Receipt (POR)</span>
                   <b>{auction.shipment.por || 'Nhava Sheva CFS, Maharashtra'}</b>
@@ -1660,7 +1660,7 @@ export default function BidRoomPage() {
                 </div>
                 <div className="kv">
                   <span>Cargo Ready Date</span>
-                  <b style={{ color: 'var(--brand)' }}>{auction.shipment.cargoReadyDate}</b>
+                  <b style={{ color: 'var(--accent-primary, #006B68)' }}>{auction.shipment.cargoReadyDate}</b>
                 </div>
                 <div className="kv">
                   <span>Origin Free Time Required</span>
@@ -1670,11 +1670,11 @@ export default function BidRoomPage() {
             </div>
 
             {/* Destination & Delivery */}
-            <div className="card cardbody" style={{ background: '#ffffff', border: '1.5px solid var(--line)' }}>
-              <small style={{ color: 'var(--mut)', fontWeight: 700, fontSize: '10.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Truck size={13} color="var(--teal)" /> Destination Logistics & Discharge
+            <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '10.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Truck size={13} style={{ color: 'var(--accent-primary, #006B68)' }} /> Destination Logistics & Discharge
               </small>
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: 'var(--ink)' }}>
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                 <div className="kv">
                   <span>Port of Discharge (POD)</span>
                   <b>{auction.shipment.pod} (UN/LOCODE: NLRTM)</b>
@@ -1700,11 +1700,11 @@ export default function BidRoomPage() {
           </div>
 
           {/* Cargo Classification & Dangerous Goods */}
-          <div className="card cardbody" style={{ background: '#ffffff', border: '1.5px solid var(--line)' }}>
-            <small style={{ color: 'var(--mut)', fontWeight: 700, fontSize: '10.5px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+          <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+            <small style={{ color: 'var(--text-secondary, #64748B)', fontWeight: 700, fontSize: '10.5px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
               Cargo Technical Classification & Specifications
             </small>
-            <div className="grid g3" style={{ fontSize: '12px', color: 'var(--ink)' }}>
+            <div className="grid g3" style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
               <div className="kv">
                 <span>Commodity Description</span>
                 <b>{auction.shipment.commodity}</b>
@@ -1737,37 +1737,37 @@ export default function BidRoomPage() {
       {/* TAB 3: COMMERCIAL TERMS & SLA CLAUSES */}
       {activeTab === 'terms' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div className="card cardbody" style={{ background: '#ffffff', border: '1.5px solid var(--line)' }}>
-            <b style={{ fontSize: '15px', color: 'var(--ink)' }}>FR8X Master Reverse Auction SLA Terms</b>
-            <p style={{ fontSize: '12.5px', color: 'var(--mut)', marginTop: '2px' }}>
+          <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+            <b style={{ fontSize: '15px', color: 'var(--text-primary, #1F2937)' }}>FR8X Master Reverse Auction SLA Terms</b>
+            <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>
               These terms govern bidder qualification, rate validity, detention penalties, and settlement protocol.
             </p>
 
             <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
-                <b style={{ fontSize: '13px', color: 'var(--brand)' }}>1. Incoterms & Cost Division (Incoterms 2020)</b>
-                <p style={{ fontSize: '12.5px', color: 'var(--ink-secondary)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                <b style={{ fontSize: '13px', color: 'var(--accent-primary, #006B68)' }}>1. Incoterms & Cost Division (Incoterms 2020)</b>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0', lineHeight: 1.5 }}>
                   Governed strictly under FOB (Free On Board) terms. The winning service provider is responsible for international ocean carriage, fuel/bunker adjustments (BAF), destination terminal handling charges (DTHC), and destination customs clearance documentation.
                 </p>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
-                <b style={{ fontSize: '13px', color: 'var(--brand)' }}>2. Payment Terms & Currency Pegging</b>
-                <p style={{ fontSize: '12.5px', color: 'var(--ink-secondary)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                <b style={{ fontSize: '13px', color: 'var(--accent-primary, #006B68)' }}>2. Payment Terms & Currency Pegging</b>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0', lineHeight: 1.5 }}>
                   Invoices shall be processed in USD ($) payable within <b>Net 45 Days</b> upon receipt of clean on-board Bill of Lading, Verified Gross Mass (VGM) certificate, and approved itemized billing vouchers.
                 </p>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
-                <b style={{ fontSize: '13px', color: 'var(--brand)' }}>3. Demurrage & Detention Free Time SLA</b>
-                <p style={{ fontSize: '12.5px', color: 'var(--ink-secondary)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                <b style={{ fontSize: '13px', color: 'var(--accent-primary, #006B68)' }}>3. Demurrage & Detention Free Time SLA</b>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0', lineHeight: 1.5 }}>
                   The quoted rate must incorporate a minimum of <b>14 calendar days free time at origin</b> and <b>21 calendar days combined free time at destination</b>. Daily demurrage thereafter is capped at $75/day for 40HC.
                 </p>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
-                <b style={{ fontSize: '13px', color: 'var(--brand)' }}>4. Carrier Nomination Constraints</b>
-                <p style={{ fontSize: '12.5px', color: 'var(--ink-secondary)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              <div style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+                <b style={{ fontSize: '13px', color: 'var(--accent-primary, #006B68)' }}>4. Carrier Nomination Constraints</b>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0', lineHeight: 1.5 }}>
                   Quotes are restricted to Tier-1 container liner carriers (MSC, Maersk, CMA CGM, Hapag-Lloyd, ONE, Evergreen). Transshipment is permitted with a maximum of 1 hub and total transit time ≤ 32 days.
                 </p>
               </div>
@@ -1779,11 +1779,11 @@ export default function BidRoomPage() {
       {/* TAB 4: ANONYMIZED MARKET LEDGER (Requirement 5: Lowest is L1) */}
       {activeTab === 'ledger' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div className="card" style={{ background: '#ffffff', border: '1.5px solid var(--line)' }}>
+          <div className="card" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <div className="cardhead" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <b style={{ color: 'var(--ink)', fontSize: '14px' }}>Real-Time Anonymized Reverse Auction Bidding Stream</b>
-                <span className="sub" style={{ display: 'block', fontSize: '11.5px', color: 'var(--mut)' }}>
+                <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '14px' }}>Real-Time Anonymized Reverse Auction Bidding Stream</b>
+                <span className="sub" style={{ display: 'block', fontSize: '11.5px', color: 'var(--text-secondary, #64748B)' }}>
                   Audited event log with cryptographic timestamps and price decrement history (Lowest bid = Rank #1).
                 </span>
               </div>
@@ -1795,7 +1795,7 @@ export default function BidRoomPage() {
             <div className="tablewrap flush">
               <table className="table" style={{ fontSize: '11.5px' }}>
                 <thead>
-                  <tr style={{ background: '#f1f5f9' }}>
+                  <tr style={{ background: 'var(--surface-secondary, #F8FAFC)' }}>
                     <th>Timestamp</th>
                     <th>Bidder Alias</th>
                     <th>Total Offer (USD)</th>
@@ -1820,23 +1820,23 @@ export default function BidRoomPage() {
                         const hash = b.id ? `SHA-256: ${b.id.substring(0, 5)}...${b.id.substring(b.id.length - 4)}` : 'SHA-256: verified';
 
                         return (
-                          <tr key={b.id || idx} style={{ background: isUser ? '#f0fdf4' : undefined }}>
+                          <tr key={b.id || idx} style={{ background: isUser ? 'rgba(22, 163, 74, 0.08)' : undefined }}>
                             <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{timeStr}</td>
                             <td><b>{alias}</b></td>
-                            <td style={{ fontWeight: 800, color: idx === 0 ? 'var(--green)' : 'var(--ink)', fontSize: '12.5px' }}>
+                            <td style={{ fontWeight: 800, color: idx === 0 ? '#16a34a' : 'var(--text-primary, #1F2937)', fontSize: '12.5px' }}>
                               ${Number(b.grandTotalUSD || 0).toFixed(2)} USD
                             </td>
                             <td><span className={badgeClass}>{`#${idx + 1} ${rankLabel}`}</span></td>
-                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>{hash}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>{hash}</td>
                           </tr>
                         );
                       })
                   ) : (
                     <tr>
-                      <td colSpan={5} style={{ padding: '36px 16px', textAlign: 'center', color: '#64748B', fontSize: '12px' }}>
-                        <Activity size={24} color="#94A3B8" style={{ margin: '0 auto 8px', display: 'block' }} />
-                        <b style={{ color: '#1E293B', fontSize: '13px', display: 'block', marginBottom: '2px' }}>No bids submitted yet</b>
-                        <span style={{ fontSize: '11px', color: '#64748B' }}>
+                      <td colSpan={5} style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--text-secondary, #64748B)', fontSize: '12px' }}>
+                        <Activity size={24} style={{ color: 'var(--text-secondary, #64748B)', margin: '0 auto 8px', display: 'block' }} />
+                        <b style={{ color: 'var(--text-primary, #1F2937)', fontSize: '13px', display: 'block', marginBottom: '2px' }}>No bids submitted yet</b>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                           All valid competitive bids from verified freight forwarders will populate here in real time.
                         </span>
                       </td>
@@ -1852,14 +1852,14 @@ export default function BidRoomPage() {
       {/* TAB 5: DOCUMENT VAULT & COMPLIANCE */}
       {activeTab === 'docs' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div className="card cardbody" style={{ background: '#ffffff', border: '1.5px solid var(--line)' }}>
-            <b style={{ fontSize: '14px', color: 'var(--ink)' }}>RFQ Document Vault & Regulatory Annexures</b>
-            <p style={{ fontSize: '12px', color: 'var(--mut)', marginTop: '2px' }}>
+          <div className="card cardbody" style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
+            <b style={{ fontSize: '14px', color: 'var(--text-primary, #1F2937)' }}>RFQ Document Vault & Regulatory Annexures</b>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>
               Download official sourcing documentation, commercial annexures, and packing specifications.
             </p>
 
             <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--surface-secondary, #F8FAFC)', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)', flexWrap: 'wrap', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <FileText size={20} color="var(--brand)" />
                   <div>
@@ -1874,12 +1874,12 @@ export default function BidRoomPage() {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--surface-secondary, #F8FAFC)', borderRadius: '8px', border: '1px solid var(--border-subtle, #E5E7EB)', flexWrap: 'wrap', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <FileSpreadsheet size={20} color="var(--green)" />
                   <div>
-                    <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>FR8X_Itemized_Bid_Matrix_Template.xlsx</b>
-                    <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>
+                    <b style={{ fontSize: '12.5px', color: 'var(--text-primary, #1F2937)' }}>FR8X_Itemized_Bid_Matrix_Template.xlsx</b>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', display: 'block' }}>
                       Standard Excel Rate Matrix with Formula Verification · 480 KB
                     </span>
                   </div>
@@ -1894,14 +1894,14 @@ export default function BidRoomPage() {
       )}
 
       {/* Sticky Bottom Action Bar (Requirement 2) */}
-      <div className="actionbar" style={{ background: '#ffffff', borderTop: '1.5px solid var(--line)', padding: '12px 20px' }}>
+      <div className="actionbar" style={{ background: 'var(--surface-primary, #FFFFFF)', borderTop: '1px solid var(--border-default, #D9DEE5)', padding: '12px 20px' }}>
         {isAuctionOwner ? (
           <>
             <div>
-              <small style={{ display: 'block', color: 'var(--ink)', fontSize: '12px', fontWeight: 700 }}>
+              <small style={{ display: 'block', color: 'var(--text-primary, #1F2937)', fontSize: '12px', fontWeight: 700 }}>
                 Reverse Auction Owner Console · {currentBids.length} Bid{currentBids.length === 1 ? '' : 's'} Received
               </small>
-              <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                 {currentBids.length > 0
                   ? `Lowest competitive offer: $${Math.min(...currentBids.map((b) => Number(b.grandTotalUSD || 0))).toFixed(2)} USD (L1)`
                   : 'Awaiting incoming forwarder tenders · Real-time cryptographic ledger'}
@@ -1914,12 +1914,12 @@ export default function BidRoomPage() {
                   alignItems: 'center',
                   gap: '6px',
                   padding: '8px 16px',
-                  backgroundColor: '#1B2B4B',
+                  backgroundColor: 'var(--accent-primary, #006B68)',
                   color: '#FFFFFF',
-                  borderRadius: '4px',
+                  borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: 'Calibri, Arial, sans-serif',
+                  fontFamily: 'var(--font-family-primary)',
                 }}
               >
                 <ShieldCheck size={14} /> Owner Tender Console Active
@@ -1929,20 +1929,20 @@ export default function BidRoomPage() {
         ) : (
           <>
             <div>
-              <small style={{ display: 'block', color: 'var(--ink)', fontSize: '12px' }}>
+              <small style={{ display: 'block', color: 'var(--text-primary, #1F2937)', fontSize: '12px' }}>
                 Current Competition Ceiling: <b>${ceiling.toFixed(2)} USD</b>
               </small>
-              <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)' }}>
                 Bidder identity protected under FR8X verified anonymized sourcing protocol.
               </span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div style={{ textAlign: 'right' }}>
-                <small style={{ color: 'var(--mut)', display: 'block', fontSize: '10px', fontWeight: 700 }}>
+                <small style={{ color: 'var(--text-secondary, #64748B)', display: 'block', fontSize: '10px', fontWeight: 700 }}>
                   YOUR TOTAL OFFER
                 </small>
-                <b style={{ fontSize: '18px', color: '#0f172a' }}>
+                <b style={{ fontSize: '18px', color: 'var(--text-primary, #1F2937)' }}>
                   ${grandTotalUSD.toFixed(2)} USD
                 </b>
               </div>
@@ -1975,7 +1975,7 @@ export default function BidRoomPage() {
           <b>{auction.id}</b> on behalf of <b>{user.company}</b>.
         </p>
 
-        <div className="card cardbody" style={{ background: '#f8fafc', marginBottom: '12px', border: '1px solid var(--line)' }}>
+        <div className="card cardbody" style={{ background: 'var(--surface-secondary, #F8FAFC)', marginBottom: '12px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
           <div className="kv">
             <span>Auction Title</span>
             <b>{auction.title}</b>
@@ -2020,20 +2020,20 @@ export default function BidRoomPage() {
         title="RFQ Commercial Terms & Master SLA Clauses"
         maxWidth="720px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: 'var(--ink-secondary)', lineHeight: 1.6 }}>
-          <div style={{ padding: '10px 14px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', color: '#0369a1' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.6 }}>
+          <div style={{ padding: '10px 14px', background: 'var(--surface-secondary, #F8FAFC)', borderRadius: '8px', border: '1px solid var(--border-default, #D9DEE5)', color: 'var(--accent-primary, #006B68)' }}>
             <b>Tender Reference: {auction.rfqId} · Auction ID: {auction.id}</b>
           </div>
           <div>
-            <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '2px' }}>1. Scope of Work & Incoterm:</b>
+            <b style={{ color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>1. Scope of Work & Incoterm:</b>
             <p>Governed strictly under FOB terms. Service provider responsible for ocean carriage, BAF, DTHC, destination manifest filing, and release of cargo at {auction.shipment.pod}.</p>
           </div>
           <div>
-            <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '2px' }}>2. Payment Terms:</b>
+            <b style={{ color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>2. Payment Terms:</b>
             <p>Invoices processed in USD payable Net 45 Days from receipt of clean Bill of Lading, VGM certificate, and signed customs delivery order.</p>
           </div>
           <div>
-            <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '2px' }}>3. Free Time SLA:</b>
+            <b style={{ color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '2px' }}>3. Free Time SLA:</b>
             <p>Minimum 14 calendar days origin free time and 21 calendar days destination combined demurrage/detention mandatory.</p>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
@@ -2051,23 +2051,23 @@ export default function BidRoomPage() {
         title="Material Safety Data Sheet (MSDS) & Hazard Declaration"
         maxWidth="720px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: 'var(--ink)', lineHeight: 1.6 }}>
-          <div style={{ padding: '10px 14px', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca', color: '#991b1b' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.6 }}>
+          <div style={{ padding: '10px 14px', background: 'rgba(220, 38, 38, 0.1)', borderRadius: '8px', border: '1px solid rgba(220, 38, 38, 0.3)', color: '#dc2626' }}>
             <b>Commodity Classification: {auction.shipment.commodity} (HS: {auction.shipment.hsCode})</b>
           </div>
-          <div className="kv-box" style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line)' }}>
+          <div className="kv-box" style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <span>Hazardous Classification</span>
             <b>{auction.shipment.isHazardous ? 'CLASS 3 FLAMMABLE LIQUID' : 'NON-HAZARDOUS (General Merchandise)'}</b>
           </div>
-          <div className="kv-box" style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line)' }}>
+          <div className="kv-box" style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <span>Flash Point / UN Number</span>
             <b>{auction.shipment.unNumber || 'UN N/A (Standard Non-DG)'}</b>
           </div>
-          <div className="kv-box" style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line)' }}>
+          <div className="kv-box" style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <span>IMO / IMDG Code Class</span>
             <b>{auction.shipment.imoClass || 'Non-Regulated for Maritime Transport'}</b>
           </div>
-          <div className="kv-box" style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line)' }}>
+          <div className="kv-box" style={{ background: 'var(--surface-secondary, #F8FAFC)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
             <span>Emergency Spill Response</span>
             <b>Standard dry chemical / CO2 extinguishing procedure. Non-toxic runoff.</b>
           </div>
@@ -2089,7 +2089,7 @@ export default function BidRoomPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12px' }}>
           <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#f1f5f9' }}>
+              <tr style={{ background: 'var(--surface-secondary, #F8FAFC)' }}>
                 <th>Container Type</th>
                 <th>Qty</th>
                 <th>Dimensions (L x W x H)</th>
@@ -2126,42 +2126,42 @@ export default function BidRoomPage() {
         title="Submit Binding Reverse Auction Offer · Legal Evidence Docket"
         maxWidth="840px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '12px', color: 'var(--ink)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
           {/* Auction & Bid Offer Summary Header */}
-          <div style={{ background: '#f8fafc', border: '1px solid var(--fr8x-outline)', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div>
               <span className="badge blue" style={{ fontSize: '10px', fontWeight: 800 }}>{auction.id} · REVERSE AUCTION</span>
-              <h3 style={{ margin: '4px 0 2px', fontSize: '14px', color: 'var(--ink)', fontWeight: 800 }}>{auction.title}</h3>
-              <p style={{ margin: 0, color: 'var(--mut)', fontSize: '11px' }}>
+              <h3 style={{ margin: '4px 0 2px', fontSize: '14px', color: 'var(--text-primary, #1F2937)', fontWeight: 800 }}>{auction.title}</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
                 Route: <b>{auction.shipment.pol}</b> → <b>{auction.shipment.pod}</b> | Commodity: <b>{auction.shipment.commodity}</b>
               </p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <small style={{ color: 'var(--mut)', fontSize: '10px', fontWeight: 700, display: 'block' }}>TOTAL BINDING OFFER</small>
+              <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '10px', fontWeight: 700, display: 'block' }}>TOTAL BINDING OFFER</small>
               <b style={{ fontSize: '18px', color: '#16a34a' }}>${grandTotalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</b>
-              <small style={{ display: 'block', color: 'var(--fr8x-muted)', fontSize: '10.5px' }}>
+              <small style={{ display: 'block', color: 'var(--text-secondary, #64748B)', fontSize: '10.5px' }}>
                 (€{grandTotalEUR.toFixed(2)} EUR · ₹{grandTotalINR.toFixed(2)} INR)
               </small>
             </div>
           </div>
 
           {/* Section 1: Required Information Checklist */}
-          <div style={{ border: '1px solid var(--fr8x-outline)', padding: '14px', background: '#ffffff' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', borderBottom: '1px solid var(--line-light)', paddingBottom: '6px' }}>
-              <Truck size={14} color="var(--brand)" />
-              <b style={{ fontSize: '12px', color: 'var(--ink)' }}>REQUIRED OPERATIONAL INFORMATION</b>
+          <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '14px', background: 'var(--surface-primary, #FFFFFF)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+              <Truck size={14} style={{ color: 'var(--accent-primary, #006B68)' }} />
+              <b style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>REQUIRED OPERATIONAL INFORMATION</b>
               <span style={{ fontSize: '10px', color: '#dc2626', fontWeight: 700 }}>*Mandatory for Godfather Audit Log</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                   Nominated Ocean Carrier / Shipping Line *
                 </label>
                 <select
                   value={proposedCarrier}
                   onChange={(e) => setProposedCarrier(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--line)', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)' }}
                 >
                   <option value="MSC Mediterranean Shipping Co.">MSC Mediterranean Shipping Co.</option>
                   <option value="Maersk Line">Maersk Line</option>
@@ -2176,13 +2176,13 @@ export default function BidRoomPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                   Proposed Routing / Service String *
                 </label>
                 <select
                   value={proposedRouting}
                   onChange={(e) => setProposedRouting(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--line)', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)' }}
                 >
                   <option value="Direct Express Service (No Transshipment)">Direct Express Service (No Transshipment)</option>
                   <option value="Transshipment via Colombo Hub">Transshipment via Colombo Hub</option>
@@ -2193,7 +2193,7 @@ export default function BidRoomPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                   Guaranteed Transit Time (Port-to-Port) *
                 </label>
                 <input
@@ -2201,24 +2201,24 @@ export default function BidRoomPage() {
                   value={proposedTransitTime}
                   onChange={(e) => setProposedTransitTime(e.target.value)}
                   placeholder="e.g. 24 Days Port-to-Port"
-                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--line)', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                   Target Vessel Departure / ETD *
                 </label>
                 <input
                   type="date"
                   value={proposedVesselDate}
                   onChange={(e) => setProposedVesselDate(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--line)', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                   Origin Free Time (Demurrage &amp; Detention Days)
                 </label>
                 <input
@@ -2226,12 +2226,12 @@ export default function BidRoomPage() {
                   min={0}
                   value={offeredOriginFreeDays}
                   onChange={(e) => setOfferedOriginFreeDays(Number(e.target.value))}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--line)', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', display: 'block', marginBottom: '4px' }}>
                   Destination Free Time (Detention Days)
                 </label>
                 <input
@@ -2239,48 +2239,48 @@ export default function BidRoomPage() {
                   min={0}
                   value={offeredDestFreeDays}
                   onChange={(e) => setOfferedDestFreeDays(Number(e.target.value))}
-                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--line)', background: '#ffffff' }}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '12px', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '6px', background: 'var(--surface-primary, #FFFFFF)', color: 'var(--text-primary, #1F2937)' }}
                 />
               </div>
             </div>
 
-            <div style={{ marginTop: '10px', padding: '8px 10px', background: '#f8fafc', border: '1px solid var(--line-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+            <div style={{ marginTop: '10px', padding: '8px 10px', background: 'var(--surface-secondary, #F8FAFC)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
               <div>
-                <span style={{ color: 'var(--mut)' }}>Authorized Signatory: </span>
-                <b style={{ color: 'var(--ink)' }}>{user.displayName}</b> ({user.designation || 'Signatory Representative'})
+                <span style={{ color: 'var(--text-secondary, #64748B)' }}>Authorized Signatory: </span>
+                <b style={{ color: 'var(--text-primary, #1F2937)' }}>{user.displayName}</b> ({user.designation || 'Signatory Representative'})
               </div>
               <div>
-                <span style={{ color: 'var(--mut)' }}>Entity: </span>
-                <b style={{ color: 'var(--ink)' }}>{user.company}</b> · {user.email}
+                <span style={{ color: 'var(--text-secondary, #64748B)' }}>Entity: </span>
+                <b style={{ color: 'var(--text-primary, #1F2937)' }}>{user.company}</b> · {user.email}
               </div>
             </div>
           </div>
 
           {/* Section 2: Mandatory Terms & Conditions Acceptance */}
-          <div style={{ border: '1px solid #fed7aa', background: '#fffbeb', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#9a3412', fontWeight: 800, fontSize: '12px' }}>
+          <div style={{ border: '1px solid rgba(217, 119, 6, 0.35)', borderRadius: '6px', background: 'rgba(217, 119, 6, 0.08)', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#d97706', fontWeight: 800, fontSize: '12px' }}>
               <ShieldAlert size={15} />
               <span>TERMS &amp; CONDITIONS ACCEPTANCE &amp; GODFATHER AUDIT SEAL</span>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '11.5px', color: '#78350f', lineHeight: 1.5 }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.5 }}>
               <input
                 type="checkbox"
                 checked={confirmInformationVerified}
                 onChange={(e) => setConfirmInformationVerified(e.target.checked)}
-                style={{ marginTop: '3px', cursor: 'pointer', accentColor: 'var(--brand)' }}
+                style={{ marginTop: '3px', cursor: 'pointer', accentColor: 'var(--accent-primary, #006B68)' }}
               />
               <span>
                 <b>Required Information Verification:</b> I attest that all operational information provided (carrier space guarantee, routing, vessel schedule, and free-time days) is verified, binding, and ready for immediate operational fulfillment.
               </span>
             </label>
 
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '11.5px', color: '#78350f', lineHeight: 1.5 }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.5 }}>
               <input
                 type="checkbox"
                 checked={confirmTermsAccepted}
                 onChange={(e) => setConfirmTermsAccepted(e.target.checked)}
-                style={{ marginTop: '3px', cursor: 'pointer', accentColor: 'var(--brand)' }}
+                style={{ marginTop: '3px', cursor: 'pointer', accentColor: 'var(--accent-primary, #006B68)' }}
               />
               <span>
                 <b>Formal Acceptance of RFQ Terms:</b> I, on behalf of <b>{user.company}</b>, hereby formally accept all RFQ technical requirements, packaging rules, demurrage/detention tariffs, payment conditions, and dispute bylaws. I acknowledge that submitting this offer generates an immutable evidence log preserved in the <b>Godfather Regulatory Vault</b> for all bidders and regulatory review.
@@ -2331,19 +2331,19 @@ export default function BidRoomPage() {
         title="Bid Submitted & Sealed in Godfather Audit Vault"
         maxWidth="680px"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px', color: 'var(--ink)' }}>
-          <div style={{ textAlign: 'center', padding: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
+          <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.3)', borderRadius: '6px' }}>
             <CheckCircle size={36} color="#16a34a" style={{ margin: '0 auto 6px' }} />
-            <h3 style={{ margin: 0, color: '#166534', fontSize: '16px', fontWeight: 800 }}>
+            <h3 style={{ margin: 0, color: '#16a34a', fontSize: '16px', fontWeight: 800 }}>
               Bid Recorded as Authoritative Evidence
             </h3>
-            <p style={{ margin: '4px 0 0', color: '#15803d', fontSize: '11.5px' }}>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-primary, #1F2937)', fontSize: '11.5px' }}>
               Your reverse auction offer of <b>${grandTotalUSD.toFixed(2)} USD</b> has been cryptographically sealed and logged into the Godfather Compliance Repository.
             </p>
           </div>
 
           {lastSubmittedDocket && (
-            <div style={{ border: '1px solid var(--line)', padding: '12px', background: '#ffffff', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '6px', padding: '12px', background: 'var(--surface-primary, #FFFFFF)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '6px' }}>
                 <span style={{ color: 'var(--mut)', fontWeight: 600 }}>EVIDENCE DOCKET REF</span>
                 <b className="font-mono" style={{ color: 'var(--brand)' }}>{lastSubmittedDocket.docketRef}</b>

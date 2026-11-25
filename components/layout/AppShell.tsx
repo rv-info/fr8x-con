@@ -112,8 +112,8 @@ function ShellLayout({ children }: { children: ReactNode }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#ffffff',
-          color: 'var(--fr8x-text, #1e293b)',
+          background: 'var(--app-bg, #FFFFFF)',
+          color: 'var(--text-primary, #1F2937)',
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
@@ -122,7 +122,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
             alt="FR8X"
             style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
           />
-          <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1B2B4B', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+          <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
             FR8X
           </div>
           <div
@@ -130,21 +130,21 @@ function ShellLayout({ children }: { children: ReactNode }) {
               marginTop: '8px',
               width: '24px',
               height: '24px',
-              border: '2px solid #E2E8F0',
-              borderTopColor: '#47799E',
+              border: '2px solid var(--border-subtle, #E5E7EB)',
+              borderTopColor: 'var(--accent-primary, #006B68)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
             }}
           />
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#1B2B4B', letterSpacing: '0.02em', marginTop: '4px' }}>
-            Verifying <span style={{ fontWeight: 'bold', color: '#1B2B4B', textTransform: 'uppercase' }}>FR8X</span> session…
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', letterSpacing: '0.02em', marginTop: '4px' }}>
+            Verifying <span style={{ fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase' }}>FR8X</span> session…
           </span>
           <a
             href="/login"
             style={{
               marginTop: '6px',
               fontSize: '12px',
-              color: '#1B2B4B',
+              color: 'var(--accent-primary, #006B68)',
               textDecoration: 'none',
               fontWeight: 600,
             }}

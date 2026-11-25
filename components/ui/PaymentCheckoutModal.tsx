@@ -363,8 +363,8 @@ export function PaymentCheckoutModal({
           <div
             style={{
               padding: '16px 18px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--surface-secondary, #F9FAFB)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               borderRadius: '10px',
               display: 'flex',
               flexDirection: 'column',
@@ -373,13 +373,13 @@ export function PaymentCheckoutModal({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ flex: 1, minWidth: '220px' }}>
-                <small style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.5px' }}>
+                <small style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-secondary, #64748B)', letterSpacing: '0.5px' }}>
                   Commercial Invoice Summary
                 </small>
-                <b style={{ display: 'block', fontSize: '15px', color: '#0f172a', marginTop: '2px' }}>
+                <b style={{ display: 'block', fontSize: '15px', color: 'var(--text-primary, #1F2937)', marginTop: '2px' }}>
                   {displayTitle}
                 </b>
-                <span style={{ fontSize: '12.5px', color: '#475569' }}>
+                <span style={{ fontSize: '12.5px', color: 'var(--text-secondary, #64748B)' }}>
                   {displayDescription}
                 </span>
               </div>
@@ -400,9 +400,9 @@ export function PaymentCheckoutModal({
                       fontWeight: 700,
                       padding: '3px 8px',
                       borderRadius: '4px',
-                      border: '1px solid #cbd5e1',
-                      background: '#ffffff',
-                      color: '#0f172a',
+                      border: '1px solid var(--border-default, #D9DEE5)',
+                      background: 'var(--surface-primary, #FFFFFF)',
+                      color: 'var(--text-primary, #1F2937)',
                       cursor: 'pointer',
                     }}
                   >
@@ -414,16 +414,16 @@ export function PaymentCheckoutModal({
                   </select>
                 </div>
 
-                <div style={{ fontSize: '22px', fontWeight: 800, color: '#075B5B', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--accent-primary, #006B68)', fontFamily: 'monospace' }}>
                   {isGeneratingQuote ? (
-                    <span style={{ fontSize: '14px', color: '#64748b' }}>Calculating...</span>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary, #64748B)' }}>Calculating...</span>
                   ) : (
                     currentDisplayAmount
                   )}
                 </div>
 
                 {selectedCurrency !== 'INR' && activeQuote && (
-                  <small style={{ display: 'block', fontSize: '10.5px', color: '#64748b', marginTop: '1px' }}>
+                  <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)', marginTop: '1px' }}>
                     Base: ₹{activeQuote.basePriceINR.toLocaleString('en-IN')} (1 INR = {activeQuote.exchangeRate.toFixed(4)} {selectedCurrency})
                   </small>
                 )}
@@ -458,7 +458,7 @@ export function PaymentCheckoutModal({
         {/* PAYMENT METHOD SELECTION (Hidden when Free Access is Active) */}
         {!isFree && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>
               Select Verified Payment Gateway
             </label>
 
@@ -475,7 +475,7 @@ export function PaymentCheckoutModal({
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'razorpay' ? '2px solid #075B5B' : '1px solid #cbd5e1',
+                  border: paymentMethod === 'razorpay' ? '2px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                   background: paymentMethod === 'razorpay' ? '#f0fdf4' : isRazorpayActive ? '#ffffff' : '#f8fafc',
                   cursor: isRazorpayActive ? 'pointer' : 'not-allowed',
                   display: 'flex',
@@ -501,7 +501,7 @@ export function PaymentCheckoutModal({
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'upi' ? '2px solid #075B5B' : '1px solid #cbd5e1',
+                  border: paymentMethod === 'upi' ? '2px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                   background: paymentMethod === 'upi' ? '#f0fdf4' : '#ffffff',
                   cursor: 'pointer',
                   display: 'flex',
@@ -515,7 +515,7 @@ export function PaymentCheckoutModal({
                 <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'upi' ? '#075B5B' : '#0f172a' }}>
                   Instant UPI QR
                 </span>
-                <small style={{ fontSize: '10px', color: '#64748b' }}>Zero Fee · Instant</small>
+                <small style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>Zero Fee · Instant</small>
               </button>
 
               <button
@@ -524,7 +524,7 @@ export function PaymentCheckoutModal({
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'bank_transfer' ? '2px solid #075B5B' : '1px solid #cbd5e1',
+                  border: paymentMethod === 'bank_transfer' ? '2px solid #075B5B' : '1px solid var(--border-default, #D9DEE5)',
                   background: paymentMethod === 'bank_transfer' ? '#f0fdf4' : '#ffffff',
                   cursor: 'pointer',
                   display: 'flex',
@@ -538,18 +538,18 @@ export function PaymentCheckoutModal({
                 <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'bank_transfer' ? '#075B5B' : '#0f172a' }}>
                   Corporate Wire
                 </span>
-                <small style={{ fontSize: '10px', color: '#64748b' }}>RTGS / Swift Wire</small>
+                <small style={{ fontSize: '10px', color: 'var(--text-secondary, #64748B)' }}>RTGS / Swift Wire</small>
               </button>
             </div>
 
             {/* Gateway Sub-panels */}
             {paymentMethod === 'razorpay' && (
-              <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ padding: '14px 16px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <ShieldCheck size={20} color="#16a34a" />
                   <div>
-                    <b style={{ fontSize: '13px', color: '#0f172a' }}>International Multi-Currency Gateway Rail</b>
-                    <small style={{ display: 'block', color: '#64748b', fontSize: '11.5px' }}>
+                    <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)' }}>International Multi-Currency Gateway Rail</b>
+                    <small style={{ display: 'block', color: 'var(--text-secondary, #64748B)', fontSize: '11.5px' }}>
                       Visa, MasterCard, Amex, RuPay, Corporate NetBanking &amp; Wallets · 256-Bit SSL
                     </small>
                   </div>
@@ -566,7 +566,7 @@ export function PaymentCheckoutModal({
             )}
 
             {paymentMethod === 'upi' && (
-              <div style={{ padding: '14px 16px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ padding: '14px 16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>Official Platform VPA</span>
@@ -592,7 +592,7 @@ export function PaymentCheckoutModal({
                     placeholder="e.g. 423981298412"
                     value={utrReference}
                     onChange={(e) => setUtrReference(e.target.value)}
-                    style={{ background: '#ffffff', fontSize: '13px' }}
+                    style={{ background: 'var(--surface-primary, #FFFFFF)', fontSize: '13px' }}
                     required
                   />
                   <small style={{ color: '#15803d', fontSize: '10.5px', marginTop: '2px', display: 'block' }}>
@@ -603,8 +603,8 @@ export function PaymentCheckoutModal({
             )}
 
             {paymentMethod === 'bank_transfer' && (
-              <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ fontSize: '12px', lineHeight: 1.5, color: '#475569' }}>
+              <div style={{ padding: '14px 16px', background: 'var(--surface-secondary, #F9FAFB)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-secondary, #64748B)' }}>
                   <b>Account Name:</b> FR8X FREIGHT EXCHANGE PRIVATE LIMITED<br />
                   <b>Bank:</b> ICICI Bank Ltd · <b>IFSC:</b> ICIC0000007<br />
                   <b>A/C No:</b> 000705018924 (Current Account) · <b>SWIFT:</b> ICICINBBCTS
@@ -619,7 +619,7 @@ export function PaymentCheckoutModal({
                     placeholder="e.g. ICICR24091482914"
                     value={utrReference}
                     onChange={(e) => setUtrReference(e.target.value)}
-                    style={{ background: '#ffffff', fontSize: '13px' }}
+                    style={{ background: 'var(--surface-primary, #FFFFFF)', fontSize: '13px' }}
                     required
                   />
                 </div>
@@ -629,7 +629,7 @@ export function PaymentCheckoutModal({
         )}
 
         {/* Modal Action Controls */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid var(--border-subtle, #E5E7EB)' }}>
           <button
             type="button"
             className="btn secondary"

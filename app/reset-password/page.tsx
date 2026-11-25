@@ -18,7 +18,7 @@ import {
 
 // Password strength scorer
 function calcPasswordStrength(pwd: string): { score: number; label: string; color: string } {
-  if (!pwd) return { score: 0, label: '', color: '#94a3b8' };
+  if (!pwd) return { score: 0, label: '', color: 'var(--text-secondary, #64748B)' };
   let score = 0;
   if (pwd.length >= 8) score++;
   if (pwd.length >= 12) score++;
@@ -180,7 +180,7 @@ function ResetPasswordInner() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#ffffff',
+        background: 'var(--surface-primary, #FFFFFF)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -192,9 +192,9 @@ function ResetPasswordInner() {
         style={{
           width: '100%',
           maxWidth: '440px',
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '12px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           padding: '36px 28px',
         }}
@@ -216,10 +216,10 @@ function ResetPasswordInner() {
           >
             <KeyRound size={24} />
           </div>
-          <h1 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: 'var(--text-primary, #1F2937)' }}>
             RESET PASSWORD
           </h1>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0' }}>
             FR8X Workspace · Enterprise Account Recovery
           </p>
         </div>
@@ -227,8 +227,8 @@ function ResetPasswordInner() {
         {errorMessage && (
           <div
             style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               borderRadius: '8px',
               padding: '12px',
               marginBottom: '20px',
@@ -261,10 +261,10 @@ function ResetPasswordInner() {
             >
               <CheckCircle2 size={32} />
             </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', margin: '0 0 8px' }}>
               Password Reset Complete
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: '0 0 24px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5, margin: '0 0 24px' }}>
               {successMessage || 'Your credentials have been securely updated. A confirmation email has been dispatched from password@fr8x.in.'}
             </p>
             <button
@@ -295,30 +295,30 @@ function ResetPasswordInner() {
             <div
               style={{
                 padding: '12px 14px',
-                background: '#f0f9ff',
-                border: '1px solid #bae6fd',
+                background: 'var(--surface-secondary, #F9FAFB)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '8px',
                 marginBottom: '16px',
                 fontSize: '12px',
-                color: '#0369a1',
+                color: 'var(--accent-primary, #006B68)',
                 lineHeight: 1.45,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
               }}
             >
-              <Mail size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
+              <Mail size={18} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span>
                 Enter your registered corporate email address. A secure 6-digit one-time password (OTP) will be dispatched to your inbox.
               </span>
             </div>
 
             <div style={{ marginBottom: '18px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '6px' }}>
                 Corporate Email Address <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                <Mail size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: 'var(--text-secondary, #64748B)' }} />
                 <input
                   type="email"
                   value={email}
@@ -330,7 +330,7 @@ function ResetPasswordInner() {
                     height: '40px',
                     paddingLeft: '36px',
                     paddingRight: '12px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     fontSize: '13px',
                     boxSizing: 'border-box',
@@ -380,8 +380,8 @@ function ResetPasswordInner() {
                 <div
                   style={{
                     padding: '10px 12px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--surface-secondary, #F9FAFB)',
+                    border: '1px solid var(--border-subtle, #E5E7EB)',
                     borderRadius: '6px',
                     marginBottom: '14px',
                     display: 'flex',
@@ -391,8 +391,8 @@ function ResetPasswordInner() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                    <Mail size={14} style={{ color: '#0284c7', flexShrink: 0 }} />
-                    <span style={{ color: '#0f172a', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    <Mail size={14} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
+                    <span style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                       {email}
                     </span>
                   </div>
@@ -406,7 +406,7 @@ function ResetPasswordInner() {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#0284c7',
+                      color: 'var(--accent-primary, #006B68)',
                       fontSize: '11.5px',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -419,7 +419,7 @@ function ResetPasswordInner() {
 
                 <div style={{ marginBottom: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                       6-Digit Recovery OTP <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <button
@@ -452,7 +452,7 @@ function ResetPasswordInner() {
                       fontSize: '18px',
                       letterSpacing: '6px',
                       textAlign: 'center',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid var(--border-default, #D9DEE5)',
                       borderRadius: '6px',
                       boxSizing: 'border-box',
                     }}
@@ -463,11 +463,11 @@ function ResetPasswordInner() {
             )}
 
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '6px' }}>
                 New Password (minimum 8 characters) <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: 'var(--text-secondary, #64748B)' }} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
@@ -479,7 +479,7 @@ function ResetPasswordInner() {
                     height: '40px',
                     paddingLeft: '36px',
                     paddingRight: '36px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     fontSize: '13px',
                     boxSizing: 'border-box',
@@ -488,7 +488,7 @@ function ResetPasswordInner() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, #64748B)' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -496,7 +496,7 @@ function ResetPasswordInner() {
               {/* Password strength bar */}
               {newPassword.length > 0 && (
                 <div style={{ marginTop: '5px' }}>
-                  <div style={{ height: '4px', borderRadius: '2px', background: '#e2e8f0', overflow: 'hidden' }}>
+                  <div style={{ height: '4px', borderRadius: '2px', background: 'var(--border-subtle, #E5E7EB)', overflow: 'hidden' }}>
                     <div style={{
                       height: '100%',
                       width: `${(calcPasswordStrength(newPassword).score / 5) * 100}%`,
@@ -512,11 +512,11 @@ function ResetPasswordInner() {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '6px' }}>
                 Confirm New Password <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: 'var(--text-secondary, #64748B)' }} />
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   value={confirmPassword}
@@ -528,7 +528,7 @@ function ResetPasswordInner() {
                     height: '40px',
                     paddingLeft: '36px',
                     paddingRight: '36px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     fontSize: '13px',
                     boxSizing: 'border-box',
@@ -537,7 +537,7 @@ function ResetPasswordInner() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, #64748B)' }}
                 >
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -575,9 +575,9 @@ function ResetPasswordInner() {
           </form>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: '#64748b' }}>
+        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
           Remember your password?{' '}
-          <Link href="/login" style={{ color: '#0284c7', fontWeight: 600 }}>
+          <Link href="/login" style={{ color: 'var(--accent-primary, #006B68)', fontWeight: 600 }}>
             Back to Sign In
           </Link>
         </div>

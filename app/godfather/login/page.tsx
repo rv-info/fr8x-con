@@ -443,8 +443,8 @@ export default function DedicatedGodfatherLoginPage() {
 
           {/* Alerts */}
           {sessionNotice && !errorMessage && (
-            <div className="gfl-clean-alert" style={{ background: '#eff6ff', borderColor: '#bfdbfe', color: '#1d4ed8' }}>
-              <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="gfl-clean-alert" style={{ background: 'var(--surface-secondary, #F8FAFC)', borderColor: 'var(--border-default, #D9DEE5)', color: 'var(--text-primary, #1F2937)' }}>
+              <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-primary, #006B68)' }} />
               <span>{sessionNotice}</span>
             </div>
           )}
@@ -461,9 +461,9 @@ export default function DedicatedGodfatherLoginPage() {
             <div
               className="gfl-clean-alert"
               style={{
-                background: '#f0fdf4',
-                borderColor: '#bbf7d0',
-                color: '#166534',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                borderColor: 'var(--border-default, #D9DEE5)',
+                color: 'var(--accent-primary, #006B68)',
                 flexDirection: 'column',
                 alignItems: 'stretch',
                 gap: '8px',
@@ -605,23 +605,24 @@ export default function DedicatedGodfatherLoginPage() {
                     display: 'inline-flex',
                     padding: '10px',
                     borderRadius: '50%',
-                    background: '#eff6ff',
+                    background: 'var(--surface-secondary, #F8FAFC)',
+                    border: '1px solid var(--border-subtle, #E5E7EB)',
                     marginBottom: '8px',
                   }}
                 >
-                  <ShieldCheck className="w-6 h-6 text-blue-600" />
+                  <ShieldCheck className="w-6 h-6" style={{ color: 'var(--accent-primary, #006B68)' }} />
                 </div>
                 <h2
                   style={{
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#1e293b',
+                    color: 'var(--text-primary, #1F2937)',
                     margin: '0 0 4px 0',
                   }}
                 >
                   Enter the verification code
                 </h2>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', margin: 0 }}>
                   A verification code has been dispatched to your registered address.
                 </p>
               </div>

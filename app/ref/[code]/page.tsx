@@ -253,7 +253,7 @@ export default function CompanyReferencePage() {
                 </span>
               </div>
 
-              <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <p style={{ color: 'var(--text-secondary, #64748B)', fontSize: '13.5px', margin: '8px 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <MapPin size={13} color="#38bdf8" />
                 {matched.city}, {matched.country} · Operational Scale: <b>{matched.teu}</b>
               </p>
@@ -277,7 +277,7 @@ export default function CompanyReferencePage() {
                 borderRadius: '10px',
               }}
             >
-              <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
                 Compliance Level
               </span>
               <p style={{ fontSize: '14px', fontWeight: 700, margin: '4px 0 0', color: '#f8fafc' }}>
@@ -294,7 +294,7 @@ export default function CompanyReferencePage() {
                 borderRadius: '10px',
               }}
             >
-              <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
                 Reverse Auction Authorization
               </span>
               <p style={{ fontSize: '14px', fontWeight: 700, margin: '4px 0 0', color: '#f8fafc' }}>
@@ -311,7 +311,7 @@ export default function CompanyReferencePage() {
                 borderRadius: '10px',
               }}
             >
-              <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>
                 Community Standing
               </span>
               <p style={{ fontSize: '14px', fontWeight: 700, margin: '4px 0 0', color: '#f8fafc' }}>
@@ -336,7 +336,7 @@ export default function CompanyReferencePage() {
               gap: '12px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary, #64748B)', fontSize: '12px' }}>
               <Lock size={13} color="#10b981" />
               Cryptographically verified by FR8X Network
             </div>

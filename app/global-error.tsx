@@ -59,11 +59,11 @@ export default function GlobalError({
           <h2 style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 8px', color: '#f8fafc' }}>
             System Core Exception
           </h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 24px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5, margin: '0 0 24px' }}>
             The application encountered a critical root exception. Our resiliency shield has prevented data corruption.
           </p>
           {error?.digest && (
-            <p style={{ fontSize: '12px', color: '#64748b', fontFamily: 'monospace', margin: '0 0 16px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', fontFamily: 'monospace', margin: '0 0 16px' }}>
               Ref: {error.digest}
             </p>
           )}

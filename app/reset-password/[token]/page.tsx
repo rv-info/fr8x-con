@@ -84,9 +84,9 @@ export default function TokenResetPasswordPage() {
         style={{
           width: '100%',
           maxWidth: '440px',
-          background: '#ffffff',
+          background: 'var(--surface-primary, #FFFFFF)',
           borderRadius: '12px',
-          border: '1px solid #e2e8f0',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           padding: '36px 28px',
         }}
@@ -108,10 +108,10 @@ export default function TokenResetPasswordPage() {
           >
             <KeyRound size={24} />
           </div>
-          <h1 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: 'var(--text-primary, #1F2937)' }}>
             RESET PASSWORD
           </h1>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', margin: '4px 0 0' }}>
             Verified Security Token Link
           </p>
         </div>
@@ -119,8 +119,8 @@ export default function TokenResetPasswordPage() {
         {errorMessage && (
           <div
             style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               borderRadius: '8px',
               padding: '12px',
               marginBottom: '20px',
@@ -153,10 +153,10 @@ export default function TokenResetPasswordPage() {
             >
               <CheckCircle2 size={32} />
             </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', margin: '0 0 8px' }}>
               Password Reset Complete
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: '0 0 24px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5, margin: '0 0 24px' }}>
               {successMessage || 'Your credentials have been updated. A confirmation notice was dispatched from password@fr8x.in.'}
             </p>
             <button
@@ -184,11 +184,11 @@ export default function TokenResetPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '6px' }}>
                 New Password (minimum 8 characters)
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: 'var(--text-secondary, #64748B)' }} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={newPassword}
@@ -200,7 +200,7 @@ export default function TokenResetPasswordPage() {
                     height: '40px',
                     paddingLeft: '36px',
                     paddingRight: '36px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     fontSize: '13px',
                   }}
@@ -208,7 +208,7 @@ export default function TokenResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, #64748B)' }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -216,11 +216,11 @@ export default function TokenResetPasswordPage() {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginBottom: '6px' }}>
                 Confirm New Password
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: 'var(--text-secondary, #64748B)' }} />
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   value={confirmPassword}
@@ -232,7 +232,7 @@ export default function TokenResetPasswordPage() {
                     height: '40px',
                     paddingLeft: '36px',
                     paddingRight: '36px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid var(--border-default, #D9DEE5)',
                     borderRadius: '6px',
                     fontSize: '13px',
                   }}
@@ -240,7 +240,7 @@ export default function TokenResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary, #64748B)' }}
                 >
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -278,8 +278,8 @@ export default function TokenResetPasswordPage() {
           </form>
         )}
 
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: '#64748b' }}>
-          <Link href="/login" style={{ color: '#0284c7', fontWeight: 600 }}>
+        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: 'var(--text-secondary, #64748B)' }}>
+          <Link href="/login" style={{ color: 'var(--accent-primary, #006B68)', fontWeight: 600 }}>
             Back to Sign In
           </Link>
         </div>

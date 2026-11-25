@@ -39,15 +39,15 @@ function LiveClock() {
         gap: '6px',
         fontSize: '11px',
         fontFamily: 'Consolas, Monaco, monospace',
-        color: '#475569',
-        background: '#f1f5f9',
-        border: '1px solid #e2e8f0',
+        color: 'var(--text-secondary, #64748B)',
+        background: 'var(--surface-secondary, #F9FAFB)',
+        border: '1px solid var(--border-subtle, #E5E7EB)',
         padding: '3px 8px',
         borderRadius: '5px',
         whiteSpace: 'nowrap',
       }}
     >
-      <Clock style={{ width: '13px', height: '13px', color: '#64748b' }} />
+      <Clock style={{ width: '13px', height: '13px', color: 'var(--text-secondary, #64748B)' }} />
       <span style={{ fontWeight: 700 }}>{time}</span>
     </div>
   );
@@ -77,8 +77,8 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
         className="gf-topbar"
         style={{
           height: '48px',
-          background: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
+          background: 'var(--surface-primary, #FFFFFF)',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -100,7 +100,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
                 justifyContent: 'center',
                 padding: '4px',
                 borderRadius: '5px',
-                color: '#64748b',
+                color: 'var(--text-secondary, #64748B)',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
@@ -111,10 +111,10 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
             </button>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-            <span style={{ color: '#94a3b8', fontFamily: 'Consolas, Monaco, monospace', fontWeight: 800, fontSize: '11px' }}>
+            <span style={{ color: 'var(--text-secondary, #64748B)', fontFamily: 'Consolas, Monaco, monospace', fontWeight: 800, fontSize: '11px' }}>
               GODFATHER /
             </span>
-            <h1 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <h1 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {activeTitle}
             </h1>
           </div>
@@ -132,17 +132,17 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
               justifyContent: 'space-between',
               padding: '5px 10px',
               borderRadius: '6px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--surface-secondary, #F9FAFB)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
               fontSize: '11.5px',
-              color: '#64748b',
+              color: 'var(--text-secondary, #64748B)',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              <Search style={{ width: '14px', height: '14px', color: '#94a3b8', flexShrink: 0 }} />
-              <span style={{ color: '#64748b', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+              <Search style={{ width: '14px', height: '14px', color: 'var(--text-secondary, #64748B)', flexShrink: 0 }} />
+              <span style={{ color: 'var(--text-secondary, #64748B)', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                 Search users, companies, auctions, rates, audit records...
               </span>
             </div>
@@ -153,11 +153,11 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
                 gap: '2px',
                 fontFamily: 'Consolas, monospace',
                 fontSize: '10px',
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
+                background: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 padding: '1px 5px',
                 borderRadius: '4px',
-                color: '#475569',
+                color: 'var(--text-secondary, #64748B)',
                 fontWeight: 800,
                 flexShrink: 0,
               }}
@@ -183,7 +183,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
               fontFamily: 'Consolas, monospace',
               color: '#047857',
               background: '#ecfdf5',
-              border: '1px solid #a7f3d0',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
               padding: '3px 8px',
               borderRadius: '5px',
               fontWeight: 800,
@@ -231,7 +231,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
             onClick={() => setIsNotifOpen(true)}
             style={{
               position: 'relative',
-              color: '#475569',
+              color: 'var(--text-secondary, #64748B)',
               padding: '5px',
               borderRadius: '5px',
               background: 'transparent',
@@ -265,7 +265,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
               alignItems: 'center',
               gap: '7px',
               paddingLeft: '8px',
-              borderLeft: '1px solid #e2e8f0',
+              borderLeft: '1px solid var(--border-subtle, #E5E7EB)',
             }}
           >
             <div
@@ -289,7 +289,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
               style={{
                 fontSize: '11.5px',
                 fontWeight: 700,
-                color: '#334155',
+                color: 'var(--text-primary, #1F2937)',
                 fontFamily: 'Consolas, monospace',
                 maxWidth: '120px',
                 overflow: 'hidden',
@@ -309,7 +309,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
               style={{
                 padding: '4px 6px',
                 borderRadius: '5px',
-                color: '#94a3b8',
+                color: 'var(--text-secondary, #64748B)',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',

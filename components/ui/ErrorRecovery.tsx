@@ -31,9 +31,9 @@ export function ErrorRecovery({
       style={{
         padding: '16px',
         borderRadius: '8px',
-        background: '#fef2f2',
-        border: '1px solid #fecaca',
-        color: '#991b1b',
+        background: 'rgba(220, 38, 38, 0.08)',
+        border: '1px solid rgba(220, 38, 38, 0.35)',
+        color: '#dc2626',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
@@ -43,12 +43,12 @@ export function ErrorRecovery({
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
         <AlertCircle size={18} style={{ color: '#dc2626', flexShrink: 0, marginTop: '2px' }} aria-hidden="true" />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <b style={{ fontSize: '13px', display: 'block', color: '#991b1b' }}>{title}</b>
-          <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#b91c1c', lineHeight: 1.4 }}>
+          <b style={{ fontSize: '13px', display: 'block', color: '#dc2626' }}>{title}</b>
+          <p style={{ margin: '3px 0 0', fontSize: '12px', color: 'var(--text-primary, #1F2937)', lineHeight: 1.4 }}>
             {message}
           </p>
           {preserveWorkNotice && (
-            <div style={{ marginTop: '6px', fontSize: '11px', color: '#7f1d1d', background: '#fee2e2', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-primary, #1F2937)', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.25)', padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
               <span>✓</span>
               <span>Work Preserved: Your form inputs and session drafts remain intact.</span>
             </div>

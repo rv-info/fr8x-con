@@ -68,7 +68,7 @@ export default function GodfatherNotFoundPage() {
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px', color: '#f8fafc' }}>
             GODFATHER · FR8X
           </h2>
-          <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary, #64748B)', margin: 0, lineHeight: 1.5 }}>
             {isAuthenticated
               ? 'Redirecting to Super Admin Overview Console…'
               : 'Privileged session unverified or route expired. Redirecting to operator login…'}

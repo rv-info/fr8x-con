@@ -116,7 +116,7 @@ function Section({ title, icon, children }: { title: string; icon?: React.ReactN
   return (
     <section
       style={{
-        borderBottom: '1px solid #CBD5E0',
+        borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
         paddingBottom: '24px',
         marginBottom: '24px',
       }}
@@ -129,7 +129,7 @@ function Section({ title, icon, children }: { title: string; icon?: React.ReactN
             fontWeight: 800,
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            color: '#1B2B4B',
+            color: 'var(--text-primary, #1F2937)',
             margin: 0,
           }}
         >
@@ -215,12 +215,12 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           margin: 0,
           padding: '80px 24px',
           textAlign: 'center',
-          background: '#FFFFFF',
+          background: 'var(--app-bg, #FFFFFF)',
           boxSizing: 'border-box',
         }}
       >
-        <Loader2 size={32} className="spin" style={{ margin: '0 auto 16px', color: '#1B2B4B' }} />
-        <p style={{ fontSize: '12px', fontWeight: 600, color: '#1B2B4B' }}>Loading Complete Professional Profile…</p>
+        <Loader2 size={32} className="spin" style={{ margin: '0 auto 16px', color: 'var(--accent-primary, #006B68)' }} />
+        <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>Loading Complete Professional Profile…</p>
       </div>
     );
   }
@@ -233,7 +233,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           maxWidth: '100%',
           margin: 0,
           padding: '60px 24px',
-          background: '#FFFFFF',
+          background: 'var(--app-bg, #FFFFFF)',
           boxSizing: 'border-box',
         }}
       >
@@ -243,13 +243,13 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
             margin: '0 auto',
             padding: '36px',
             textAlign: 'center',
-            background: '#FFFFFF',
-            borderRadius: '6px',
-            border: '1px solid #E2E8F0',
+            background: 'var(--surface-primary, #FFFFFF)',
+            borderRadius: '8px',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
           }}
         >
-          <h1 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 10px', color: '#1B2B4B' }}>Profile Not Found</h1>
-          <p style={{ fontSize: '12px', color: '#1B2B4B', margin: '0 0 24px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 10px', color: 'var(--text-primary, #1F2937)' }}>Profile Not Found</h1>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: '0 0 24px' }}>
             This member may have removed their profile, altered privacy visibility, or the account is restricted.
           </p>
           <Link
@@ -257,10 +257,10 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
             style={{
               display: 'inline-flex',
               padding: '8px 18px',
-              borderRadius: '4px',
-              background: '#F8FAFD',
-              color: '#1B2B4B',
-              border: '1px solid #E2E8F0',
+              borderRadius: '6px',
+              background: 'var(--surface-secondary, #F8FAFC)',
+              color: 'var(--text-primary, #1F2937)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
               fontSize: '12px',
               fontWeight: 700,
               textDecoration: 'none',
@@ -281,7 +281,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           maxWidth: '100%',
           margin: 0,
           padding: '60px 24px',
-          background: '#FFFFFF',
+          background: 'var(--app-bg, #FFFFFF)',
           boxSizing: 'border-box',
         }}
       >
@@ -291,13 +291,13 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
             margin: '0 auto',
             padding: '36px',
             textAlign: 'center',
-            background: '#FFFFFF',
-            borderRadius: '6px',
-            border: '1px solid #E2E8F0',
+            background: 'var(--surface-primary, #FFFFFF)',
+            borderRadius: '8px',
+            border: '1px solid var(--border-subtle, #E5E7EB)',
           }}
         >
-          <AlertTriangle size={28} style={{ color: '#1B2B4B', margin: '0 auto 14px' }} />
-          <p style={{ fontSize: '12px', color: '#1B2B4B', margin: '0 0 24px', fontWeight: 600 }}>
+          <AlertTriangle size={28} style={{ color: 'var(--text-primary, #1F2937)', margin: '0 auto 14px' }} />
+          <p style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)', margin: '0 0 24px', fontWeight: 600 }}>
             {error || 'Unable to load member profile.'}
           </p>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
@@ -305,12 +305,12 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
               onClick={() => window.location.reload()}
               style={{
                 padding: '8px 18px',
-                borderRadius: '4px',
-                background: '#F8FAFD',
-                color: '#1B2B4B',
+                borderRadius: '6px',
+                background: 'var(--surface-primary, #FFFFFF)',
+                color: 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
                 fontWeight: 700,
-                border: '1px solid #E2E8F0',
+                border: '1px solid var(--border-interactive, #D1D5DB)',
                 cursor: 'pointer',
               }}
             >
@@ -322,10 +322,10 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '8px 18px',
-                borderRadius: '4px',
-                background: '#F8FAFD',
-                color: '#1B2B4B',
-                border: '1px solid #E2E8F0',
+                borderRadius: '6px',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                color: 'var(--text-primary, #1F2937)',
+                border: '1px solid var(--border-interactive, #D1D5DB)',
                 fontSize: '12px',
                 fontWeight: 700,
                 textDecoration: 'none',
@@ -352,7 +352,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
         margin: 0,
         padding: '20px 24px 80px',
         boxSizing: 'border-box',
-        background: '#FFFFFF',
+        background: 'var(--app-bg, #FFFFFF)',
       }}
     >
       {/* ── 1. Top Navigation Bar ────────────────────────────────────────────── */}
@@ -365,7 +365,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           gap: '12px',
           marginBottom: '20px',
           paddingBottom: '16px',
-          borderBottom: '1px solid #CBD5E0',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
         }}
       >
         <button
@@ -382,16 +382,16 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
             gap: '8px',
             fontSize: '12px',
             fontWeight: 700,
-            color: '#1B2B4B',
+            color: 'var(--text-primary, #1F2937)',
             textDecoration: 'none',
             padding: '6px 14px',
-            background: '#F8FAFD',
-            borderRadius: '4px',
-            border: '1px solid #E2E8F0',
+            background: 'var(--surface-primary, #FFFFFF)',
+            borderRadius: '6px',
+            border: '1px solid var(--border-interactive, #D1D5DB)',
             cursor: 'pointer',
           }}
         >
-          <ArrowLeft size={15} style={{ color: '#1B2B4B' }} />
+          <ArrowLeft size={15} style={{ color: 'var(--text-primary, #1F2937)' }} />
           <span>Back to Network</span>
         </button>
 
@@ -399,7 +399,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           <span
             style={{
               fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em',
-              color: '#1B2B4B',
+              color: 'var(--text-secondary, #64748B)',
             }}
           >
             Authoritative Logistics Member Dossier
@@ -412,9 +412,9 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
         style={{
           width: '100%',
           padding: '28px',
-          borderRadius: '6px',
-          background: '#FFFFFF',
-          border: '1px solid #E2E8F0',
+          borderRadius: '8px',
+          background: 'var(--surface-primary, #FFFFFF)',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           display: 'flex',
           gap: '24px',
           alignItems: 'flex-start',
@@ -433,7 +433,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
         <div style={{ flex: 1, minWidth: '280px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
-            <h1 style={{ fontSize: '12px', fontWeight: 700, margin: 0, color: '#1B2B4B', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
+            <h1 style={{ fontSize: '12px', fontWeight: 700, margin: 0, color: 'var(--text-primary, #1F2937)', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
               {name}
             </h1>
             {profile.has_golden_tick && <GoldenTick size={20} />}
@@ -442,9 +442,9 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                 style={{
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  background: '#FFFFFF',
-                  color: '#1B2B4B',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--surface-secondary, #F8FAFC)',
+                  color: 'var(--accent-primary, #006B68)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   fontWeight: 700,
                   fontSize: '12px',
                   textTransform: 'uppercase',
@@ -459,9 +459,9 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                 style={{
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  background: '#F8FAFD',
-                  color: '#1B2B4B',
-                  border: '1px solid #E2E8F0',
+                  background: 'var(--surface-secondary, #F8FAFC)',
+                  color: 'var(--text-primary, #1F2937)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
                   fontWeight: 700,
                   fontSize: '12px',
                   textTransform: 'uppercase',
@@ -473,7 +473,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           </div>
 
           {headline && (
-            <p style={{ fontSize: '12px', fontWeight: 500, color: '#1B2B4B', margin: '4px 0 10px', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary, #64748B)', margin: '4px 0 10px', lineHeight: 1.4 }}>
               {headline}
             </p>
           )}
@@ -485,23 +485,23 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
               alignItems: 'center',
               flexWrap: 'wrap',
               fontSize: '12px',
-              color: '#1B2B4B',
+              color: 'var(--text-primary, #1F2937)',
               marginBottom: '18px',
             }}
           >
             {location && (
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                <MapPin size={14} style={{ color: '#1B2B4B' }} /> {location}
+                <MapPin size={14} style={{ color: 'var(--accent-primary, #006B68)' }} /> {location}
               </span>
             )}
             {profile.department && (
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                <Building2 size={14} style={{ color: '#1B2B4B' }} /> {profile.department}
+                <Building2 size={14} style={{ color: 'var(--accent-primary, #006B68)' }} /> {profile.department}
               </span>
             )}
             {profile.mutual_count > 0 && (
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}>
-                <Users size={14} style={{ color: '#1B2B4B' }} /> {profile.mutual_count} mutual connection{profile.mutual_count !== 1 ? 's' : ''}
+                <Users size={14} style={{ color: 'var(--accent-primary, #006B68)' }} /> {profile.mutual_count} mutual connection{profile.mutual_count !== 1 ? 's' : ''}
               </span>
             )}
           </div>
@@ -524,16 +524,16 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 16px',
-                borderRadius: '4px',
-                background: '#F8FAFD',
-                color: '#1B2B4B',
-                border: '1px solid #E2E8F0',
+                borderRadius: '6px',
+                background: 'var(--surface-primary, #FFFFFF)',
+                color: 'var(--text-primary, #1F2937)',
+                border: '1px solid var(--border-interactive, #D1D5DB)',
                 fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
               }}
             >
-              <Ban size={13} style={{ color: '#1B2B4B' }} />
+              <Ban size={13} style={{ color: 'var(--text-secondary, #64748B)' }} />
               <span>{profile.connection_status === 'blocked' ? 'Unblock Member' : 'Block Member'}</span>
             </button>
           </div>
@@ -562,19 +562,19 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           <div
             style={{
               padding: '24px',
-              borderRadius: '6px',
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
             }}
           >
-            <Section title="Professional Overview &amp; Biography" icon={<Award size={15} style={{ color: '#1B2B4B' }} />}>
-              <p style={{ fontSize: '12px', lineHeight: 1.7, color: '#1B2B4B', margin: 0 }}>
+            <Section title="Professional Overview &amp; Biography" icon={<Award size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
+              <p style={{ fontSize: '12px', lineHeight: 1.7, color: 'var(--text-primary, #1F2937)', margin: 0 }}>
                 {profile.bio || profile.summary || 'No professional bio provided by member.'}
               </p>
             </Section>
 
             {/* Primary Trade Corridors */}
-            <Section title="Primary Trade Corridors &amp; Port Lanes" icon={<Globe size={15} style={{ color: '#1B2B4B' }} />}>
+            <Section title="Primary Trade Corridors &amp; Port Lanes" icon={<Globe size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
               {profile.key_trade_lanes && profile.key_trade_lanes.length > 0 ? (
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {profile.key_trade_lanes.map((lane) => (
@@ -585,20 +585,20 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                         alignItems: 'center',
                         gap: '6px',
                         padding: '6px 12px',
-                        borderRadius: '4px',
-                        background: '#FFFFFF',
-                        color: '#1B2B4B',
-                        border: '1px solid #E2E8F0',
+                        borderRadius: '6px',
+                        background: 'var(--surface-secondary, #F8FAFC)',
+                        color: 'var(--text-primary, #1F2937)',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         fontSize: '12px',
                         fontWeight: 700,
                       }}
                     >
-                      <Compass size={12} style={{ color: '#1B2B4B' }} /> {lane}
+                      <Compass size={12} style={{ color: 'var(--accent-primary, #006B68)' }} /> {lane}
                     </span>
                   ))}
                 </div>
               ) : (
-                <p style={{ fontSize: '12px', color: '#1B2B4B', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: 0 }}>
                   Global freight forwarding and multimodal transportation corridor operations.
                 </p>
               )}
@@ -606,17 +606,17 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
             {/* Freight Services & Capabilities */}
             {profile.specializations && profile.specializations.length > 0 && (
-              <Section title="Freight &amp; Logistics Specializations" icon={<Briefcase size={15} style={{ color: '#1B2B4B' }} />}>
+              <Section title="Freight &amp; Logistics Specializations" icon={<Briefcase size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {profile.specializations.map((spec) => (
                     <span
                       key={spec}
                       style={{
                         padding: '6px 12px',
-                        borderRadius: '4px',
-                        background: '#FFFFFF',
-                        color: '#1B2B4B',
-                        border: '1px solid #E2E8F0',
+                        borderRadius: '6px',
+                        background: 'var(--surface-secondary, #F8FAFC)',
+                        color: 'var(--text-primary, #1F2937)',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         fontSize: '12px',
                         fontWeight: 700,
                       }}
@@ -630,17 +630,17 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
             {/* Core Logistics Skills */}
             {profile.skills && profile.skills.length > 0 && (
-              <Section title="Operational Competencies &amp; Skills" icon={<FileCheck2 size={15} style={{ color: '#1B2B4B' }} />}>
+              <Section title="Operational Competencies &amp; Skills" icon={<FileCheck2 size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {profile.skills.map((skill) => (
                     <span
                       key={skill}
                       style={{
                         padding: '5px 10px',
-                        borderRadius: '4px',
-                        background: '#F8FAFD',
-                        color: '#1B2B4B',
-                        border: '1px solid #E2E8F0',
+                        borderRadius: '6px',
+                        background: 'var(--surface-secondary, #F8FAFC)',
+                        color: 'var(--text-primary, #1F2937)',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         fontSize: '12px',
                         fontWeight: 700,
                       }}
@@ -661,10 +661,10 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                       key={lang}
                       style={{
                         padding: '4px 10px',
-                        borderRadius: '4px',
-                        background: '#FFFFFF',
-                        color: '#1B2B4B',
-                        border: '1px solid #E2E8F0',
+                        borderRadius: '6px',
+                        background: 'var(--surface-secondary, #F8FAFC)',
+                        color: 'var(--text-primary, #1F2937)',
+                        border: '1px solid var(--border-default, #D9DEE5)',
                         fontSize: '12px',
                         fontWeight: 600,
                       }}
@@ -681,12 +681,12 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           <div
             style={{
               padding: '24px',
-              borderRadius: '6px',
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
             }}
           >
-            <Section title="Experience &amp; Operational History" icon={<Clock size={15} style={{ color: '#1B2B4B' }} />}>
+            <Section title="Experience &amp; Operational History" icon={<Clock size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
               {profile.experiences && profile.experiences.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {profile.experiences.map((exp, i) => (
@@ -697,40 +697,40 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                         gap: '14px',
                         alignItems: 'flex-start',
                         paddingBottom: i !== profile.experiences!.length - 1 ? '16px' : '0',
-                        borderBottom: i !== profile.experiences!.length - 1 ? '1px solid #E2E8F0' : 'none',
+                        borderBottom: i !== profile.experiences!.length - 1 ? '1px solid var(--border-subtle, #E5E7EB)' : 'none',
                       }}
                     >
                       <div
                         style={{
                           width: '36px',
                           height: '36px',
-                          borderRadius: '4px',
-                          background: '#F8FAFD',
-                          border: '1px solid #E2E8F0',
+                          borderRadius: '6px',
+                          background: 'var(--surface-secondary, #F8FAFC)',
+                          border: '1px solid var(--border-subtle, #E5E7EB)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <Briefcase size={16} style={{ color: '#1B2B4B' }} />
+                        <Briefcase size={16} style={{ color: 'var(--accent-primary, #006B68)' }} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 800, fontSize: '13.5px', color: '#1B2B4B' }}>
+                        <div style={{ fontWeight: 800, fontSize: '13.5px', color: 'var(--text-primary, #1F2937)' }}>
                           {exp.title ?? 'Logistics Specialist'}
                         </div>
                         {exp.company && (
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#1B2B4B', marginTop: '2px' }}>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>
                             {exp.company}
                           </div>
                         )}
                         {(exp.from || exp.to || exp.current) && (
-                          <div style={{ fontSize: '12px', color: '#1B2B4B', marginTop: '2px', fontWeight: 600 }}>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', fontWeight: 600 }}>
                             {exp.from ?? 'Start'} – {exp.current ? 'Present' : exp.to ?? 'End'}
                           </div>
                         )}
                         {exp.description && (
-                          <p style={{ fontSize: '12px', lineHeight: 1.5, color: '#1B2B4B', margin: '6px 0 0' }}>
+                          <p style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--text-primary, #1F2937)', margin: '6px 0 0' }}>
                             {exp.description}
                           </p>
                         )}
@@ -739,7 +739,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                   ))}
                 </div>
               ) : (
-                <p style={{ fontSize: '12px', color: '#1B2B4B', margin: 0 }}>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', margin: 0 }}>
                   No previous operational employment history recorded.
                 </p>
               )}
@@ -747,12 +747,12 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
             {/* Education & Qualifications */}
             {profile.educations && profile.educations.length > 0 && (
-              <Section title="Education &amp; Professional Qualifications" icon={<GraduationCap size={15} style={{ color: '#1B2B4B' }} />}>
+              <Section title="Education &amp; Professional Qualifications" icon={<GraduationCap size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {profile.educations.map((edu, i) => (
-                    <div key={i} style={{ fontSize: '12px', color: '#1B2B4B' }}>
+                    <div key={i} style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                       <div style={{ fontWeight: 700 }}>{edu.degree || 'Degree'} {edu.field ? `in ${edu.field}` : ''}</div>
-                      <div style={{ fontWeight: 500 }}>{edu.institution || 'University / Institute'} {edu.year ? `(${edu.year})` : ''}</div>
+                      <div style={{ fontWeight: 500, color: 'var(--text-secondary, #64748B)' }}>{edu.institution || 'University / Institute'} {edu.year ? `(${edu.year})` : ''}</div>
                     </div>
                   ))}
                 </div>
@@ -764,9 +764,9 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
               <Section title="Accreditations &amp; Professional Certifications">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {profile.certifications.map((cert, i) => (
-                    <div key={i} style={{ fontSize: '12px', color: '#1B2B4B' }}>
+                    <div key={i} style={{ fontSize: '12px', color: 'var(--text-primary, #1F2937)' }}>
                       <div style={{ fontWeight: 700 }}>{cert.name}</div>
-                      <div style={{ fontWeight: 500 }}>{cert.issuer} {cert.year ? `· ${cert.year}` : ''}</div>
+                      <div style={{ fontWeight: 500, color: 'var(--text-secondary, #64748B)' }}>{cert.issuer} {cert.year ? `· ${cert.year}` : ''}</div>
                     </div>
                   ))}
                 </div>
@@ -787,28 +787,28 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           <div
             style={{
               padding: '24px',
-              borderRadius: '6px',
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              borderRadius: '8px',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-subtle, #E5E7EB)',
             }}
           >
-            <Section title="Corporate Freight Entity" icon={<Building2 size={15} style={{ color: '#1B2B4B' }} />}>
+            <Section title="Corporate Freight Entity" icon={<Building2 size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12px' }}>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#1B2B4B' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary, #64748B)' }}>
                     Entity Legal Name
                   </div>
-                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#1B2B4B', marginTop: '2px' }}>
+                  <div style={{ fontSize: '13.5px', fontWeight: 800, color: 'var(--text-primary, #1F2937)', marginTop: '2px' }}>
                     {profile.company_name || profile.company || 'Enterprise Freight Entity'}
                   </div>
                 </div>
 
                 {profile.department && (
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#1B2B4B' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary, #64748B)' }}>
                       Department / Division
                     </div>
-                    <div style={{ fontWeight: 600, color: '#1B2B4B', marginTop: '2px' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginTop: '2px' }}>
                       {profile.department}
                     </div>
                   </div>
@@ -816,10 +816,10 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
                 {location && (
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#1B2B4B' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary, #64748B)' }}>
                       Operational Jurisdiction
                     </div>
-                    <div style={{ fontWeight: 600, color: '#1B2B4B', marginTop: '2px' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginTop: '2px' }}>
                       {location}
                     </div>
                   </div>
@@ -827,10 +827,10 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
                 {profile.timezone && (
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#1B2B4B' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary, #64748B)' }}>
                       Operating Timezone
                     </div>
-                    <div style={{ fontWeight: 600, color: '#1B2B4B', marginTop: '2px' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary, #1F2937)', marginTop: '2px' }}>
                       {profile.timezone}
                     </div>
                   </div>
@@ -839,55 +839,55 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
             </Section>
 
             {/* Statutory & Industry Accreditations */}
-            <Section title="Statutory Accreditations" icon={<ShieldCheck size={15} style={{ color: '#1B2B4B' }} />}>
+            <Section title="Statutory Accreditations" icon={<ShieldCheck size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #CBD5E0', paddingBottom: '6px' }}>
-                  <span style={{ fontWeight: 700, color: '#1B2B4B' }}>KYC Verification:</span>
-                  <span style={{ fontWeight: 700, color: '#1B2B4B' }}>{profile.is_verified ? 'VERIFIED' : 'PENDING'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>KYC Verification:</span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{profile.is_verified ? 'VERIFIED' : 'PENDING'}</span>
                 </div>
                 {profile.iata_code && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #CBD5E0', paddingBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>IATA Code:</span>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>{profile.iata_code}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>IATA Code:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{profile.iata_code}</span>
                   </div>
                 )}
                 {profile.fiata_reg && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #CBD5E0', paddingBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>FIATA Reg:</span>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>{profile.fiata_reg}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>FIATA Reg:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{profile.fiata_reg}</span>
                   </div>
                 )}
                 {profile.fmc_number && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #CBD5E0', paddingBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>FMC OTI/NVOCC:</span>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>{profile.fmc_number}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>FMC OTI/NVOCC:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{profile.fmc_number}</span>
                   </div>
                 )}
                 {profile.mto && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #CBD5E0', paddingBottom: '6px' }}>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>MTO License:</span>
-                    <span style={{ fontWeight: 700, color: '#1B2B4B' }}>{profile.mto}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', paddingBottom: '6px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-secondary, #64748B)' }}>MTO License:</span>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary, #1F2937)' }}>{profile.mto}</span>
                   </div>
                 )}
               </div>
             </Section>
 
             {/* Corporate Contact Information (Relationship-Governed) */}
-            <Section title="Corporate Contact Details" icon={<Mail size={15} style={{ color: '#1B2B4B' }} />}>
+            <Section title="Corporate Contact Details" icon={<Mail size={15} style={{ color: 'var(--accent-primary, #006B68)' }} />}>
               {profile.email || profile.phone || profile.mobile ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {profile.email && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-                      <Mail size={14} style={{ color: '#1B2B4B' }} />
-                      <a href={`mailto:${profile.email}`} style={{ color: '#1B2B4B', fontWeight: 700, textDecoration: 'none' }}>
+                      <Mail size={14} style={{ color: 'var(--accent-primary, #006B68)' }} />
+                      <a href={`mailto:${profile.email}`} style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 700, textDecoration: 'none' }}>
                         {profile.email}
                       </a>
                     </div>
                   )}
                   {(profile.phone || profile.mobile) && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-                      <Phone size={14} style={{ color: '#1B2B4B' }} />
-                      <a href={`tel:${profile.phone || profile.mobile}`} style={{ color: '#1B2B4B', fontWeight: 700, textDecoration: 'none' }}>
+                      <Phone size={14} style={{ color: 'var(--accent-primary, #006B68)' }} />
+                      <a href={`tel:${profile.phone || profile.mobile}`} style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 700, textDecoration: 'none' }}>
                         {profile.phone || profile.mobile}
                       </a>
                     </div>
@@ -897,16 +897,16 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
                 <div
                   style={{
                     padding: '14px',
-                    borderRadius: '4px',
-                    background: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
+                    borderRadius: '6px',
+                    background: 'var(--surface-secondary, #F8FAFC)',
+                    border: '1px solid var(--border-subtle, #E5E7EB)',
                     fontSize: '12px',
                     lineHeight: 1.5,
-                    color: '#1B2B4B',
+                    color: 'var(--text-primary, #1F2937)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, marginBottom: '4px' }}>
-                    <Lock size={13} style={{ color: '#1B2B4B' }} />
+                    <Lock size={13} style={{ color: 'var(--accent-primary, #006B68)' }} />
                     <span>CONTACT DETAILS SHIELDED</span>
                   </div>
                   Direct telephone, email, and statutory tax filings are shielded by member privacy settings. Send a connection request to request authorized bilateral access.
@@ -918,17 +918,17 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
             <div
               style={{
                 padding: '14px',
-                borderRadius: '4px',
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                borderRadius: '6px',
+                background: 'var(--surface-secondary, #F8FAFC)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 fontSize: '12px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontWeight: 800, textTransform: 'uppercase', color: '#1B2B4B' }}>Relationship:</span>
-              <span style={{ fontWeight: 800, textTransform: 'uppercase', color: '#1B2B4B' }}>
+              <span style={{ fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary, #64748B)' }}>Relationship:</span>
+              <span style={{ fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-primary, #1F2937)' }}>
                 {profile.connection_status === 'connected'
                   ? 'Connected Partner'
                   : profile.connection_status === 'pending_sent'
