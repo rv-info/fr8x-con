@@ -1053,7 +1053,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                   </div>
                 ) : (
                   selectedTopic.replies.map((reply, i) => (
-                    <div key={reply.id || i} style={{ padding: '12px 14px', background: '#fafbfc', borderRadius: '6px', border: '1px solid var(--line)', position: 'relative' }}>
+                    <div key={reply.id || i} style={{ padding: '12px 14px', background: 'var(--surface-elevated, #F8FAFC)', borderRadius: '6px', border: '1px solid var(--border-subtle, #E5E7EB)', position: 'relative' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <span style={{ fontWeight: 700, fontSize: '12px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           {reply.author}

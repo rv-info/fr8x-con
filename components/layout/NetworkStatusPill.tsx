@@ -107,9 +107,9 @@ export function NetworkStatusPill({ isOpen: controlledIsOpen, onToggle, onClose 
       ? '0 0 6px rgba(7, 91, 91, 0.45)'
       : 'none';
 
-  const pillBg = '#FFFFFF';
-  const pillBorder = '#D9E0E8';
-  const pillText = '#172B45';
+  const pillBg = 'var(--surface-primary, #FFFFFF)';
+  const pillBorder = 'var(--border-default, #D9DEE5)';
+  const pillText = 'var(--text-primary, #1F2937)';
 
   return (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }} ref={popoverRef}>

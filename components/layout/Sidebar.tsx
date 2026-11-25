@@ -86,7 +86,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   return (
     <aside
       className={`side ${collapsed ? 'is-collapsed' : ''} ${isMobileDrawer ? 'mobile-drawer-side' : ''}`}
-      style={{ backgroundColor: '#FFFFFF', borderRight: '1px solid #D9E0E8' }}
+      style={{ backgroundColor: 'var(--surface-primary, #FFFFFF)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}
     >
       {/* Brand Header */}
       <div
@@ -95,8 +95,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           justifyContent: collapsed ? 'center' : 'space-between',
           padding: collapsed ? '4px 0 10px' : '4px 6px 10px',
           alignItems: 'center',
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #D9E0E8',
+          backgroundColor: 'var(--surface-primary, #FFFFFF)',
+          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
         }}
       >
         <Link
@@ -132,7 +132,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               fontSize: '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#172B45',
+              color: 'var(--text-primary, #1F2937)',
               lineHeight: 1,
               textTransform: 'uppercase',
               fontFamily: 'Calibri, Arial, sans-serif',
@@ -180,18 +180,21 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               style={{
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 padding: collapsed ? '0' : '0 11px',
+                width: collapsed ? '36px' : 'auto',
+                height: '34px',
+                margin: collapsed ? '3px auto' : '2px 0',
+                borderRadius: '6px',
+                boxSizing: 'border-box',
                 ...(active
-                  ? { backgroundColor: '#075B5B', color: '#FFFFFF', borderRadius: '6px', border: '1px solid #075B5B', boxShadow: '0 1px 3px rgba(7, 91, 91, 0.25)' }
-                  : { color: '#172B45', backgroundColor: 'transparent', border: '1px solid transparent' }),
+                  ? { backgroundColor: 'var(--accent-primary, #006B68)', color: '#FFFFFF', border: '1px solid var(--accent-primary, #006B68)', boxShadow: '0 1px 3px rgba(0, 107, 104, 0.25)' }
+                  : { color: 'var(--text-primary, #1F2937)', backgroundColor: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }),
                 fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                 fontSize: '12px',
-                fontWeight: active ? 600 : 400,
+                fontWeight: active ? 600 : 500,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '9px',
                 textDecoration: 'none',
-                height: '34px',
-                margin: '1px 0',
                 transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
@@ -199,7 +202,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 name={item.id}
                 filled={active}
                 size={18}
-                style={{ color: active ? '#FFFFFF' : '#172B45' }}
+                style={{ color: active ? '#FFFFFF' : 'var(--text-primary, #1F2937)' }}
               />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
@@ -239,9 +242,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             className="sidelink desktop-only-collapse"
             onClick={onToggleCollapse}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            style={{ justifyContent: collapsed ? 'center' : 'flex-start', cursor: 'pointer', border: 'none', background: 'transparent' }}
+            style={{ justifyContent: collapsed ? 'center' : 'flex-start', cursor: 'pointer', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '6px' }}
           >
-            <NavigationIcon name="resize" filled={!collapsed} size={16} style={{ color: '#1B2B4B' }} />
+            <NavigationIcon name="resize" filled={!collapsed} size={16} style={{ color: 'var(--text-primary, #1F2937)' }} />
             {!collapsed && <span>{collapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>}
           </button>
         )}
@@ -254,9 +257,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             logout();
           }}
           title="Sign out"
-          style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+          style={{ justifyContent: collapsed ? 'center' : 'flex-start', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '6px' }}
         >
-          <NavigationIcon name="signout" filled={false} size={16} style={{ color: '#1B2B4B' }} />
+          <NavigationIcon name="signout" filled={false} size={16} style={{ color: 'var(--text-primary, #1F2937)' }} />
           {!collapsed && <span>Sign out</span>}
         </Link>
       </div>

@@ -961,8 +961,8 @@ export default function FeedsPage() {
         key={ad.id || `slot-${slotNum}`}
         className="card side-card"
         style={{
-          background: '#ffffff',
-          border: '1px solid var(--line)',
+          background: 'var(--surface-primary, #ffffff)',
+          border: '1px solid var(--border-subtle, #E5E7EB)',
           borderRadius: '8px',
           padding: '12px',
           display: 'flex',
@@ -1390,79 +1390,79 @@ export default function FeedsPage() {
 
       {/* LEFT COLUMN: Identity & Quick Shortcuts (Desktop-only to prevent cluttering mobile feed sequence) */}
       <aside className="feed-left-rail desktop-only">
-        <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
-          <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
-            <div style={{ margin: '0 auto 10px', display: 'flex', justifyContent: 'center' }}>
-              <UserAvatar user={user} size={74} />
+        <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 14px', textAlign: 'center', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
+            <div style={{ margin: '0 auto 6px', display: 'flex', justifyContent: 'center' }}>
+              <UserAvatar user={user} size={56} />
             </div>
-            <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
+            <b style={{ fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--text-primary, #1F2937)' }}>
               {user.displayName}
               {user.hasGoldenTick && <GoldenTick size={14} />}
             </b>
-            <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+            <small style={{ color: 'var(--text-secondary, #64748B)', fontSize: '11px', display: 'block', marginTop: '2px' }}>
               {user.designation}
             </small>
-            <small style={{ color: 'var(--fr8x-text)', fontSize: '11.5px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '2px' }}>
+            <small style={{ color: 'var(--text-primary, #1F2937)', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '2px' }}>
               {user.companyLogoUrl && (
                 <img
                   src={user.companyLogoUrl}
                   alt={user.company || 'Company'}
-                  style={{ width: '15px', height: '15px', objectFit: 'contain', background: 'transparent', flexShrink: 0 }}
+                  style={{ width: '14px', height: '14px', objectFit: 'contain', background: 'transparent', flexShrink: 0 }}
                 />
               )}
               <span>{user.company}</span>
             </small>
-            <div style={{ marginTop: '8px' }}>
+            <div style={{ marginTop: '6px' }}>
               <LocalTimeBadge timezone={user.timezone} />
             </div>
           </div>
 
-          <div style={{ padding: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
-              <span style={{ color: 'var(--fr8x-muted)' }}>My Plan</span>
+          <div style={{ padding: '6px 12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 4px', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
+              <span style={{ color: 'var(--text-secondary, #64748B)' }}>My Plan</span>
               <span className="badge">
                 {user.plan.toUpperCase()}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
-              <span style={{ color: 'var(--fr8x-muted)' }}>Saved Posts</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 4px', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
+              <span style={{ color: 'var(--text-secondary, #64748B)' }}>Saved Posts</span>
               <b>{posts.filter((p) => p.isSaved).length}</b>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
-              <span style={{ color: 'var(--fr8x-muted)' }}>Verification</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 4px', fontSize: '11.5px', color: 'var(--text-primary, #1F2937)' }}>
+              <span style={{ color: 'var(--text-secondary, #64748B)' }}>Verification</span>
               <span className="badge">VERIFIED</span>
             </div>
           </div>
 
           {/* Contact Details & Direct Contact Action below profile */}
-          <div style={{ padding: '10px 12px 14px', borderTop: '1px solid var(--fr8x-outline)', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fafbfc' }}>
+          <div style={{ padding: '10px 12px 12px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', display: 'flex', flexDirection: 'column', gap: '6px', background: 'var(--surface-elevated, #F8FAFC)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                 Contact &amp; Trade Connect
               </div>
             </div>
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}
               title={user.email}
             >
-              <Mail size={12} style={{ flexShrink: 0, color: 'var(--fr8x-text)' }} />
+              <Mail size={12} style={{ flexShrink: 0, color: 'var(--text-secondary, #64748B)' }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user.email}
               </span>
             </div>
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--text-primary, #1F2937)' }}
               title={user.mobile || (user as any).phone || 'Not configured'}
             >
               <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
-              <span>{user.mobile || (user as any).phone || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
+              <span>{user.mobile || (user as any).phone || <span style={{ color: 'var(--text-secondary, #64748B)' }}>Not configured</span>}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '10.5px', color: 'var(--text-secondary, #64748B)' }}>
               <div
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}
                 title={user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
               >
-                <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
+                <MapPin size={12} style={{ flexShrink: 0, color: 'var(--text-secondary, #64748B)' }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
                 </span>
@@ -1472,7 +1472,7 @@ export default function FeedsPage() {
             <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
               <button
                 className="btn primary sm"
-                style={{ flex: 1, justifyContent: 'center', fontSize: '11px', height: '28px', background: 'var(--fr8x-outline)', borderRadius: '0px' }}
+                style={{ flex: 1, justifyContent: 'center', fontSize: '11px', height: '32px', borderRadius: '6px' }}
                 onClick={() => setSelectedProfileName(user.displayName)}
               >
                 <UserCheck size={12} /> Contact Profile
@@ -1480,7 +1480,7 @@ export default function FeedsPage() {
               <a
                 href={`mailto:${user.email}`}
                 className="btn secondary sm"
-                style={{ padding: '0 8px', height: '28px', borderRadius: '0px' }}
+                style={{ padding: '0 10px', height: '32px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-default, #D9DEE5)' }}
                 title="Send Email"
               >
                 <Mail size={12} />
@@ -1490,21 +1490,21 @@ export default function FeedsPage() {
         </div>
 
         {/* Quick Navigation Shortcuts */}
-        <div className="card">
-          <div className="cardhead" style={{ fontSize: '12px' }}>
-            <b>Quick Shortcuts</b>
+        <div className="card" style={{ border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', background: 'var(--surface-primary, #FFFFFF)' }}>
+          <div className="cardhead" style={{ fontSize: '12px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', padding: '10px 12px' }}>
+            <b style={{ color: 'var(--text-primary, #1F2937)' }}>Quick Shortcuts</b>
           </div>
-          <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <Link href="/auctions/create" className="feed-shortcut-link">
-              <Gavel size={15} style={{ color: '#075B5B', flexShrink: 0 }} />
+              <Gavel size={14} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span>Create Reverse Auction</span>
             </Link>
             <Link href="/rates" className="feed-shortcut-link">
-              <TrendingUp size={15} style={{ color: '#075B5B', flexShrink: 0 }} />
+              <TrendingUp size={14} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span>Rate Intelligence</span>
             </Link>
             <Link href="/jobs" className="feed-shortcut-link">
-              <Briefcase size={15} style={{ color: '#0891b2', flexShrink: 0 }} />
+              <Briefcase size={14} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span>Trade Careers</span>
             </Link>
             <button
@@ -1513,18 +1513,18 @@ export default function FeedsPage() {
               className="feed-shortcut-link"
               style={{ width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
             >
-              <Plus size={15} style={{ color: '#075B5B', flexShrink: 0 }} />
+              <Plus size={14} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span>Post a Job</span>
             </button>
             <Link href="/nexus" className="feed-shortcut-link">
-              <ShieldAlert size={15} style={{ color: '#d97706', flexShrink: 0 }} />
+              <ShieldAlert size={14} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span>Compliance & Blacklist</span>
             </Link>
           </div>
         </div>
 
         {/* Added Contacts List (Requirement 5) */}
-        <div className="card" style={{ marginTop: '12px', border: '1px solid var(--fr8x-outline)' }}>
+        <div className="card" style={{ marginTop: '12px', border: '1px solid var(--border-subtle, #E5E7EB)' }}>
           <div className="cardhead" style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <b style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
               <UserCheck size={13} color="var(--brand)" /> Added Contacts
@@ -1791,10 +1791,11 @@ export default function FeedsPage() {
                 height: '32px',
                 padding: '0 12px',
                 fontSize: '11.5px',
-                fontWeight: 700,
-                color: 'var(--brand)',
-                borderColor: 'var(--brand)',
-                background: 'rgba(0, 163, 196, 0.06)',
+                fontWeight: 600,
+                color: 'var(--accent-primary, #006B68)',
+                borderColor: 'var(--border-default, #D9DEE5)',
+                background: 'var(--surface-primary, #FFFFFF)',
+                borderRadius: '6px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
@@ -1813,9 +1814,9 @@ export default function FeedsPage() {
                 fontSize: '11.5px',
                 fontWeight: 600,
                 borderRadius: '6px',
-                border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                background: '#ffffff',
-                color: 'var(--fr8x-text)',
+                border: '1px solid var(--border-default, #D9DEE5)',
+                background: 'var(--surface-primary, #FFFFFF)',
+                color: 'var(--text-primary, #1F2937)',
                 cursor: 'pointer',
               }}
             >
@@ -2774,9 +2775,9 @@ export default function FeedsPage() {
       {/* RIGHT COLUMN: Jobs & Interactive "YOUR AD HERE" Booking Space */}
       <aside className="feed-right-rail">
         {/* Active Jobs Card */}
-        <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px' }}>
-          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid #D9E0E8', background: '#FFFFFF' }}>
-            <b style={{ fontSize: '13px', color: '#172B45', fontWeight: 700 }}>Trade Careers &amp; Jobs</b>
+        <div className="card side-card" style={{ background: 'var(--surface-primary, #ffffff)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px' }}>
+          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }}>
+            <b style={{ fontSize: '13px', color: 'var(--text-primary, #1F2937)', fontWeight: 700 }}>Trade Careers &amp; Jobs</b>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
               <button
                 type="button"
@@ -2785,15 +2786,15 @@ export default function FeedsPage() {
                   padding: '0 10px',
                   fontSize: '11px',
                   fontWeight: 700,
-                  backgroundColor: '#075B5B',
+                  backgroundColor: 'var(--accent-primary, #006B68)',
                   color: '#FFFFFF',
-                  border: '1px solid #075B5B',
-                  borderRadius: '4px',
+                  border: '1px solid var(--accent-primary, #006B68)',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '4px',
-                  boxShadow: '0 1px 2px rgba(7, 91, 91, 0.2)',
+                  boxShadow: '0 1px 2px rgba(0, 107, 104, 0.2)',
                 }}
                 onClick={() => setShowJobCreateModal(true)}
               >
@@ -2806,10 +2807,10 @@ export default function FeedsPage() {
                   padding: '0 10px',
                   fontSize: '11px',
                   fontWeight: 600,
-                  backgroundColor: '#FFFFFF',
-                  color: '#172B45',
-                  border: '1px solid #D9E0E8',
-                  borderRadius: '4px',
+                  backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                  color: 'var(--text-primary, #1F2937)',
+                  border: '1px solid var(--border-default, #D9DEE5)',
+                  borderRadius: '6px',
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2901,16 +2902,16 @@ export default function FeedsPage() {
 
         {/* Unified Single Sponsor Ad Booking Card (Never duplicate identical placeholder cards) */}
         {!bookedSlot1 && !bookedSlot2 && (
-          <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px', textAlign: 'center', padding: '16px 14px' }}>
-            <h3 style={{ fontSize: '13.5px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
+          <div className="card side-card" style={{ background: 'var(--surface-primary, #ffffff)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '8px', textAlign: 'center', padding: '16px 14px' }}>
+            <h3 style={{ fontSize: '13.5px', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary, #1F2937)' }}>
               Promote your business with us
             </h3>
-            <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 12px', lineHeight: 1.45 }}>
+            <p style={{ fontSize: '11.5px', color: 'var(--text-secondary, #64748B)', margin: '0 0 12px', lineHeight: 1.45 }}>
               Advertise your company · Reach verified logistics leaders · Grow your trade network
             </p>
             <button
               className="btn primary sm"
-              style={{ width: '100%', justifyContent: 'center', height: '32px', fontWeight: 700 }}
+              style={{ width: '100%', justifyContent: 'center', height: '34px', fontWeight: 700, borderRadius: '6px' }}
               onClick={() => {
                 setActiveAdSlot(1);
                 setShowBookAdModal(true);

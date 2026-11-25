@@ -1287,7 +1287,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </div>
       )}
 
-      <header className="top" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #D9E0E8', fontFamily: "'Calibri Light', Calibri, Arial, sans-serif", fontSize: '12px', height: '48px', boxSizing: 'border-box' }}>
+      <header className="top" style={{ backgroundColor: 'var(--surface-primary, #FFFFFF)', borderBottom: '1px solid var(--border-subtle, #E5E7EB)', fontFamily: "'Calibri Light', Calibri, Arial, sans-serif", fontSize: '12px', height: '48px', boxSizing: 'border-box' }}>
         {/* Left Section: Logo, Breadcrumbs, Global Search */}
         <div className="top-left-section" style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flexShrink: 1 }}>
           {/* FR8X Application Logo - Visible on Desktop and Mobile */}
@@ -1313,18 +1313,18 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 // Fallback alias: /FR8X ICON.png
               }}
             />
-            <b className="desktop-only" style={{ fontSize: '13px', fontWeight: 900, color: '#172B45', letterSpacing: '0.04em' }}>
+            <b className="desktop-only" style={{ fontSize: '13px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em' }}>
               FR8X
             </b>
           </Link>
 
           {/* Vertical Separator - Desktop */}
-          <div className="desktop-only" style={{ width: '1px', height: '18px', background: '#D9E0E8', flexShrink: 0 }} />
+          <div className="desktop-only" style={{ width: '1px', height: '18px', background: 'var(--border-subtle, #E5E7EB)', flexShrink: 0 }} />
 
           {/* Desktop Breadcrumbs */}
-          <div className="crumb desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#526174', whiteSpace: 'nowrap', minWidth: 0 }}>
-            <span className="crumb-prefix" style={{ color: '#526174' }}>Workspace / </span>
-            <b style={{ color: '#172B45', fontWeight: 700 }}>{activePageTitle}</b>
+          <div className="crumb desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-secondary, #64748B)', whiteSpace: 'nowrap', minWidth: 0 }}>
+            <span className="crumb-prefix" style={{ color: 'var(--text-secondary, #64748B)' }}>Workspace / </span>
+            <b style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 700 }}>{activePageTitle}</b>
           </div>
 
           {/* Global Search Trigger */}
@@ -1340,22 +1340,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '8px',
-              background: '#FFFFFF',
-              border: '1px solid #D9E0E8',
+              background: 'var(--surface-primary, #FFFFFF)',
+              border: '1px solid var(--border-default, #D9DEE5)',
               borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '12px',
-              color: '#526174',
+              color: 'var(--text-secondary, #64748B)',
               boxSizing: 'border-box',
               whiteSpace: 'nowrap',
               transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
             }}
           >
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <NavigationIcon name="search" size={13} style={{ color: '#526174', flexShrink: 0 }} />
-              <span className="search-text" style={{ color: '#526174' }}>Search…</span>
+              <NavigationIcon name="search" size={13} style={{ color: 'var(--text-secondary, #64748B)', flexShrink: 0 }} />
+              <span className="search-text" style={{ color: 'var(--text-secondary, #64748B)' }}>Search…</span>
             </div>
-            <kbd className="search-kbd desktop-only" style={{ fontSize: '10px', fontWeight: 600, background: '#F4F6F8', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '2px 5px', color: '#526174', lineHeight: 1 }}>Ctrl+K</kbd>
+            <kbd className="search-kbd desktop-only" style={{ fontSize: '10px', fontWeight: 600, background: 'var(--surface-elevated, #F8FAFC)', border: '1px solid var(--border-default, #D9DEE5)', borderRadius: '4px', padding: '2px 5px', color: 'var(--text-secondary, #64748B)', lineHeight: 1 }}>Ctrl+K</kbd>
           </button>
         </div>
 
@@ -1543,10 +1543,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                background: '#FFFFFF',
-                border: '1px solid #D9E0E8',
+                background: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
-                color: '#172B45',
+                color: 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
                 fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                 fontWeight: 600,
@@ -1556,11 +1556,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 transition: 'all 0.15s ease',
               }}
             >
-              <MapPin size={13} style={{ color: '#075B5B', flexShrink: 0 }} />
+              <MapPin size={13} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span className="country-name" style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {selectedHub || `${user.city}, ${user.country}`}
               </span>
-              <ChevronDown size={11} style={{ color: '#526174', flexShrink: 0 }} />
+              <ChevronDown size={11} style={{ color: 'var(--text-secondary, #64748B)', flexShrink: 0 }} />
             </button>
 
             {showLocationModal && (
@@ -1685,10 +1685,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                background: '#FFFFFF',
-                border: '1px solid #D9E0E8',
+                background: 'var(--surface-primary, #FFFFFF)',
+                border: '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
-                color: '#172B45',
+                color: 'var(--text-primary, #1F2937)',
                 fontSize: '12px',
                 fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                 fontWeight: 600,
@@ -1698,9 +1698,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 transition: 'all 0.15s ease',
               }}
             >
-              <Calculator size={13} style={{ color: '#075B5B', flexShrink: 0 }} />
+              <Calculator size={13} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
               <span className="currency-label">CR · {currentCurrency}</span>
-              <ChevronDown size={11} className="currency-chevron" style={{ color: '#526174', flexShrink: 0 }} />
+              <ChevronDown size={11} className="currency-chevron" style={{ color: 'var(--text-secondary, #64748B)', flexShrink: 0 }} />
             </button>
 
             {showCurrencyModal && (
@@ -1984,8 +1984,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: showNotifications ? '#F4F6F8' : '#FFFFFF',
-                border: showNotifications ? '1.5px solid #075B5B' : '1px solid #D9E0E8',
+                background: showNotifications ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
+                border: showNotifications ? '1.5px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 position: 'relative',
@@ -1993,7 +1993,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 transition: 'all 0.15s ease',
               }}
             >
-              <NavigationIcon name="notifications" filled={unreadCount > 0} size={15} style={{ color: unreadCount > 0 ? '#075B5B' : '#526174' }} />
+              <NavigationIcon name="notifications" filled={unreadCount > 0} size={15} style={{ color: unreadCount > 0 ? 'var(--accent-primary, #006B68)' : 'var(--text-secondary, #64748B)' }} />
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -2357,8 +2357,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: showUserDropdown ? '#F4F6F8' : '#FFFFFF',
-                border: showUserDropdown ? '1.5px solid #075B5B' : '1px solid #D9E0E8',
+                background: showUserDropdown ? 'var(--surface-elevated, #F8FAFC)' : 'var(--surface-primary, #FFFFFF)',
+                border: showUserDropdown ? '1.5px solid var(--accent-primary, #006B68)' : '1px solid var(--border-default, #D9DEE5)',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 boxSizing: 'border-box',
@@ -2367,11 +2367,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               }}
             >
               <UserAvatar user={user} size={20} />
-              <span className="user-name-text desktop-only" style={{ fontSize: '12px', fontWeight: 600, color: '#172B45' }}>
+              <span className="user-name-text desktop-only" style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>
                 {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
               </span>
               {user?.hasGoldenTick && <GoldenTick className="desktop-only" size={12} />}
-              <ChevronDown size={11} style={{ color: '#526174' }} className="user-chevron desktop-only" />
+              <ChevronDown size={11} style={{ color: 'var(--text-secondary, #64748B)' }} className="user-chevron desktop-only" />
             </button>
 
             {showUserDropdown && (

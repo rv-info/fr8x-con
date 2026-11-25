@@ -3439,10 +3439,10 @@ export default function ProfilePage() {
             {/* Passport Preview Simulation Card */}
             <div
               style={{
-                border: '1px solid var(--fr8x-outline)',
+                border: '1px solid var(--border-subtle, #E5E7EB)',
                 borderRadius: '8px',
                 padding: '14px',
-                background: '#fafbfc',
+                background: 'var(--surface-elevated, #F8FAFC)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '10px',

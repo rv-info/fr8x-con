@@ -2101,7 +2101,7 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
             </table>
           </div>
           {/* Dynamic Rates Pagination Footer */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 18px', borderTop: '1px solid var(--line)', flexWrap: 'wrap', gap: '12px', fontSize: '12px', color: 'var(--mut)', background: '#fafbfc' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 18px', borderTop: '1px solid var(--border-subtle, #E5E7EB)', flexWrap: 'wrap', gap: '12px', fontSize: '12px', color: 'var(--text-secondary, #64748B)', background: 'var(--surface-primary, #FFFFFF)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
                 {totalFilteredRates === 0
