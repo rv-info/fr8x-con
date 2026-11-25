@@ -146,6 +146,33 @@ export async function GET(req: NextRequest) {
       return res;
     }
 
+    // Enforce single-device active session (One User One Login on one device & browser only)
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1';
+    const clientDeviceId = req.cookies.get('fr8x_device_id')?.value || verified.payload.deviceId;
+    const sessionCheck = serverSecurityStore.validateActiveSession(
+      verified.payload.uid || verified.payload.email,
+      verified.payload.sessionId || '',
+      clientDeviceId,
+      ip
+    );
+    if (!sessionCheck.valid && sessionCheck.reason === 'concurrent_device_login') {
+      const res = NextResponse.json(
+        {
+          authenticated: false,
+          reason: 'concurrent_device_login',
+          message:
+            sessionCheck.message ||
+            "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out.",
+        },
+        { status: 401 }
+      );
+      res.cookies.delete('fr8x_session');
+      return res;
+    }
+
     let userData = verified.payload;
     try {
       const latestUser = serverSecurityStore.getUser(verified.payload.uid) || serverSecurityStore.getUserByEmailOrUid(verified.payload.uid);

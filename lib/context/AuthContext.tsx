@@ -326,17 +326,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', onUserInteraction, { passive: true });
     window.addEventListener('click', onUserInteraction, { passive: true });
 
+    const checkActiveDeviceSession = async () => {
+      if (!currentUserRef.current) return;
+      try {
+        const deviceId = getOrCreateDeviceId();
+        const res = await fetch('/api/auth/session-heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: currentUserRef.current.uid,
+            email: currentUserRef.current.email,
+            deviceId,
+          }),
+        });
+        if (res.status === 401) {
+          const data = await res.json().catch(() => ({}));
+          if (data.reason === 'concurrent_device_login') {
+            logout(
+              "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out."
+            );
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login?reason=concurrent_device_login';
+            }
+          } else if (data.reason === 'session_expired') {
+            logout("Your 2-hour session has expired. Please sign in again to continue.");
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login?reason=session_expired';
+            }
+          }
+        }
+      } catch {}
+    };
+
     const checkInterval = setInterval(() => {
       if (currentUserRef.current && checkIsSessionExpired()) {
         console.warn('[AuthContext] Inactivity timeout reached. Logging out.');
         logout('Session expired due to inactivity.');
+      } else if (currentUserRef.current) {
+        checkActiveDeviceSession();
       }
-    }, 30000);
+    }, 25000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && currentUserRef.current) {
+        checkActiveDeviceSession();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       window.removeEventListener('mousemove', onUserInteraction);
       window.removeEventListener('keydown', onUserInteraction);
       window.removeEventListener('click', onUserInteraction);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       clearInterval(checkInterval);
     };
   }, []);

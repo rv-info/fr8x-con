@@ -13,6 +13,7 @@ import path from 'path';
 import { resolveCallerIdentity } from '@/lib/connections-backend';
 import { getDbClient, createAdminClient } from '@/lib/supabase/server';
 import { updateContact } from '@/lib/db/contacts';
+import { serverSecurityStore } from '@/lib/server-auth-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,32 @@ interface DirectMessage {
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CHAT_STORE_PATH = path.join(DATA_DIR, 'contacts_chat_store.json');
+
+function getUserAliases(rawId: string): Set<string> {
+  const aliases = new Set<string>();
+  if (!rawId) return aliases;
+  const clean = rawId.trim().toLowerCase().replace(/^c-/, '');
+  aliases.add(clean);
+  aliases.add(`c-${clean}`);
+  const user = serverSecurityStore.getUser(clean) || serverSecurityStore.getUserByEmailOrUid(clean);
+  if (user) {
+    if (user.uid) {
+      aliases.add(user.uid.toLowerCase());
+      aliases.add(`c-${user.uid.toLowerCase()}`);
+    }
+    if (user.email) {
+      aliases.add(user.email.toLowerCase());
+    }
+  }
+  return aliases;
+}
+
+function matchesParty(msgUserId: string, targetId: string): boolean {
+  if (!msgUserId || !targetId) return false;
+  const msgClean = msgUserId.trim().toLowerCase().replace(/^c-/, '');
+  const targetAliases = getUserAliases(targetId);
+  return targetAliases.has(msgClean) || targetAliases.has(msgUserId.trim().toLowerCase());
+}
 
 function loadChatStore(): DirectMessage[] {
   try {
@@ -59,17 +86,22 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const targetId = searchParams.get('targetId');
 
-  if (!targetId) {
-    return NextResponse.json({ success: false, error: 'targetId is required' }, { status: 400 });
-  }
-
-  // Filter messages between these two parties
   const allMessages = loadChatStore();
-  const conversation = allMessages.filter(
-    (m) =>
-      (m.sender_id === userId && m.recipient_id === targetId) ||
-      (m.sender_id === targetId && m.recipient_id === userId)
-  );
+  let conversation: DirectMessage[];
+
+  if (targetId) {
+    // Filter messages specifically between current user and targetId (with alias matching)
+    conversation = allMessages.filter(
+      (m) =>
+        (matchesParty(m.sender_id, userId) && matchesParty(m.recipient_id, targetId)) ||
+        (matchesParty(m.sender_id, targetId) && matchesParty(m.recipient_id, userId))
+    );
+  } else {
+    // Return all direct messages involving current caller across all contacts
+    conversation = allMessages.filter(
+      (m) => matchesParty(m.sender_id, userId) || matchesParty(m.recipient_id, userId)
+    );
+  }
 
   conversation.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
@@ -92,14 +124,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'targetId and content are required' }, { status: 400 });
     }
 
+    const cleanTargetId = String(targetId).trim().replace(/^c-/, '');
     const now = new Date().toISOString();
     const newMsg: DirectMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       sender_id: userId,
-      recipient_id: targetId,
+      recipient_id: cleanTargetId,
       content: content.trim(),
       created_at: now,
-      is_read: true,
+      is_read: false,
     };
 
     // Save to resilient chat store
@@ -108,7 +141,7 @@ export async function POST(req: NextRequest) {
     saveChatStore(store);
 
     // Update last_contacted_at on the contact record
-    updateContact(userId, targetId, { last_contacted_at: now }, caller.token).catch(() => {});
+    updateContact(userId, cleanTargetId, { last_contacted_at: now }, caller.token).catch(() => {});
 
     // Also attempt write to Supabase messages table if conversations table exists
     try {
