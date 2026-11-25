@@ -480,7 +480,14 @@ export default function FeedsPage() {
         name: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'Member',
         role: u.designation || 'Freight Professional',
         company: u.company || 'Enterprise Member',
-        isOnline: false,
+        isOnline: Boolean(
+          (u as any).isOnline ||
+            u.status === 'active' ||
+            u.status === 'online' ||
+            (u as any).presenceStatus === 'active' ||
+            (u as any).presenceStatus === 'idle' ||
+            (u as any).userStatus === 'available'
+        ),
         hasGoldenTick: Boolean(u.hasGoldenTick),
         email: u.email || '',
       }));

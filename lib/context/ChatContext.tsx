@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef, ReactNode } from 'react';
 import { ChatContact, ChatMessage, ActiveChatWindow } from '@/lib/types';
 import { useAuth } from './AuthContext';
 import { presenceService } from '@/lib/presence/presenceService';
@@ -82,6 +82,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [isLauncherOpen, setIsLauncherOpen] = useState(false);
   const [activeWindows, setActiveWindows] = useState<ActiveChatWindow[]>([]);
+  const activeWindowsRef = useRef<ActiveChatWindow[]>([]);
+  useEffect(() => {
+    activeWindowsRef.current = activeWindows;
+  }, [activeWindows]);
   // SSR Hydration Safe: Initialize to empty on both server & client initial render
   const [contacts, setContacts] = useState<ChatContact[]>(INITIAL_CONTACTS);
   const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MESSAGES);
@@ -195,12 +199,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    if (!user?.uid || user.uid === 'guest') return;
     loadRemoteContactsAndMembers();
   }, [user?.uid]);
 
   // Periodic background message poll to ensure live bidirectional chat delivery across devices & accounts
   useEffect(() => {
-    if (typeof window === 'undefined' || !user?.uid) return;
+    if (typeof window === 'undefined' || !user?.uid || user.uid === 'guest') return;
 
     let isSubscribed = true;
     const syncServerMessages = async () => {
@@ -214,23 +219,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const currentUid = (user.uid || '').toLowerCase();
         const currentEmail = (user.email || '').toLowerCase();
 
+        const newUnreadBySender = new Map<string, number>();
+
         setAllMessages((prev) => {
           let hasNew = false;
           const updated = { ...prev };
 
           for (const sm of serverMessages) {
             const senderClean = (sm.sender_id || '').toLowerCase().replace(/^c-/, '');
-            const recipientClean = (sm.recipient_id || '').toLowerCase().replace(/^c-/, '');
             const isMe = senderClean === currentUid || senderClean === currentEmail;
             const conversationTarget = isMe ? sm.recipient_id : sm.sender_id;
             const convKey = conversationTarget.replace(/^c-/, '');
+            const formattedTime = new Date(sm.created_at).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
 
             const existingList = updated[convKey] || updated[conversationTarget] || [];
             const exists = existingList.some(
-              (m) =>
-                m.id === sm.id ||
-                (m.text === sm.content &&
-                  Math.abs(new Date(m.time).getTime() - new Date(sm.created_at).getTime()) < 5000)
+              (m) => m.id === sm.id || (m.text === sm.content && m.time === formattedTime && m.me === isMe)
             );
 
             if (!exists) {
@@ -241,7 +248,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 senderName: isMe ? user.displayName : 'Verified Partner',
                 me: isMe,
                 text: sm.content,
-                time: new Date(sm.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                time: formattedTime,
                 status: sm.is_read ? 'read' : 'sent',
               };
 
@@ -249,6 +256,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               updated[convKey] = nextList;
               if (conversationTarget !== convKey) {
                 updated[conversationTarget] = nextList;
+              }
+
+              if (!isMe) {
+                const isOpenAndVisible = activeWindowsRef.current.some(
+                  (w) =>
+                    (w.contactId === convKey || w.contactId === conversationTarget) && !w.isMinimized
+                );
+                if (!isOpenAndVisible) {
+                  newUnreadBySender.set(convKey, (newUnreadBySender.get(convKey) || 0) + 1);
+                }
               }
             }
           }
@@ -259,6 +276,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           }
           return prev;
         });
+
+        if (newUnreadBySender.size > 0 && isSubscribed) {
+          setContacts((prev) => {
+            const updated = prev.map((c) => {
+              const cleanCid = c.id.replace(/^c-/, '');
+              const inc = newUnreadBySender.get(cleanCid) || 0;
+              return inc > 0 ? { ...c, unreadCount: (c.unreadCount || 0) + inc } : c;
+            });
+            safeSaveLocalStorage(CHAT_CONTACTS_KEY, updated);
+            return updated;
+          });
+        }
       } catch {}
     };
 

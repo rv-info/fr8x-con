@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { saveUserPresence, getUserPresence } from '@/lib/db/presence';
 import { UserPresenceState } from '@/lib/types';
 import { authenticateUserSession } from '@/lib/auth-guard';
+import { serverSecurityStore } from '@/lib/server-auth-store';
 
 export async function POST(req: NextRequest) {
   // ── Authentication guard ────────────────────────────────────────────────
@@ -46,7 +47,35 @@ export async function GET(req: NextRequest) {
     }
 
     // Authoritative check in Supabase PostgreSQL
-    const presence = await getUserPresence(userId);
+    let presence = await getUserPresence(userId);
+
+    // Fallback to active session device activity if presence record is absent or stale
+    if (!presence || presence.status === 'offline' || presence.status === 'away') {
+      const secUser = serverSecurityStore.getUser(userId) || serverSecurityStore.getUserByEmailOrUid(userId);
+      if (secUser?.activeDevice?.lastActiveAt) {
+        const lastActiveIso = secUser.activeDevice.lastActiveAt;
+        const elapsedMs = Date.now() - new Date(lastActiveIso).getTime();
+        if (elapsedMs < 5 * 60 * 1000) {
+          presence = {
+            user_id: userId,
+            online: true,
+            status: 'active',
+            last_seen: lastActiveIso,
+            active_device: secUser.activeDevice,
+            updated_at: lastActiveIso,
+          };
+        } else if (elapsedMs < 15 * 60 * 1000) {
+          presence = {
+            user_id: userId,
+            online: false,
+            status: 'idle',
+            last_seen: lastActiveIso,
+            active_device: secUser.activeDevice,
+            updated_at: lastActiveIso,
+          };
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

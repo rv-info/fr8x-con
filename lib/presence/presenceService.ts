@@ -8,6 +8,7 @@ import { PresenceStatus, UserPresenceState } from '@/lib/types';
 
 // In-memory presence cache for local client
 const localPresenceCache = new Map<string, UserPresenceState>();
+const localPresenceFetchedAt = new Map<string, number>();
 
 const HEARTBEAT_INTERVAL_MS = 90_000;  // 90 seconds throttled heartbeat
 const PRESENCE_TTL_SECONDS = 300;      // 5 minutes TTL
@@ -339,11 +340,14 @@ class PresenceService {
   }
 
   public async getContactPresence(userId: string): Promise<PresenceStatus> {
-    // 1. Check client local cache
+    // 1. Check client local cache only if fresh (< 15 seconds old)
     const presence = localPresenceCache.get(userId);
-    if (presence?.status) return presence.status;
+    const fetchedAt = localPresenceFetchedAt.get(userId) || 0;
+    if (presence?.status && Date.now() - fetchedAt < 15_000) {
+      return presence.status;
+    }
 
-    // 2. Fallback to /api/presence
+    // 2. Fetch live status from /api/presence
     if (typeof window !== 'undefined') {
       try {
         const res = await fetch(`/api/presence?userId=${encodeURIComponent(userId)}`);
@@ -351,13 +355,14 @@ class PresenceService {
           const data = await res.json();
           if (data.presence?.status) {
             localPresenceCache.set(userId, data.presence);
+            localPresenceFetchedAt.set(userId, Date.now());
             return data.presence.status;
           }
         }
       } catch {}
     }
 
-    return 'away';
+    return presence?.status || 'away';
   }
 }
 

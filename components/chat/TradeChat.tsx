@@ -191,35 +191,82 @@ function SingleChatBox({
 
         <div className="ha" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <button
+            type="button"
             onClick={onMinimize}
             title="Minimize chat"
             className="actionicon"
-            style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: '26px',
+              height: '26px',
+              minWidth: '26px',
+              minHeight: '26px',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--surface-secondary, #F8FAFC)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
+              color: 'var(--text-primary, #1F2937)',
+              borderRadius: '5px',
+              cursor: 'pointer',
+            }}
           >
-            <Minus size={13} />
+            <Minus size={14} style={{ stroke: 'currentColor', display: 'block' }} />
           </button>
           <button
+            type="button"
             onClick={() => setIsMaximized(!isMaximized)}
             title={isMaximized ? 'Restore normal window' : 'Maximize window'}
             className="actionicon"
-            style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: '26px',
+              height: '26px',
+              minWidth: '26px',
+              minHeight: '26px',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--surface-secondary, #F8FAFC)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
+              color: 'var(--text-primary, #1F2937)',
+              borderRadius: '5px',
+              cursor: 'pointer',
+            }}
           >
-            <Maximize2 size={13} />
+            <Maximize2 size={14} style={{ stroke: 'currentColor', display: 'block' }} />
           </button>
           <button
+            type="button"
             onClick={() => onOpenProfile(cleanName)}
             title="Open Profile"
             className="actionicon"
-            style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: '26px',
+              height: '26px',
+              minWidth: '26px',
+              minHeight: '26px',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--surface-secondary, #F8FAFC)',
+              border: '1px solid var(--border-interactive, #D1D5DB)',
+              color: 'var(--text-primary, #1F2937)',
+              borderRadius: '5px',
+              cursor: 'pointer',
+            }}
           >
-            <ExternalLink size={13} />
+            <ExternalLink size={14} style={{ stroke: 'currentColor', display: 'block' }} />
           </button>
           <button
+            type="button"
             onClick={onClose}
             title="Close chat"
             className="close-red-box"
+            style={{ padding: 0 }}
           >
-            <X size={14} />
+            <X size={14} style={{ stroke: '#FFFFFF', display: 'block' }} />
           </button>
         </div>
       </div>
@@ -284,8 +331,8 @@ function SingleChatBox({
             }
           }}
         />
-        <button onClick={handleSend} title="Send message" className="sendbtn">
-          <Send size={14} />
+        <button type="button" onClick={handleSend} title="Send message" className="sendbtn" style={{ padding: 0 }}>
+          <Send size={15} style={{ stroke: '#FFFFFF', display: 'block' }} />
         </button>
       </div>
     </div>
@@ -361,8 +408,8 @@ export function TradeChat() {
         ))}
       </div>
 
-      {/* Contacts List Launcher Popup (Hidden when a chat window is active on mobile) */}
-      {isLauncherOpen && activeWindows.length === 0 && (
+      {/* Contacts List Launcher Popup */}
+      {isLauncherOpen && (
         <section className="chatlauncherpanel" aria-label="Nexus Communication">
           <div className="chathead" style={{ padding: '12px 14px' }}>
             <MessagesSquare size={18} />
