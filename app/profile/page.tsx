@@ -4786,7 +4786,7 @@ export default function ProfilePage() {
                   </div>
                   {additionalEmails.length === 0 ? (
                     <small style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>
-                      No secondary emails added. Click "+ Add Email" to register operational, finance or branch desk emails.
+                      No secondary emails added. Click &ldquo;+ Add Email&rdquo; to register operational, finance or branch desk emails.
                     </small>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -4852,7 +4852,7 @@ export default function ProfilePage() {
                   </div>
                   {additionalPhones.length === 0 ? (
                     <small style={{ color: '#64748b', fontSize: '11px', display: 'block' }}>
-                      No secondary lines added. Click "+ Add Phone" to add alternate mobile, WhatsApp or emergency trade numbers.
+                      No secondary lines added. Click &ldquo;+ Add Phone&rdquo; to add alternate mobile, WhatsApp or emergency trade numbers.
                     </small>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

@@ -1,7 +1,7 @@
-// FR8X Enterprise Service Worker v5.0.0
+// FR8X Enterprise Service Worker v5.1.0
 // Ultra-low latency caching, instant cache-purging for stale assets, and offline fallback.
 
-const CACHE_NAME = 'fr8x-cache-v5.0.0';
+const CACHE_NAME = 'fr8x-cache-v5.1.0';
 const STATIC_ASSETS = [
   '/logo.png',
   '/icon.png',

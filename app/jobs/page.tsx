@@ -473,7 +473,7 @@ export default function JobsPage() {
 
                     {app.coverNote && (
                       <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: 0, background: '#f8fafc', padding: '6px 10px', borderRadius: '5px' }}>
-                        "{app.coverNote}"
+                        &ldquo;{app.coverNote}&rdquo;
                       </p>
                     )}
 
