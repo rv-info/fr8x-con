@@ -461,7 +461,7 @@ export function TradeChat() {
           right: isLauncherOpen ? '348px' : '76px',
         }}
       >
-        {activeWindows.slice(-1).map((win) => (
+        {activeWindows.map((win) => (
           <SingleChatBox
             key={win.contactId}
             contactId={win.contactId}

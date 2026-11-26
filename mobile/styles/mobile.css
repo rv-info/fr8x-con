@@ -537,11 +537,86 @@
   }
 
   /* Keep floating TradeChat launcher above bottom nav without overlapping it */
+  [data-fr8x-mobile-shell="true"] .chatfab,
   [data-fr8x-mobile-shell="true"] .trade-chat-fab,
   [data-fr8x-mobile-shell="true"] button[aria-label*="Trade Chat"],
   [data-fr8x-mobile-shell="true"] button[aria-label*="Open Chat"] {
     bottom: calc(var(--m-bottomnav-height) + env(safe-area-inset-bottom, 0px) + 12px) !important;
     right: 12px !important;
+  }
+
+  /* Full-height 100dvh mobile chat sheet & launcher */
+  [data-fr8x-mobile-shell="true"] .multichattray {
+    position: fixed !important;
+    inset: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 1300 !important;
+    pointer-events: none;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .multichattray > *:not(:last-child) {
+    display: none !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .singlechatwindow {
+    pointer-events: auto;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .singlechatwindow .chathead {
+    min-height: 56px !important;
+    padding: 8px 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .singlechatwindow .ha button,
+  [data-fr8x-mobile-shell="true"] .singlechatwindow .sendbtn,
+  [data-fr8x-mobile-shell="true"] .chatlauncherpanel .actionicon {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .singlechatwindow .chatbody.messages {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .singlechatwindow .compose {
+    flex-shrink: 0 !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .singlechatwindow .compose textarea {
+    font-size: 16px !important;
+    min-height: 44px !important;
+  }
+
+  [data-fr8x-mobile-shell="true"] .chatlauncherpanel {
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(var(--m-bottomnav-height) + env(safe-area-inset-bottom, 0px) + 12px) !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: 75dvh !important;
+    z-index: 1290 !important;
   }
 
   /* Mobile-friendly modals & overlays */
