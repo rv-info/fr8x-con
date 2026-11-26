@@ -94,14 +94,14 @@ export default function DashboardPage() {
   const recentActivity = notifications.slice(0, 6);
 
   const kpis = [
-    { label: 'Active Auctions', value: activeAuctions, icon: <Gavel size={16} />, color: '#1168d7', href: '/auctions' },
-    { label: 'My Posted', value: myPostedActive, icon: <Activity size={16} />, color: '#099889', href: '/auctions' },
-    { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={16} />, color: '#7c3aed', href: '/auctions' },
-    { label: 'Bids Won', value: bidsWon, icon: <Award size={16} />, color: '#d97706', href: '/auctions' },
-    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={16} />, color: 'var(--text-secondary, #64748B)', href: '/auctions' },
-    { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={16} />, color: '#dc2626', href: '/feeds' },
-    { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={16} />, color: '#059669', href: '/feeds' },
-    { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={16} />, color: '#0891b2', href: '/jobs' },
+    { label: 'Active Auctions', value: activeAuctions, icon: <Gavel size={15} />, href: '/auctions' },
+    { label: 'My Posted', value: myPostedActive, icon: <Activity size={15} />, href: '/auctions' },
+    { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={15} />, href: '/auctions' },
+    { label: 'Bids Won', value: bidsWon, icon: <Award size={15} />, href: '/auctions' },
+    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={15} />, href: '/auctions' },
+    { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={15} />, href: '/feeds' },
+    { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={15} />, href: '/feeds' },
+    { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={15} />, href: '/jobs' },
   ];
 
   const quickActions = [
@@ -163,11 +163,11 @@ export default function DashboardPage() {
             <div className="dashboard-kpi-grid">
               {kpis.map((kpi) => (
                 <Link key={kpi.label} href={kpi.href} className="dashboard-kpi-card" aria-label={`${kpi.label}: ${kpi.value}`}>
-                  <div className="dashboard-kpi-icon" style={{ background: kpi.color + '18', color: kpi.color }} aria-hidden="true">
+                  <div className="dashboard-kpi-icon" style={{ background: 'var(--surface-secondary, #EDEDEF)', color: 'var(--icon-inactive, #858A91)', borderRadius: '10px' }} aria-hidden="true">
                     {kpi.icon}
                   </div>
                   <div>
-                    <div className="dashboard-kpi-value">{kpi.value}</div>
+                    <div className="dashboard-kpi-value ui-tabular">{kpi.value}</div>
                     <div className="dashboard-kpi-label">{kpi.label}</div>
                   </div>
                 </Link>

@@ -126,7 +126,7 @@ function SingleChatBox({
           {(contact as any)?.avatarUrl ? (
             <img src={(contact as any).avatarUrl} alt={cleanName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9px', fontWeight: 800 }}>
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--accent-primary, #C95038)', color: '#ffffff', fontSize: '9px', fontWeight: 700 }}>
               {initials}
             </div>
           )}

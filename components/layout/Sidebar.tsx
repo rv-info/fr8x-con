@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
@@ -20,6 +21,27 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { notifications } = useData();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('fr8x_theme');
+      if (saved === 'dark' || saved === 'light') {
+        setTheme(saved);
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
+      }
+    } catch {}
+  }, []);
+
+  const applyTheme = (nextTheme: 'light' | 'dark') => {
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem('fr8x_theme', nextTheme);
+      document.documentElement.setAttribute('data-theme', nextTheme);
+    } catch {}
+  };
 
   // If this is rendered inside mobile drawer, force collapsed to false so full labels are shown
   const collapsed = isMobileDrawer ? false : isCollapsed;
@@ -86,28 +108,31 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   return (
     <aside
       className={`side ${collapsed ? 'is-collapsed' : ''} ${isMobileDrawer ? 'mobile-drawer-side' : ''}`}
-      style={{ backgroundColor: 'var(--surface-primary, #FFFFFF)', borderRight: '1px solid var(--border-subtle, #E5E7EB)' }}
+      style={{
+        backgroundColor: 'var(--sidebar-bg, #E1E2E6)',
+        borderRight: '1px solid var(--border-default, #E0E1E3)',
+      }}
     >
       {/* Brand Header */}
       <div
         className="brand"
         style={{
-          justifyContent: collapsed ? 'center' : 'space-between',
-          padding: collapsed ? '4px 0 10px' : '4px 6px 10px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          padding: collapsed ? '10px 0 12px' : '10px 10px 12px',
           alignItems: 'center',
-          backgroundColor: 'var(--surface-primary, #FFFFFF)',
-          borderBottom: '1px solid var(--border-subtle, #E5E7EB)',
+          backgroundColor: 'transparent',
+          borderBottom: '1px solid var(--border-subtle, #E7E7E8)',
         }}
       >
         <Link
           href="/"
           style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: collapsed ? 'column' : 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
             width: '100%',
-            gap: '3px',
+            gap: collapsed ? '3px' : '10px',
             textDecoration: 'none',
           }}
           title="FR8X Home"
@@ -116,10 +141,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             src="/ART/LOGOS/logo_primary.svg"
             alt="FR8X"
             style={{
-              width: collapsed ? '26px' : '30px',
-              height: collapsed ? '26px' : '30px',
+              width: collapsed ? '26px' : '28px',
+              height: collapsed ? '26px' : '28px',
               objectFit: 'contain',
-              borderRadius: '6px',
+              borderRadius: '8px',
               flexShrink: 0,
               display: 'block',
             }}
@@ -129,13 +154,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           />
           <span
             style={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              letterSpacing: '0.04em',
-              color: 'var(--text-primary, #1F2937)',
+              fontSize: collapsed ? '10px' : '14px',
+              fontWeight: 600,
+              letterSpacing: '0.03em',
+              color: 'var(--text-primary, #20242B)',
               lineHeight: 1,
-              textTransform: 'uppercase',
-              fontFamily: 'Calibri, Arial, sans-serif',
+              fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif',
             }}
           >
             FR8X
@@ -179,21 +203,30 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               title={collapsed ? item.label : undefined}
               style={{
                 justifyContent: collapsed ? 'center' : 'flex-start',
-                padding: collapsed ? '0' : '0 11px',
-                width: collapsed ? '36px' : 'auto',
-                height: '34px',
+                padding: collapsed ? '0' : '0 14px',
+                width: collapsed ? '42px' : 'auto',
+                height: '42px',
                 margin: collapsed ? '3px auto' : '2px 0',
-                borderRadius: '6px',
+                borderRadius: '24px',
                 boxSizing: 'border-box',
                 ...(active
-                  ? { backgroundColor: 'var(--accent-primary, #006B68)', color: '#FFFFFF', border: '1px solid var(--accent-primary, #006B68)', boxShadow: '0 1px 3px rgba(0, 107, 104, 0.25)' }
-                  : { color: 'var(--text-primary, #1F2937)', backgroundColor: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)' }),
-                fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
-                fontSize: '12px',
+                  ? {
+                      backgroundColor: 'var(--surface-primary, #FFFFFF)',
+                      color: 'var(--text-primary, #20242B)',
+                      border: '1px solid var(--border-default, #E0E1E3)',
+                      boxShadow: 'var(--shadow-card)',
+                    }
+                  : {
+                      color: 'var(--text-secondary, #777B82)',
+                      backgroundColor: 'transparent',
+                      border: '1px solid transparent',
+                    }),
+                fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif',
+                fontSize: '13px',
                 fontWeight: active ? 600 : 500,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '9px',
+                gap: '10px',
                 textDecoration: 'none',
                 transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
@@ -202,7 +235,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 name={item.id}
                 filled={active}
                 size={18}
-                style={{ color: active ? '#FFFFFF' : 'var(--text-primary, #1F2937)' }}
+                style={{ color: active ? 'var(--text-primary, #20242B)' : 'var(--icon-inactive, #858A91)' }}
               />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
@@ -236,15 +269,75 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           )}
         </Link>
 
+        {/* Appearance Theme Switch (Light / Dark) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'space-between',
+            gap: '6px',
+            padding: '4px',
+            borderRadius: '20px',
+            background: 'var(--surface-recessed, #ECEDEF)',
+            border: '1px solid var(--border-default, #E0E1E3)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => applyTheme('light')}
+            title="Light appearance"
+            aria-label="Light appearance"
+            style={{
+              flex: collapsed ? undefined : 1,
+              width: collapsed ? '24px' : undefined,
+              height: '28px',
+              padding: 0,
+              borderRadius: '16px',
+              border: 'none',
+              background: theme === 'light' ? 'var(--surface-primary, #FFFFFF)' : 'transparent',
+              color: theme === 'light' ? 'var(--text-primary, #20242B)' : 'var(--icon-inactive, #858A91)',
+              boxShadow: theme === 'light' ? 'var(--shadow-card)' : 'none',
+            }}
+          >
+            <Sun size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => applyTheme('dark')}
+            title="Dark appearance"
+            aria-label="Dark appearance"
+            style={{
+              flex: collapsed ? undefined : 1,
+              width: collapsed ? '24px' : undefined,
+              height: '28px',
+              padding: 0,
+              borderRadius: '16px',
+              border: 'none',
+              background: theme === 'dark' ? 'var(--surface-primary, #FFFFFF)' : 'transparent',
+              color: theme === 'dark' ? 'var(--text-primary, #20242B)' : 'var(--icon-inactive, #858A91)',
+              boxShadow: theme === 'dark' ? 'var(--shadow-card)' : 'none',
+            }}
+          >
+            <Moon size={14} />
+          </button>
+        </div>
+
         {/* Desktop collapse toggle */}
         {!isMobileDrawer && (
           <button
             className="sidelink desktop-only-collapse"
             onClick={onToggleCollapse}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            style={{ justifyContent: collapsed ? 'center' : 'flex-start', cursor: 'pointer', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '6px' }}
+            style={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              cursor: 'pointer',
+              border: '1px solid var(--border-default, #E0E1E3)',
+              background: 'var(--surface-primary, #FFFFFF)',
+              color: 'var(--text-secondary, #777B82)',
+              borderRadius: '10px',
+            }}
           >
-            <NavigationIcon name="resize" filled={!collapsed} size={16} style={{ color: 'var(--text-primary, #1F2937)' }} />
+            <NavigationIcon name="resize" filled={!collapsed} size={16} style={{ color: 'var(--icon-inactive, #858A91)' }} />
             {!collapsed && <span>{collapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>}
           </button>
         )}
@@ -257,9 +350,15 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             logout();
           }}
           title="Sign out"
-          style={{ justifyContent: collapsed ? 'center' : 'flex-start', border: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)', borderRadius: '6px' }}
+          style={{
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            border: '1px solid var(--border-default, #E0E1E3)',
+            background: 'var(--surface-primary, #FFFFFF)',
+            color: 'var(--text-secondary, #777B82)',
+            borderRadius: '10px',
+          }}
         >
-          <NavigationIcon name="signout" filled={false} size={16} style={{ color: 'var(--text-primary, #1F2937)' }} />
+          <NavigationIcon name="signout" filled={false} size={16} style={{ color: 'var(--icon-inactive, #858A91)' }} />
           {!collapsed && <span>Sign out</span>}
         </Link>
       </div>

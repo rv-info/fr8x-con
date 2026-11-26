@@ -333,13 +333,12 @@ export function DailyRecommendationsWidget({
               style={{
                 width: '32px',
                 height: '32px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #1168d7 0%, #099889 100%)',
-                color: '#ffffff',
+                borderRadius: '10px',
+                background: 'var(--accent-pale, #F6E8E4)',
+                color: 'var(--accent-primary, #C95038)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 6px rgba(17, 104, 215, 0.25)',
               }}
             >
               <Sparkles size={16} />
@@ -468,13 +467,12 @@ export function DailyRecommendationsWidget({
             style={{
               width: '32px',
               height: '32px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #1168d7 0%, #099889 100%)',
-              color: '#ffffff',
+              borderRadius: '10px',
+              background: 'var(--accent-pale, #F6E8E4)',
+              color: 'var(--accent-primary, #C95038)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 6px rgba(17, 104, 215, 0.25)',
             }}
           >
             <Sparkles size={16} />

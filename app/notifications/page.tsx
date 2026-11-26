@@ -34,7 +34,7 @@ const CATEGORY_MAP: Record<
   string,
   { label: string; icon: React.ReactNode; color: string }
 > = {
-  all: { label: 'All', icon: <Bell size={14} />, color: '#1168d7' },
+  all: { label: 'All', icon: <Bell size={14} />, color: 'var(--accent-primary, #C95038)' },
   connections: { label: 'Connections', icon: <Users size={14} />, color: '#10b981' },
   feeds: { label: 'Feeds & Posts', icon: <MessageSquare size={14} />, color: '#8b5cf6' },
   auctions: { label: 'Auctions & Bids', icon: <Gavel size={14} />, color: '#f59e0b' },
@@ -74,7 +74,7 @@ export default function NotificationCenterPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(17,104,215,0.1)', color: '#1168d7', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--accent-pale, #F6E8E4)', color: 'var(--accent-primary, #C95038)', display: 'grid', placeItems: 'center' }}>
               <Bell size={20} />
             </div>
             <div>
