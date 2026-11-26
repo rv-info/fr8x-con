@@ -1,0 +1,1473 @@
+{
+  "mobileRoutes": [
+    {
+      "viewport": 320,
+      "route": "/",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 238,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/login",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 238,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/register",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "[Preview Terms Modal ↗]",
+          "w": 159,
+          "h": 26
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/reset-password",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/verify-email",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/download",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 238,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/privacy",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/terms",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/sitemap",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 238,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/godfather/login",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/godfather/reset-password",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/dashboard",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/feeds",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/rates",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/auctions",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/auctions/create",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/network",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/connections",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/contacts",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 1,
+      "clippedRightSample": [
+        {
+          "tag": "p",
+          "text": "No contacts match your current f",
+          "right": 421,
+          "vw": 320
+        }
+      ]
+    },
+    {
+      "viewport": 320,
+      "route": "/people",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 6,
+      "clippedRightSample": [
+        {
+          "tag": "label",
+          "text": "Golden Tick Only",
+          "right": 385,
+          "vw": 320
+        },
+        {
+          "tag": "span",
+          "text": "Golden Tick Only",
+          "right": 385,
+          "vw": 320
+        },
+        {
+          "tag": "label",
+          "text": "Hide Connected",
+          "right": 441,
+          "vw": 320
+        },
+        {
+          "tag": "span",
+          "text": "Hide Connected",
+          "right": 441,
+          "vw": 320
+        },
+        {
+          "tag": "h3",
+          "text": "No Logistics Members Found",
+          "right": 332,
+          "vw": 320
+        }
+      ]
+    },
+    {
+      "viewport": 320,
+      "route": "/nexus",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/jobs",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/profile",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 320,
+      "route": "/notifications",
+      "vw": 320,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 3,
+      "clippedRightSample": [
+        {
+          "tag": "button",
+          "text": "Security & Safety",
+          "right": 332,
+          "vw": 320
+        },
+        {
+          "tag": "button",
+          "text": "System",
+          "right": 384,
+          "vw": 320
+        },
+        {
+          "tag": "span",
+          "text": "System",
+          "right": 372,
+          "vw": 320
+        }
+      ]
+    },
+    {
+      "viewport": 390,
+      "route": "/",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 308,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/login",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 308,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/register",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "[Preview Terms Modal ↗]",
+          "w": 159,
+          "h": 26
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/reset-password",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/verify-email",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/download",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 308,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/privacy",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/terms",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/sitemap",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 308,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/godfather/login",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/godfather/reset-password",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/dashboard",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/feeds",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/rates",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/auctions",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/auctions/create",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/network",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/connections",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/contacts",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 1,
+      "clippedRightSample": [
+        {
+          "tag": "p",
+          "text": "No contacts match your current f",
+          "right": 421,
+          "vw": 390
+        }
+      ]
+    },
+    {
+      "viewport": 390,
+      "route": "/people",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 3,
+      "clippedRightSample": [
+        {
+          "tag": "label",
+          "text": "Hide Connected",
+          "right": 441,
+          "vw": 390
+        },
+        {
+          "tag": "span",
+          "text": "Hide Connected",
+          "right": 441,
+          "vw": 390
+        },
+        {
+          "tag": "p",
+          "text": "No members match your search cri",
+          "right": 433,
+          "vw": 390
+        }
+      ]
+    },
+    {
+      "viewport": 390,
+      "route": "/nexus",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/jobs",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/profile",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 390,
+      "route": "/notifications",
+      "vw": 390,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 406,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/login",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 406,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/register",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "[Preview Terms Modal ↗]",
+          "w": 159,
+          "h": 26
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/reset-password",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/verify-email",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/download",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 406,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/privacy",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/terms",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/sitemap",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 1,
+      "smallButtonsSample": [
+        {
+          "tag": "button",
+          "text": "Sign in to Workspace",
+          "w": 406,
+          "h": 42
+        }
+      ],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/godfather/login",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/godfather/reset-password",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/dashboard",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/feeds",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/rates",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/auctions",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/auctions/create",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/network",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/connections",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/contacts",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/people",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/nexus",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/jobs",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/profile",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    },
+    {
+      "viewport": 768,
+      "route": "/notifications",
+      "vw": 768,
+      "mobileRootActive": true,
+      "docOverflow": 0,
+      "smallButtonsCount": 0,
+      "smallButtonsSample": [],
+      "smallInputsCount": 0,
+      "smallInputsSample": [],
+      "clippedRightCount": 0,
+      "clippedRightSample": []
+    }
+  ],
+  "viewportMatrix": [
+    {
+      "viewport": 320,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 320,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 320,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 340,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 340,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 340,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 360,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 360,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 360,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 375,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 375,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 375,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 390,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 390,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 390,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 393,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 393,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 393,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 402,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 402,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 402,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 414,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 414,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 414,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 430,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 430,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 430,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 480,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 480,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 480,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 600,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 600,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 600,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 768,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 768,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 768,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 820,
+      "route": "/dashboard",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 820,
+      "route": "/feeds",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    },
+    {
+      "viewport": 820,
+      "route": "/auctions",
+      "docOverflow": 0,
+      "clippedRightCount": 0,
+      "smallInputsCount": 0
+    }
+  ],
+  "interactiveChecks": [
+    {
+      "check": "login-validation-rendered",
+      "ok": true
+    },
+    {
+      "check": "mobile-drawer-open-and-escape-close",
+      "ok": true
+    },
+    {
+      "check": "mobile-search-sheet",
+      "ok": true
+    }
+  ],
+  "desktopRegression": [
+    {
+      "route": "/dashboard",
+      "mobileRootCount": 0,
+      "mobileTopbarCount": 0,
+      "mobileBottomNavCount": 0,
+      "comparable": true,
+      "sameDimensions": true,
+      "diffRatio": 0.0001
+    },
+    {
+      "route": "/feeds",
+      "mobileRootCount": 0,
+      "mobileTopbarCount": 0,
+      "mobileBottomNavCount": 0,
+      "comparable": true,
+      "sameDimensions": true,
+      "diffRatio": 0.0001
+    },
+    {
+      "route": "/rates",
+      "mobileRootCount": 0,
+      "mobileTopbarCount": 0,
+      "mobileBottomNavCount": 0,
+      "comparable": true,
+      "sameDimensions": true,
+      "diffRatio": 0
+    },
+    {
+      "route": "/auctions",
+      "mobileRootCount": 0,
+      "mobileTopbarCount": 0,
+      "mobileBottomNavCount": 0,
+      "comparable": true,
+      "sameDimensions": true,
+      "diffRatio": 0
+    },
+    {
+      "route": "/network",
+      "mobileRootCount": 0,
+      "mobileTopbarCount": 0,
+      "mobileBottomNavCount": 0,
+      "comparable": true,
+      "sameDimensions": true,
+      "diffRatio": 0
+    },
+    {
+      "route": "/profile",
+      "mobileRootCount": 0,
+      "mobileTopbarCount": 0,
+      "mobileBottomNavCount": 0,
+      "comparable": true,
+      "sameDimensions": true,
+      "diffRatio": 0.0001
+    }
+  ]
+}

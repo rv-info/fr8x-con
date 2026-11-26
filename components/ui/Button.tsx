@@ -1,7 +1,7 @@
 'use client';
 
 import React, { ButtonHTMLAttributes, ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { AnimatedOrb } from './LoadingSystem';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'outline' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -39,7 +39,7 @@ export function Button({
       className={`ui-btn ui-btn-${variant} ui-btn-${size} ${fullWidth ? 'ui-btn-block' : ''} ${className}`.trim()}
       {...props}
     >
-      {loading ? <Loader2 size={14} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> : leftIcon}
+      {loading ? <AnimatedOrb size="inline" tone={variant === 'primary' || variant === 'destructive' ? 'on-dark' : 'default'} /> : leftIcon}
       {children && <span>{children}</span>}
       {!loading && rightIcon}
     </button>
@@ -76,7 +76,7 @@ export function IconButton({
       className={`ui-btn ui-btn-${variant} ui-btn-icon-${size} ${className}`.trim()}
       {...props}
     >
-      {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : children}
+      {loading ? <AnimatedOrb size="inline" tone={variant === 'primary' || variant === 'destructive' ? 'on-dark' : 'default'} /> : children}
     </button>
   );
 }

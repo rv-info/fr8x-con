@@ -1,0 +1,58 @@
+/* ============================================================================
+   FR8X MOBILE DESIGN TOKENS (ISOLATED TO MOBILE VIEWPORTS <= 900px)
+   Strictly scoped — zero desktop impact.
+   ============================================================================ */
+
+@media (max-width: 900px) {
+  :root {
+    --m-font-sans: 'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --m-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Color System — Minimalist SaaS + Blue Shadow #26313A */
+    --m-primary: #26313A;
+    --m-primary-hover: #1C252C;
+    --m-primary-active: #141B20;
+    --m-primary-text: #FFFFFF;
+    --m-accent-teal: #006B68;
+    --m-bg: #F4F6F8;
+    --m-surface: #FFFFFF;
+    --m-surface-muted: #F8FAFC;
+    --m-border: #E2E8F0;
+    --m-border-strong: #CBD5E1;
+    --m-text: #1F2937;
+    --m-text-secondary: #475569;
+    --m-text-muted: #64748B;
+    --m-success: #15803D;
+    --m-success-bg: #DCFCE7;
+    --m-danger: #B91C1C;
+    --m-danger-bg: #FEE2E2;
+    --m-warning: #B45309;
+    --m-warning-bg: #FEF3C7;
+
+    /* Typography Scale */
+    --m-h1-size: 20px;
+    --m-h2-size: 17px;
+    --m-h3-size: 15.5px;
+    --m-body-size: 15px;
+    --m-kpi-size: 21px;
+    --m-label-size: 12.5px;
+    --m-input-size: 16px;
+    --m-btn-size: 14.5px;
+    --m-table-size: 13px;
+    --m-badge-size: 10.5px;
+    --m-help-size: 12.5px;
+    --m-meta-size: 11.5px;
+
+    /* Radii & Spacing */
+    --m-radius-sm: 8px;
+    --m-radius-md: 12px;
+    --m-radius-lg: 16px;
+    --m-radius-pill: 9999px;
+    --m-touch-min: 44px;
+    --m-topbar-height: 56px;
+    --m-bottomnav-height: 64px;
+    --m-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+    --m-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+    --m-shadow-sheet: 0 -8px 30px rgba(15, 23, 42, 0.14);
+  }
+}

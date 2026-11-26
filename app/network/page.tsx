@@ -62,6 +62,7 @@ import { ConnectionButton, ConnectionStatus } from '@/components/people/Connecti
 import { SearchConnectionsModal } from '@/components/connections/SearchConnectionsModal';
 import { RecommendedSection } from '@/components/people/RecommendedSection';
 import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { OrbLoader } from '@/components/ui/LoadingSystem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ContactRecord } from '@/lib/db/contacts';
 import { getClientAuthHeaders, CONNECTIONS_CHANGED_EVENT, dispatchConnectionsChanged } from '@/lib/connections';
@@ -2448,8 +2449,8 @@ function NetworkPageContent() {
             {/* Messages Stream */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {chatLoading ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-primary, #1F2937)', fontSize: '12px', margin: 'auto' }}>
-                  Loading conversation history…
+                <div style={{ margin: 'auto' }}>
+                  <OrbLoader variant="section" message="Loading conversation history…" delayMs={150} />
                 </div>
               ) : chatMessages.length === 0 ? (
                 <div style={{ textAlign: 'center', color: 'var(--text-primary, #1F2937)', fontSize: '12px', margin: 'auto' }}>

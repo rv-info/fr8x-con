@@ -1,0 +1,3138 @@
+[
+  {
+    "viewport": "390",
+    "route": "/",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 308,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/login",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 308,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/register",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "tag": "button",
+        "text": "[Preview Terms Modal ↗]",
+        "w": 159,
+        "h": 26
+      },
+      {
+        "tag": "button",
+        "text": "CREATE ACCOUNT & VERIFY EMAIL",
+        "w": 356,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 14,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "e.g. John",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "e.g. Doe",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "e.g. Freight Procurement Manager",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "name@company.com",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Create strong password",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "10-digit mobile (e.g. 9876543210)",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/reset-password",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 1,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Send Recovery OTP Code",
+        "w": 300,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "name@company.com",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/verify-email",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Enter OTP Code",
+        "w": 136,
+        "h": 36
+      },
+      {
+        "tag": "button",
+        "text": "Resend Link",
+        "w": 136,
+        "h": 36
+      },
+      {
+        "tag": "button",
+        "text": "Request a new one →",
+        "w": 117,
+        "h": 17
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Your registered email (e.g. name@company.com)",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "6-digit code e.g. 476582",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/download",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 308,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/privacy",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 0,
+    "smallButtonsSample": [],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 51,
+    "clippedRightSample": [
+      {
+        "tag": "th",
+        "text": "SPECIFIC DATA ELEMENTS",
+        "right": 718,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "PURPOSE & LAWFUL BASIS",
+        "right": 1114,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "VISIBILITY & SHARING",
+        "right": 1599,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "STATUTORY RETENTION",
+        "right": 1951,
+        "vw": 390
+      },
+      {
+        "tag": "td",
+        "text": "First name, last name, corporate",
+        "right": 718,
+        "vw": 390
+      },
+      {
+        "tag": "td",
+        "text": "Contractual performance, authent",
+        "right": 1114,
+        "vw": 390
+      }
+    ]
+  },
+  {
+    "viewport": "390",
+    "route": "/terms",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 0,
+    "smallButtonsSample": [],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/sitemap",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 308,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/godfather/login",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 4,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 123,
+        "h": 31
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 52,
+        "h": 38
+      },
+      {
+        "tag": "button",
+        "text": "Sign In",
+        "w": 96,
+        "h": 40
+      },
+      {
+        "tag": "button",
+        "text": "Need Access Clearance?",
+        "w": 217,
+        "h": 38
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "tech@fr8x.in",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "••••••••••••••••",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/godfather/reset-password",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 4,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 123,
+        "h": 31
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 52,
+        "h": 38
+      },
+      {
+        "tag": "button",
+        "text": "Sign In",
+        "w": 96,
+        "h": 40
+      },
+      {
+        "tag": "button",
+        "text": "Need Access Clearance?",
+        "w": 217,
+        "h": 38
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "tech@fr8x.in",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "••••••••••••••••",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/dashboard",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 5,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/feeds",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 30,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Home Feed",
+        "w": 80,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Trending",
+        "w": 68,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover",
+        "w": 67,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 4,
+    "smallInputsSample": [
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Search feed posts, authors, commodities…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "textarea",
+        "name": "Share market intelligence, blank sailings alert, port operational updates, or rate trends…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/rates",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 14,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Rate",
+        "w": 54,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Bulk Ingest Rates",
+        "w": 138,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "CSV Template",
+        "w": 121,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "All Rates\n0",
+        "w": 85,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "POL: Mundra, Nhava Sheva…",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "POD: Jebel Ali, Rotterdam…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/auctions",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 12,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "All Overview\n0",
+        "w": 106,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Live Bidding\n0",
+        "w": 120,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Bid Posted\n0",
+        "w": 112,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Participated\n0",
+        "w": 120,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search auctions by ID, origin (POL), destination (POD), commodity, carrier…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 15,
+    "clippedRightSample": [
+      {
+        "tag": "button",
+        "text": "Participated\n0",
+        "right": 498,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Participated",
+        "right": 474,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "0",
+        "right": 485,
+        "vw": 390
+      },
+      {
+        "tag": "button",
+        "text": "Drafts\n0",
+        "right": 591,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Drafts",
+        "right": 567,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "0",
+        "right": 578,
+        "vw": 390
+      }
+    ]
+  },
+  {
+    "viewport": "390",
+    "route": "/auctions/create",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 14,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Container Row",
+        "w": 137,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "",
+        "w": 28,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Add Another Container Row",
+        "w": 340,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Add Carrier",
+        "w": 92,
+        "h": 34
+      }
+    ],
+    "smallInputsCount": 50,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Auction Title",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 15,
+    "clippedRightSample": [
+      {
+        "tag": "th",
+        "text": "QTY",
+        "right": 396,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "PICKUP LOCATION",
+        "right": 492,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "EMPTY RETURN",
+        "right": 580,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "SPECIAL",
+        "right": 660,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "HS CODE",
+        "right": 738,
+        "vw": 390
+      },
+      {
+        "tag": "th",
+        "text": "GROSS WT (KG)",
+        "right": 838,
+        "vw": 390
+      }
+    ]
+  },
+  {
+    "viewport": "390",
+    "route": "/network",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 11,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/connections",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 11,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search connected partners…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/contacts",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 12,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 3,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search CRM by partner, company, tag…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/people",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 13,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search freight professionals by name, company, skill…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 2,
+    "clippedRightSample": [
+      {
+        "tag": "label",
+        "text": "Hide Connected",
+        "right": 412,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Hide Connected",
+        "right": 412,
+        "vw": 390
+      }
+    ]
+  },
+  {
+    "viewport": "390",
+    "route": "/nexus",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 10,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "New Discussion",
+        "w": 131,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Community Topics (0)",
+        "w": 147,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Company Reviews (0)",
+        "w": 146,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search Nexus by keyword, company, port…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/jobs",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 8,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Job",
+        "w": 48,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Post a Job",
+        "w": 102,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "All Jobs (0)",
+        "w": 78,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "My Posted (0)",
+        "w": 92,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 3,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search jobs, companies, skills…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "390",
+    "route": "/profile",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 18,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Preview Passport",
+        "w": 139,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Privacy & Visibility",
+        "w": 146,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Reset Password",
+        "w": 131,
+        "h": 34
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 6,
+    "clippedRightSample": [
+      {
+        "tag": "button",
+        "text": "Certifications & Licences",
+        "right": 510,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Certifications & Licences",
+        "right": 494,
+        "vw": 390
+      },
+      {
+        "tag": "button",
+        "text": "Corporate KYC",
+        "right": 650,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Corporate KYC",
+        "right": 634,
+        "vw": 390
+      },
+      {
+        "tag": "button",
+        "text": "Privacy & Governance",
+        "right": 832,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Privacy & Governance",
+        "right": 816,
+        "vw": 390
+      }
+    ]
+  },
+  {
+    "viewport": "390",
+    "route": "/notifications",
+    "vw": 390,
+    "vh": 844,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 12,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "All",
+        "w": 58,
+        "h": 29
+      },
+      {
+        "tag": "button",
+        "text": "Connections",
+        "w": 111,
+        "h": 29
+      },
+      {
+        "tag": "button",
+        "text": "Feeds & Posts",
+        "w": 119,
+        "h": 29
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 13,
+    "clippedRightSample": [
+      {
+        "tag": "h1",
+        "text": "Notification Center",
+        "right": 450,
+        "vw": 390
+      },
+      {
+        "tag": "p",
+        "text": "Manage your real-time alerts, co",
+        "right": 450,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "not",
+        "right": 673,
+        "vw": 390
+      },
+      {
+        "tag": "button",
+        "text": "Auctions & Bids",
+        "right": 466,
+        "vw": 390
+      },
+      {
+        "tag": "span",
+        "text": "Auctions & Bids",
+        "right": 454,
+        "vw": 390
+      },
+      {
+        "tag": "button",
+        "text": "Bids",
+        "right": 541,
+        "vw": 390
+      }
+    ]
+  },
+  {
+    "viewport": "320",
+    "route": "/",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 238,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/login",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 238,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/register",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 24,
+        "h": 24
+      },
+      {
+        "tag": "button",
+        "text": "[Preview Terms Modal ↗]",
+        "w": 159,
+        "h": 26
+      },
+      {
+        "tag": "button",
+        "text": "CREATE ACCOUNT & VERIFY EMAIL",
+        "w": 286,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 14,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "e.g. John",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "e.g. Doe",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "e.g. Freight Procurement Manager",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "name@company.com",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Create strong password",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "10-digit mobile (e.g. 9876543210)",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/reset-password",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 1,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Send Recovery OTP Code",
+        "w": 230,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "name@company.com",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/verify-email",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Enter OTP Code",
+        "w": 101,
+        "h": 36
+      },
+      {
+        "tag": "button",
+        "text": "Resend Link",
+        "w": 101,
+        "h": 36
+      },
+      {
+        "tag": "button",
+        "text": "Request a new one →",
+        "w": 117,
+        "h": 17
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Your registered email (e.g. name@company.com)",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "6-digit code e.g. 476582",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/download",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 238,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/privacy",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 0,
+    "smallButtonsSample": [],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 51,
+    "clippedRightSample": [
+      {
+        "tag": "th",
+        "text": "SPECIFIC DATA ELEMENTS",
+        "right": 718,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "PURPOSE & LAWFUL BASIS",
+        "right": 1114,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "VISIBILITY & SHARING",
+        "right": 1599,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "STATUTORY RETENTION",
+        "right": 1951,
+        "vw": 320
+      },
+      {
+        "tag": "td",
+        "text": "First name, last name, corporate",
+        "right": 718,
+        "vw": 320
+      },
+      {
+        "tag": "td",
+        "text": "Contractual performance, authent",
+        "right": 1114,
+        "vw": 320
+      }
+    ]
+  },
+  {
+    "viewport": "320",
+    "route": "/terms",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 0,
+    "smallButtonsSample": [],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/sitemap",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 3,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 103,
+        "h": 21
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 30,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Sign in to Workspace",
+        "w": 238,
+        "h": 42
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "User ID or Corporate Email",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Enter your password",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/godfather/login",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 4,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 123,
+        "h": 31
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 52,
+        "h": 38
+      },
+      {
+        "tag": "button",
+        "text": "Sign In",
+        "w": 96,
+        "h": 40
+      },
+      {
+        "tag": "button",
+        "text": "Need Access Clearance?",
+        "w": 217,
+        "h": 38
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "tech@fr8x.in",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "••••••••••••••••",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/godfather/reset-password",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 4,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "Forgot password?",
+        "w": 123,
+        "h": 31
+      },
+      {
+        "tag": "button",
+        "text": "Show password",
+        "w": 52,
+        "h": 38
+      },
+      {
+        "tag": "button",
+        "text": "Sign In",
+        "w": 96,
+        "h": 40
+      },
+      {
+        "tag": "button",
+        "text": "Need Access Clearance?",
+        "w": 217,
+        "h": 38
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "tech@fr8x.in",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "••••••••••••••••",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/dashboard",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 5,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/feeds",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 30,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Home Feed",
+        "w": 80,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Trending",
+        "w": 68,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover",
+        "w": 67,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 4,
+    "smallInputsSample": [
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "Search feed posts, authors, commodities…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "textarea",
+        "name": "Share market intelligence, blank sailings alert, port operational updates, or rate trends…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/rates",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 14,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Rate",
+        "w": 54,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Bulk Ingest Rates",
+        "w": 138,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "CSV Template",
+        "w": 121,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "All Rates\n0",
+        "w": 85,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "POL: Mundra, Nhava Sheva…",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "POD: Jebel Ali, Rotterdam…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/auctions",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 12,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "All Overview\n0",
+        "w": 106,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Live Bidding\n0",
+        "w": 120,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Bid Posted\n0",
+        "w": 112,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Participated\n0",
+        "w": 120,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search auctions by ID, origin (POL), destination (POD), commodity, carrier…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 18,
+    "clippedRightSample": [
+      {
+        "tag": "button",
+        "text": "Bid Posted\n0",
+        "right": 373,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Bid Posted",
+        "right": 348,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "0",
+        "right": 360,
+        "vw": 320
+      },
+      {
+        "tag": "button",
+        "text": "Participated\n0",
+        "right": 498,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Participated",
+        "right": 474,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "0",
+        "right": 485,
+        "vw": 320
+      }
+    ]
+  },
+  {
+    "viewport": "320",
+    "route": "/auctions/create",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 14,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Container Row",
+        "w": 137,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "",
+        "w": 28,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Add Another Container Row",
+        "w": 270,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Add Carrier",
+        "w": 92,
+        "h": 34
+      }
+    ],
+    "smallInputsCount": 50,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Auction Title",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "input",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 17,
+    "clippedRightSample": [
+      {
+        "tag": "th",
+        "text": "TYPE",
+        "right": 326,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "QTY",
+        "right": 396,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "PICKUP LOCATION",
+        "right": 492,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "EMPTY RETURN",
+        "right": 580,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "SPECIAL",
+        "right": 660,
+        "vw": 320
+      },
+      {
+        "tag": "th",
+        "text": "HS CODE",
+        "right": 738,
+        "vw": 320
+      }
+    ]
+  },
+  {
+    "viewport": "320",
+    "route": "/network",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 11,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/connections",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 11,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search connected partners…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/contacts",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 12,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 3,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search CRM by partner, company, tag…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/people",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 13,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Contact",
+        "w": 71,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Add Contact",
+        "w": 116,
+        "h": 28
+      },
+      {
+        "tag": "button",
+        "text": "Overview",
+        "w": 72,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Discover Directory",
+        "w": 114,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 2,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search freight professionals by name, company, skill…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 4,
+    "clippedRightSample": [
+      {
+        "tag": "label",
+        "text": "Golden Tick Only",
+        "right": 326,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Golden Tick Only",
+        "right": 326,
+        "vw": 320
+      },
+      {
+        "tag": "label",
+        "text": "Hide Connected",
+        "right": 412,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Hide Connected",
+        "right": 412,
+        "vw": 320
+      }
+    ]
+  },
+  {
+    "viewport": "320",
+    "route": "/nexus",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 10,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "New Discussion",
+        "w": 131,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Community Topics (0)",
+        "w": 147,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Company Reviews (0)",
+        "w": 146,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 1,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search Nexus by keyword, company, port…",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/jobs",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 8,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Job",
+        "w": 48,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Post a Job",
+        "w": 102,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "All Jobs (0)",
+        "w": 78,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "My Posted (0)",
+        "w": 92,
+        "h": 30
+      }
+    ],
+    "smallInputsCount": 3,
+    "smallInputsSample": [
+      {
+        "tag": "input",
+        "name": "Search jobs, companies, skills…",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      },
+      {
+        "tag": "select",
+        "name": "",
+        "fontSize": 13
+      }
+    ],
+    "clippedRightCount": 0,
+    "clippedRightSample": []
+  },
+  {
+    "viewport": "320",
+    "route": "/profile",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 18,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "Preview Passport",
+        "w": 139,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Privacy & Visibility",
+        "w": 146,
+        "h": 34
+      },
+      {
+        "tag": "button",
+        "text": "Reset Password",
+        "w": 131,
+        "h": 34
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 6,
+    "clippedRightSample": [
+      {
+        "tag": "button",
+        "text": "Certifications & Licences",
+        "right": 510,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Certifications & Licences",
+        "right": 494,
+        "vw": 320
+      },
+      {
+        "tag": "button",
+        "text": "Corporate KYC",
+        "right": 650,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Corporate KYC",
+        "right": 634,
+        "vw": 320
+      },
+      {
+        "tag": "button",
+        "text": "Privacy & Governance",
+        "right": 832,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Privacy & Governance",
+        "right": 816,
+        "vw": 320
+      }
+    ]
+  },
+  {
+    "viewport": "320",
+    "route": "/notifications",
+    "vw": 320,
+    "vh": 568,
+    "docOverflow": 0,
+    "bodyOverflow": 0,
+    "smallButtonsCount": 12,
+    "smallButtonsSample": [
+      {
+        "tag": "button",
+        "text": "",
+        "w": 180,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "+ Post",
+        "w": 53,
+        "h": 27
+      },
+      {
+        "tag": "button",
+        "text": "Online",
+        "w": 83,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "View notifications",
+        "w": 32,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "VS",
+        "w": 38,
+        "h": 30
+      },
+      {
+        "tag": "button",
+        "text": "All",
+        "w": 58,
+        "h": 29
+      },
+      {
+        "tag": "button",
+        "text": "Connections",
+        "w": 111,
+        "h": 29
+      },
+      {
+        "tag": "button",
+        "text": "Feeds & Posts",
+        "w": 119,
+        "h": 29
+      }
+    ],
+    "smallInputsCount": 0,
+    "smallInputsSample": [],
+    "clippedRightCount": 14,
+    "clippedRightSample": [
+      {
+        "tag": "h1",
+        "text": "Notification Center",
+        "right": 450,
+        "vw": 320
+      },
+      {
+        "tag": "p",
+        "text": "Manage your real-time alerts, co",
+        "right": 450,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "not",
+        "right": 673,
+        "vw": 320
+      },
+      {
+        "tag": "button",
+        "text": "Feeds & Posts",
+        "right": 329,
+        "vw": 320
+      },
+      {
+        "tag": "button",
+        "text": "Auctions & Bids",
+        "right": 466,
+        "vw": 320
+      },
+      {
+        "tag": "span",
+        "text": "Auctions & Bids",
+        "right": 454,
+        "vw": 320
+      }
+    ]
+  }
+]

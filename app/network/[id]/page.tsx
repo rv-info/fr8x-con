@@ -16,6 +16,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { OrbLoader } from '@/components/ui/LoadingSystem';
 import {
   MapPin,
   Building2,
@@ -219,8 +220,12 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           boxSizing: 'border-box',
         }}
       >
-        <Loader2 size={32} className="spin" style={{ margin: '0 auto 16px', color: 'var(--accent-primary, #006B68)' }} />
-        <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)' }}>Loading Complete Professional Profile…</p>
+        <OrbLoader
+          variant="page"
+          message="Loading member profile…"
+          stage="Retrieving credentials & trade corridors…"
+          delayMs={150}
+        />
       </div>
     );
   }

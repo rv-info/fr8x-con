@@ -19,6 +19,7 @@ import { NetworkStatusPill } from './NetworkStatusPill';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { AnimatedOrb } from '@/components/ui/LoadingSystem';
 import { useChat } from '@/lib/context/ChatContext';
 import { useToast } from '@/lib/context/ToastContext';
 import {
@@ -925,7 +926,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               onClick={(e) => handleAcceptRequest(e, p)}
                               disabled={acceptingUid === p.uid}
                             >
-                              {acceptingUid === p.uid ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
+                              {acceptingUid === p.uid ? <AnimatedOrb size="inline" tone="on-dark" /> : <Check size={11} />}
                               Accept Request
                             </button>
                           </div>
@@ -1031,7 +1032,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                                 onClick={(e) => handleSendConnect(e, p)}
                                 disabled={connectingUid === p.uid}
                               >
-                                {connectingUid === p.uid ? <Loader2 size={11} className="animate-spin" /> : <UserPlus size={11} />}
+                                {connectingUid === p.uid ? <AnimatedOrb size="inline" tone="on-dark" /> : <UserPlus size={11} />}
                                 Connect
                               </button>
                             )}
@@ -1275,8 +1276,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               </div>
               <div>
                 {isSearchingRemote ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--accent-primary, #006B68)' }}>
-                    <Loader2 size={11} className="animate-spin" /> Searching network…
+                  <span role="status" aria-live="polite" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#26313A', fontWeight: 600 }}>
+                    <AnimatedOrb size="inline" /> Searching network…
                   </span>
                 ) : (
                   <span>

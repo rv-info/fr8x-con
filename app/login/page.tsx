@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, getOrCreateDeviceId } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
+import { sanitizeNextRedirect } from '@/lib/auth-redirect';
 import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download, Zap, Sparkles, Eye, EyeOff, Calendar, Shield, RefreshCw } from 'lucide-react';
 
 // --- Password Strength Scorer (reused in reset modal) ---
@@ -56,46 +57,86 @@ function LiveClockPanel() {
     <div
       suppressHydrationWarning
       style={{
-        width: '100%', height: '100%',
+        width: '100%',
+        height: '100%',
         background: 'var(--surface-primary, #FFFFFF)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 24px', position: 'relative', overflow: 'hidden',
+        border: '1px solid var(--border-default, #E0E1E3)',
+        borderRadius: '18px',
+        boxShadow: 'var(--shadow-card)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '28px 20px',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-        <img
-          src="/ART/LOGOS/logo_primary.png"
-          alt="FR8X"
-          style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
-        />
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
-          FR8X
-        </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--text-secondary, #64748B)', marginTop: '2px' }}>Enterprise Workspace</div>
-      </div>
-      <div style={{ background: 'var(--app-bg, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
+      <div
+        style={{
+          background: 'var(--surface-card, #F6F6F6)',
+          border: '1px solid var(--border-default, #E0E1E3)',
+          borderRadius: '14px',
+          padding: '16px 22px',
+          textAlign: 'center',
+          marginBottom: '16px',
+          width: '100%',
+          maxWidth: '240px',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '48px', fontWeight: 900, color: 'var(--text-primary, #1F2937)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
-            {mounted ? `${String(h12).padStart(2,'0')}:${mm}` : '--:--'}
+          <span
+            className="ui-tabular"
+            style={{ fontSize: '42px', fontWeight: 700, color: 'var(--text-primary, #26313A)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}
+          >
+            {mounted ? `${String(h12).padStart(2, '0')}:${mm}` : '--:--'}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-primary, #006B68)', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-primary, #26313A)', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary, #646E78)', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
           </div>
         </div>
-        <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '6px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-secondary, #646E78)', marginTop: '6px' }}>
           {days[currentTime.getDay()]} · {months[currentTime.getMonth()]} {currentTime.getDate()}, {currentTime.getFullYear()}
         </div>
       </div>
-      <div style={{ background: 'var(--surface-primary, #FFFFFF)', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px', boxShadow: '0 1px 3px rgba(23,43,77,0.04)' }}>
+      <div
+        style={{
+          background: 'var(--surface-primary, #FFFFFF)',
+          border: '1px solid var(--border-default, #E0E1E3)',
+          borderRadius: '14px',
+          padding: '14px',
+          width: '100%',
+          maxWidth: '240px',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '10px' }}>
-          <Calendar size={13} color="var(--accent-primary, #006B68)" />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[currentTime.getMonth()]} {currentTime.getFullYear()}</span>
+          <Calendar size={13} color="var(--accent-primary, #26313A)" />
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary, #26313A)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {months[currentTime.getMonth()]} {currentTime.getFullYear()}
+          </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
-          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-secondary, #64748B)', padding: '2px 0' }}>{d}</div>)}
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-secondary, #646E78)', padding: '2px 0' }}>
+              {d}
+            </div>
+          ))}
           {calDays.map((d, i) => (
-            <div key={i} style={{ fontSize: '10px', fontWeight: d === currentTime.getDate() ? 800 : 500, color: d === currentTime.getDate() ? '#fff' : d ? 'var(--text-primary, #1F2937)' : 'transparent', background: d === currentTime.getDate() ? 'var(--accent-primary, #006B68)' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
+            <div
+              key={i}
+              style={{
+                fontSize: '10px',
+                fontWeight: d === currentTime.getDate() ? 700 : 500,
+                color: d === currentTime.getDate() ? '#F8FAFC' : d ? 'var(--text-primary, #26313A)' : 'transparent',
+                background: d === currentTime.getDate() ? 'var(--accent-primary, #26313A)' : 'transparent',
+                borderRadius: '6px',
+                padding: '3px 0',
+                transition: 'all 0.2s',
+              }}
+            >
+              {d || ''}
+            </div>
           ))}
         </div>
       </div>
@@ -106,17 +147,21 @@ function LiveClockPanel() {
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
-  const { login, loginWithCredentials, sendPasswordReset, loadRememberedEmail, userStatus, resetPasswordWithOtp } = auth;
+  const { login, loginWithCredentials, sendPasswordReset, loadRememberedEmail, resetPasswordWithOtp } = auth;
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState(''); // uid or email
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isCapsLockOn, setIsCapsLockOn] = useState(false);
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginStage, setLoginStage] = useState<'idle' | 'verifying' | 'connecting' | 'success'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
+  const [sessionNoticeTone, setSessionNoticeTone] = useState<'warning' | 'info'>('info');
+  const [redirectTarget, setRedirectTarget] = useState<string>('/feeds');
+  const [gatewayStatus, setGatewayStatus] = useState<'checking' | 'online' | 'backend_unavailable' | 'browser_offline'>('checking');
   const [isBlocked, setIsBlocked] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
@@ -167,7 +212,7 @@ export default function LoginPage() {
       if ('caches' in window) {
         caches.keys().then((keys) => {
           keys.forEach((key) => {
-            if (key !== 'fr8x-cache-v5.0.0') {
+            if (key !== 'fr8x-cache-v6.0.0') {
               caches.delete(key).catch(() => {});
             }
           });
@@ -183,20 +228,66 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Read URL reason parameter (session_expired, inactivity, not_found)
+  // Verify real browser + backend gateway connectivity
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let isMounted = true;
+
+    const verifyGateway = async () => {
+      if (!navigator.onLine) {
+        if (isMounted) setGatewayStatus('browser_offline');
+        return;
+      }
+      if (isMounted) setGatewayStatus('checking');
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch('/api/health', { method: 'GET', cache: 'no-store', signal: controller.signal });
+        clearTimeout(timer);
+        if (isMounted) {
+          setGatewayStatus(res.ok ? 'online' : 'backend_unavailable');
+        }
+      } catch {
+        if (isMounted) {
+          setGatewayStatus(navigator.onLine ? 'backend_unavailable' : 'browser_offline');
+        }
+      }
+    };
+
+    verifyGateway();
+    const handleOnline = () => verifyGateway();
+    const handleOffline = () => {
+      if (isMounted) setGatewayStatus('browser_offline');
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Read URL reason and safe ?next= redirect parameter
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const reason = params.get('reason');
       if (reason === 'session_expired' || reason === 'inactivity') {
+        setSessionNoticeTone('warning');
         setSessionNotice('Your session has expired due to inactivity. Please sign in again to continue.');
       } else if (reason === 'concurrent_device_login') {
+        setSessionNoticeTone('warning');
         setSessionNotice("Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out. If this wasn't you, please reset your password immediately.");
       } else if (reason === 'not_found') {
+        setSessionNoticeTone('info');
         setSessionNotice('Requested page not found or unauthenticated. Please sign in to access the workspace.');
-      } else if (reason === 'unauthorized') {
+      } else if (reason === 'unauthorized' || reason === 'auth_required') {
+        setSessionNoticeTone('info');
         setSessionNotice('Authentication required. Please sign in with your enterprise credentials.');
       }
+      const safeNext = sanitizeNextRedirect(params.get('next'), '/feeds');
+      setRedirectTarget(safeNext);
       const emailParam = params.get('email');
       if (emailParam) {
         setIdentifier(emailParam.trim());
@@ -209,21 +300,21 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const activeUid = localStorage.getItem('fr8x_active_user_uid') || localStorage.getItem('fr8x_user_uid');
       if (activeUid && (auth?.isAuthenticated || document.cookie.includes('fr8x_session='))) {
-        router.replace('/feeds');
+        router.replace(redirectTarget);
       }
     }
-  }, [auth?.isAuthenticated, router]);
+  }, [auth?.isAuthenticated, router, redirectTarget]);
 
   // Prefetch destination route on mount for instantaneous transition
   useEffect(() => {
     try {
-      router.prefetch('/feeds');
+      router.prefetch(redirectTarget);
     } catch {}
     return () => {
       setIsLoading(false);
       setLoginStage('idle');
     };
-  }, [router]);
+  }, [router, redirectTarget]);
 
   // Restore remembered email on mount (password is never stored)
   useEffect(() => {
@@ -295,12 +386,12 @@ export default function LoginPage() {
 
             try {
               router.refresh();
-              router.push('/feeds');
+              router.push(redirectTarget);
             } catch {}
 
             setTimeout(() => {
               if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-                window.location.assign('/feeds');
+                window.location.assign(redirectTarget);
               }
             }, 500);
             return;
@@ -379,13 +470,13 @@ export default function LoginPage() {
         // Seamless immediate navigation with server revalidation
         try {
           router.refresh();
-          router.push('/feeds');
+          router.push(redirectTarget);
         } catch {}
 
         // Fallback guarantee: if client router navigation stalls, navigate directly
         const redirectFallback = setTimeout(() => {
           if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-            window.location.assign('/feeds');
+            window.location.assign(redirectTarget);
           }
         }, 2500);
 
@@ -460,13 +551,13 @@ export default function LoginPage() {
           // Seamless immediate navigation with server revalidation
         try {
           router.refresh();
-          router.push('/feeds');
+          router.push(redirectTarget);
         } catch {}
 
         // Fallback guarantee: if client router navigation stalls, navigate directly
         const redirectFallback = setTimeout(() => {
           if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-            window.location.assign('/feeds');
+            window.location.assign(redirectTarget);
           }
         }, 500);
 
@@ -597,30 +688,57 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--app-bg, #FFFFFF)', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', flexDirection: 'row', minHeight: '100vh', position: 'relative' }}>
-        {/* LEFT PANEL — Live Clock/Calendar */}
-        <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid var(--border-subtle, #E5E7EB)', background: 'var(--surface-primary, #FFFFFF)' }} className="login-left-panel">
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--app-bg, #E5E6E8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+      }}
+    >
+      <div
+        className="login-composition"
+        style={{
+          width: '100%',
+          maxWidth: '760px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'stretch',
+          justifyContent: 'center',
+          gap: '24px',
+          position: 'relative',
+        }}
+      >
+        {/* LEFT PANEL — Integrated Elevated Clock & Calendar Card */}
+        <div
+          style={{
+            width: '280px',
+            minWidth: '280px',
+            flexShrink: 0,
+            display: 'none',
+          }}
+          className="login-left-panel"
+        >
           <LiveClockPanel />
         </div>
 
-        {/* RIGHT PANEL — Login Form */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', background: 'transparent' }}>
-        <div className="login-card">
-        {/* Top Brand Stripe */}
-        <div style={{ height: '4px', background: 'var(--fr8x-outline)' }} />
+        {/* RIGHT PANEL — Login Form Card */}
+        <div style={{ flex: 1, minWidth: 0, maxWidth: '456px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="login-card" style={{ width: '100%', overflow: 'hidden' }}>
 
         {/* Header */}
         <div
           className="login-card-header"
           style={{
             padding: '24px 24px 18px',
-            background: 'var(--fr8x-background)',
-            borderBottom: '1px solid var(--fr8x-outline)',
+            background: 'var(--surface-primary, #FFFFFF)',
+            borderBottom: '1px solid var(--border-subtle, #E7E7E8)',
             textAlign: 'center',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', margin: '0 auto 8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', margin: '0 auto 8px' }}>
             <img
               src="/ART/LOGOS/logo_primary.png"
               alt="FR8X"
@@ -631,14 +749,14 @@ export default function LoginPage() {
                 display: 'block',
               }}
             />
-            <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary, #26313A)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1.1 }}>
               FR8X
             </div>
           </div>
-          <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: 0, color: 'var(--text-primary, #1F2937)' }}>
-            <span style={{ fontWeight: 'bold', color: 'var(--accent-primary, #006B68)', textTransform: 'uppercase' }}>FR8X</span> Workspace
+          <h1 style={{ fontSize: '15px', fontWeight: 600, margin: 0, color: 'var(--text-primary, #26313A)' }}>
+            FR8X Workspace
           </h1>
-          <p style={{ fontSize: '11px', color: 'var(--fr8x-muted)', margin: '4px 0 0' }}>
+          <p style={{ fontSize: '11.5px', color: 'var(--text-secondary, #646E78)', margin: '4px 0 0' }}>
             Enterprise Freight Forwarding &amp; Reverse Auctions Platform
           </p>
         </div>
@@ -647,46 +765,60 @@ export default function LoginPage() {
         <div className="login-card-body" style={{ padding: '24px' }}>
           {sessionNotice && !errorMessage && (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 padding: '10px 12px',
-                borderRadius: '6px',
-                background: 'var(--fr8x-input)',
-                border: '1px solid var(--fr8x-outline)',
-                color: 'var(--fr8x-text)',
-                fontSize: '11.5px',
+                borderRadius: '10px',
+                background: sessionNoticeTone === 'warning' ? 'var(--accent-warning-pale, #F5F0E3)' : 'var(--accent-info-pale, #EAF0F4)',
+                border:
+                  sessionNoticeTone === 'warning'
+                    ? '1px solid rgba(195, 154, 72, 0.38)'
+                    : '1px solid rgba(127, 166, 194, 0.42)',
+                color: sessionNoticeTone === 'warning' ? '#78350F' : '#1E3A5F',
+                fontSize: '12px',
                 marginBottom: '16px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: '8px',
-                fontWeight: 600,
-                lineHeight: 1.4,
+                fontWeight: 500,
+                lineHeight: 1.45,
+                wordBreak: 'break-word',
               }}
             >
-              <Clock size={15} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
+              {sessionNoticeTone === 'warning' ? (
+                <Clock size={15} style={{ flexShrink: 0, marginTop: '2px', color: '#A47E32' }} />
+              ) : (
+                <Info size={15} style={{ flexShrink: 0, marginTop: '2px', color: '#5C86A4' }} />
+              )}
               <span>{sessionNotice}</span>
             </div>
           )}
 
           {errorMessage && (
             <div
+              role="alert"
+              aria-live="assertive"
               style={{
                 padding: '10px 12px',
-                borderRadius: '6px',
-                background: 'var(--fr8x-input)',
-                border: '1px solid var(--fr8x-outline)',
-                color: 'var(--fr8x-text)',
-                fontSize: '11.5px',
+                borderRadius: '10px',
+                background: '#FEF2F2',
+                border: '1px solid rgba(185, 28, 28, 0.28)',
+                color: '#B91C1C',
+                fontSize: '12px',
                 marginBottom: '16px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 gap: '8px',
-                fontWeight: 700,
+                fontWeight: 600,
+                lineHeight: 1.45,
+                wordBreak: 'break-word',
               }}
             >
               {isBlocked ? (
-                <ShieldAlert size={16} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
+                <ShieldAlert size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#B91C1C' }} />
               ) : (
-                <AlertCircle size={15} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
+                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: '2px', color: '#B91C1C' }} />
               )}
               <span>{errorMessage}</span>
             </div>
@@ -694,29 +826,31 @@ export default function LoginPage() {
 
           {pendingVerificationEmail && (
             <div
+              role="status"
               style={{
                 padding: '10px 14px',
-                borderRadius: '8px',
-                background: 'var(--surface-secondary, #F8FAFC)',
-                border: '1px solid var(--border-default, #D9DEE5)',
-                color: 'var(--text-primary, #1F2937)',
+                borderRadius: '10px',
+                background: 'var(--accent-info-pale, #EAF0F4)',
+                border: '1px solid rgba(127, 166, 194, 0.38)',
+                color: 'var(--text-primary, #26313A)',
                 fontSize: '12px',
                 marginBottom: '16px',
                 display: 'flex',
+                flexWrap: 'wrap',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '8px',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Mail size={15} style={{ color: 'var(--accent-primary, #006B68)', flexShrink: 0 }} />
+                <Mail size={15} style={{ color: 'var(--accent-primary, #26313A)', flexShrink: 0 }} />
                 <span>Need a fresh 15-minute verification link?</span>
               </div>
               <Link
                 href={`/verify-email?email=${encodeURIComponent(pendingVerificationEmail)}`}
                 style={{
-                  fontWeight: 700,
-                  color: 'var(--accent-primary, #006B68)',
+                  fontWeight: 600,
+                  color: 'var(--accent-primary, #26313A)',
                   textDecoration: 'underline',
                   whiteSpace: 'nowrap',
                   fontSize: '12px',
@@ -730,16 +864,17 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             {/* User ID / Email */}
             <div className="field" style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+              <label htmlFor="login-identifier" style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #26313A)', display: 'block', marginBottom: '5px' }}>
                 User ID or Corporate Email
               </label>
               <input
+                id="login-identifier"
                 type="text"
                 className="input"
-                placeholder="User ID or Email"
+                placeholder="User ID or Corporate Email"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                autoComplete="off"
+                autoComplete="username"
                 autoCapitalize="none"
                 spellCheck={false}
                 required
@@ -748,8 +883,10 @@ export default function LoginPage() {
 
             {/* Password */}
             <div className="field" style={{ marginBottom: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Password</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                <label htmlFor="login-password" style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary, #26313A)' }}>
+                  Password
+                </label>
                 <button
                   type="button"
                   onClick={openForgotModal}
@@ -758,12 +895,12 @@ export default function LoginPage() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    fontSize: '11px',
-                    color: 'var(--brand)',
+                    fontSize: '11.5px',
+                    color: 'var(--text-primary, #26313A)',
                     fontWeight: 600,
                     padding: '2px 4px',
                     cursor: 'pointer',
-                    textDecoration: 'none',
+                    textDecoration: 'underline',
                   }}
                 >
                   Forgot password?
@@ -771,10 +908,15 @@ export default function LoginPage() {
               </div>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <input
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   className="input"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => setIsCapsLockOn(Boolean(e.getModifierState?.('CapsLock')))}
+                  onKeyUp={(e) => setIsCapsLockOn(Boolean(e.getModifierState?.('CapsLock')))}
+                  onBlur={() => setIsCapsLockOn(false)}
                   autoComplete="current-password"
                   autoCapitalize="none"
                   required
@@ -785,25 +927,47 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   style={{
                     position: 'absolute',
-                    right: '8px',
+                    right: '6px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    background: 'none',
+                    background: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    color: 'var(--text-secondary, #64748B)',
-                    display: 'flex',
+                    color: 'var(--icon-inactive, #6E7882)',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    padding: '4px',
+                    justifyContent: 'center',
+                    width: '30px',
+                    height: '30px',
+                    padding: 0,
                   }}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {isCapsLockOn && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  style={{
+                    marginTop: '5px',
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: '#92400E',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                >
+                  <AlertCircle size={12} />
+                  <span>Caps Lock is on</span>
+                </div>
+              )}
             </div>
 
-            {/* Remember Me */}
+            {/* Remember Me + Verified Gateway Connectivity */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px', padding: '2px 0' }}>
               <input
                 id="remember-device"
@@ -812,27 +976,42 @@ export default function LoginPage() {
                 onChange={(e) => setRemember(e.target.checked)}
                 style={{ width: '16px', height: '16px', cursor: 'pointer' }}
               />
-              <label htmlFor="remember-device" style={{ fontSize: '11.5px', color: 'var(--mut)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
+              <label htmlFor="remember-device" style={{ fontSize: '11.5px', color: 'var(--text-secondary, #646E78)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
                 Remember me on this device
               </label>
-              {/* Live status dot */}
               <span
+                role="status"
+                aria-live="polite"
                 style={{
                   marginLeft: 'auto',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '10px',
-                  color: userStatus === 'available' ? '#16a34a' : '#94a3b8',
+                  gap: '5px',
+                  fontSize: '10.5px',
+                  fontWeight: 600,
+                  color:
+                    gatewayStatus === 'online'
+                      ? 'var(--accent-success, #19876D)'
+                      : gatewayStatus === 'checking'
+                      ? 'var(--text-secondary, #646E78)'
+                      : '#A47E32',
                 }}
               >
-                {userStatus === 'available' ? (
+                {gatewayStatus === 'online' ? (
                   <>
-                    <Wifi size={11} /> Available
+                    <Wifi size={11} /> Gateway Online
+                  </>
+                ) : gatewayStatus === 'browser_offline' ? (
+                  <>
+                    <WifiOff size={11} /> Browser Offline
+                  </>
+                ) : gatewayStatus === 'backend_unavailable' ? (
+                  <>
+                    <WifiOff size={11} /> Gateway Unavailable
                   </>
                 ) : (
                   <>
-                    <WifiOff size={11} /> Offline
+                    <RefreshCw size={11} style={{ animation: 'spin 1.2s linear infinite' }} /> Verifying Gateway…
                   </>
                 )}
               </span>
@@ -841,7 +1020,16 @@ export default function LoginPage() {
             <button
               type="submit"
               className="btn primary login-submit-btn"
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '40px' }}
+              aria-live="polite"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                minHeight: '42px',
+                height: '42px',
+              }}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -851,7 +1039,7 @@ export default function LoginPage() {
                     {loginStage === 'connecting'
                       ? 'Connecting to Workspace…'
                       : loginStage === 'success'
-                      ? 'Redirecting to Feeds…'
+                      ? 'Redirecting…'
                       : 'Verifying Credentials…'}
                   </span>
                 </>
@@ -862,40 +1050,13 @@ export default function LoginPage() {
               )}
             </button>
 
-            {isLoading && (
-              <div
-                style={{
-                  marginTop: '10px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  background: 'var(--surface-secondary, #F9FAFB)',
-                  border: '1px solid var(--border-default, #D9DEE5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '11.5px',
-                  color: 'var(--accent-primary, #006B68)',
-                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
-                }}
-              >
-                <RefreshCw size={12} style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }} />
-                <span>
-                  {loginStage === 'connecting'
-                    ? 'Credentials verified. Establishing encrypted workspace session…'
-                    : loginStage === 'success'
-                    ? 'Session verified! Opening your workspace…'
-                    : 'Authenticating with enterprise security gateway…'}
-                </span>
-              </div>
-            )}
-
-            <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary, #64748B)', lineHeight: 1.5 }}>
+            <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary, #646E78)', lineHeight: 1.5 }}>
               By signing in, you confirm compliance with the{' '}
-              <Link href="/terms" target="_blank" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'underline' }}>
+              <Link href="/terms" target="_blank" style={{ color: 'var(--text-primary, #26313A)', fontWeight: 600, textDecoration: 'underline' }}>
                 Master Terms of Service
               </Link>
               , One User One Login Policy, and{' '}
-              <Link href="/privacy" target="_blank" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'underline' }}>
+              <Link href="/privacy" target="_blank" style={{ color: 'var(--text-primary, #26313A)', fontWeight: 600, textDecoration: 'underline' }}>
                 Privacy Policy
               </Link>
               .
@@ -915,7 +1076,7 @@ export default function LoginPage() {
           }}
         >
           New freight organization?{' '}
-          <Link href="/register" style={{ color: 'var(--brand)', fontWeight: 700 }}>
+          <Link href="/register" style={{ color: 'var(--text-primary, #26313A)', fontWeight: 700, textDecoration: 'underline' }}>
             Register Company
           </Link>
 

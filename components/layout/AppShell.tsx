@@ -10,6 +10,8 @@ import { ChatProvider } from '@/lib/context/ChatContext';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { MobileNav } from './MobileNav';
+import { MobileExperienceHost } from '@/mobile/MobileExperienceHost';
+import { OrbLoader, RouteTransitionBar } from '@/components/ui/LoadingSystem';
 import dynamic from 'next/dynamic';
 import { Menu } from 'lucide-react';
 
@@ -95,12 +97,14 @@ function ShellLayout({ children }: { children: ReactNode }) {
 
   if (isGodfather || isPublicPage) {
     return (
-      <main
-        suppressHydrationWarning
-        style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}
-      >
-        {children}
-      </main>
+      <MobileExperienceHost withShellChrome={false}>
+        <main
+          suppressHydrationWarning
+          style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}
+        >
+          {children}
+        </main>
+      </MobileExperienceHost>
     );
   }
 
@@ -110,48 +114,32 @@ function ShellLayout({ children }: { children: ReactNode }) {
         style={{
           minHeight: '100vh',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           background: 'var(--app-bg, #FFFFFF)',
           color: 'var(--text-primary, #1F2937)',
+          padding: '24px 16px',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-          <img
-            src="/ART/LOGOS/logo_primary.png"
-            alt="FR8X"
-            style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
-          />
-          <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
-            FR8X
-          </div>
-          <div
-            style={{
-              marginTop: '8px',
-              width: '24px',
-              height: '24px',
-              border: '2px solid var(--border-subtle, #E5E7EB)',
-              borderTopColor: 'var(--accent-primary, #006B68)',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }}
-          />
-          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #1F2937)', letterSpacing: '0.02em', marginTop: '4px' }}>
-            Verifying <span style={{ fontWeight: 'bold', color: 'var(--text-primary, #1F2937)', textTransform: 'uppercase' }}>FR8X</span> session…
-          </span>
-          <a
-            href="/login"
-            style={{
-              marginTop: '6px',
-              fontSize: '12px',
-              color: 'var(--accent-primary, #006B68)',
-              textDecoration: 'none',
-              fontWeight: 600,
-            }}
-          >
-            Taking too long? Click here to sign in
-          </a>
-        </div>
+        <OrbLoader
+          variant="page"
+          message="Connecting to your workspace…"
+          stage="Verifying FR8X session…"
+          delayMs={0}
+        />
+        <a
+          href="/login"
+          style={{
+            marginTop: '4px',
+            fontSize: '12.5px',
+            color: 'var(--accent-primary, #006B68)',
+            textDecoration: 'none',
+            fontWeight: 600,
+          }}
+        >
+          Taking too long? Click here to sign in
+        </a>
       </div>
     );
   }
@@ -169,42 +157,45 @@ function ShellLayout({ children }: { children: ReactNode }) {
   else if (pathname.startsWith('/network') || pathname.startsWith('/people') || pathname.startsWith('/connections') || pathname.startsWith('/contacts')) activeTitle = 'Network';
 
   return (
-    <div className={`app ${isSidebarCollapsed ? 'collapsed-sidebar' : ''}`}>
-      {/* WCAG 2.4.1 Accessible Skip Link */}
-      <a href="#main-content" className="skip-to-content-link">
-        Skip to main content
-      </a>
+    <MobileExperienceHost withShellChrome={true} activePageTitle={activeTitle}>
+      <RouteTransitionBar />
+      <div className={`app ${isSidebarCollapsed ? 'collapsed-sidebar' : ''}`}>
+        {/* WCAG 2.4.1 Accessible Skip Link */}
+        <a href="#main-content" className="skip-to-content-link">
+          Skip to main content
+        </a>
 
-      {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div
-          className="mobile-sidebar-overlay"
-          onClick={() => setIsMobileSidebarOpen(false)}
-          aria-label="Close menu overlay"
-        />
-      )}
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div
+            className="mobile-sidebar-overlay"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close menu overlay"
+          />
+        )}
 
-      {/* Sidebar with mobile class */}
-      <div className={`sidebar-wrapper ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
-        <Sidebar
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          onCloseMobile={() => setIsMobileSidebarOpen(false)}
-          isMobileDrawer={isMobileSidebarOpen}
-        />
+        {/* Sidebar with mobile class */}
+        <div className={`sidebar-wrapper ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+          <Sidebar
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            onCloseMobile={() => setIsMobileSidebarOpen(false)}
+            isMobileDrawer={isMobileSidebarOpen}
+          />
+        </div>
+
+        <main id="main-content" tabIndex={-1} style={{ minWidth: 0, outline: 'none' }}>
+          <TopBar
+            activePageTitle={activeTitle}
+            onMobileMenuClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          />
+          <div className="view">{children}</div>
+        </main>
+        <MobileNav />
+        <NexusChat />
+        <PlanExpiredModal />
       </div>
-
-      <main id="main-content" tabIndex={-1} style={{ minWidth: 0, outline: 'none' }}>
-        <TopBar
-          activePageTitle={activeTitle}
-          onMobileMenuClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        />
-        <div className="view">{children}</div>
-      </main>
-      <MobileNav />
-      <NexusChat />
-      <PlanExpiredModal />
-    </div>
+    </MobileExperienceHost>
   );
 }
 

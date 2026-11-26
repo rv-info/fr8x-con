@@ -21,6 +21,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
+import { AnimatedOrb, OrbLoader } from '@/components/ui/LoadingSystem';
 import { UserProfile } from '@/lib/types';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -648,9 +649,11 @@ export function SearchConnectionsModal({
               </button>
             </div>
           ) : isLoading && scoredCandidates.length === 0 ? (
-            <div style={{ padding: '36px', textAlign: 'center', color: 'var(--text-secondary, #64748B)', fontSize: '13px' }}>
-              Searching maritime enterprise network...
-            </div>
+            <OrbLoader
+              variant="section"
+              message="Searching maritime enterprise network…"
+              delayMs={180}
+            />
           ) : scoredCandidates.length === 0 ? (
             <div
               style={{
@@ -845,7 +848,7 @@ export function SearchConnectionsModal({
                           >
                             {withdrawingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={10} className="spin" aria-label="Withdrawing..." /> WITHDRAWING...
+                                <AnimatedOrb size="inline" /> WITHDRAWING...
                               </>
                             ) : (
                               'Withdraw'
@@ -881,7 +884,7 @@ export function SearchConnectionsModal({
                           >
                             {acceptingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={12} className="spin" aria-label="Accepting..." /> ACCEPTING...
+                                <AnimatedOrb size="inline" tone="on-dark" /> ACCEPTING...
                               </>
                             ) : (
                               <>
@@ -899,7 +902,7 @@ export function SearchConnectionsModal({
                           >
                             {rejectingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={12} className="spin" /> REJECTING...
+                                <AnimatedOrb size="inline" /> REJECTING...
                               </>
                             ) : (
                               <>
@@ -920,7 +923,7 @@ export function SearchConnectionsModal({
                           >
                             {connectingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={12} className="spin" aria-label="Sending..." /> SENDING...
+                                <AnimatedOrb size="inline" tone="on-dark" /> SENDING...
                               </>
                             ) : (
                               <>
