@@ -1,7 +1,7 @@
-// FR8X Enterprise Service Worker v5.1.0
+// FR8X Enterprise Service Worker v6.0.0
 // Ultra-low latency caching, instant cache-purging for stale assets, and offline fallback.
 
-const CACHE_NAME = 'fr8x-cache-v5.1.0';
+const CACHE_NAME = 'fr8x-cache-v6.0.0';
 const STATIC_ASSETS = [
   '/logo.png',
   '/icon.png',
@@ -42,8 +42,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Ignore non-GET requests or chrome-extension URLs
-  if (request.method !== 'GET' || !url.protocol.startsWith('http')) {
+  // Ignore non-GET requests, localhost dev/preview, or chrome-extension URLs
+  if (
+    request.method !== 'GET' ||
+    !url.protocol.startsWith('http') ||
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1'
+  ) {
     return;
   }
 

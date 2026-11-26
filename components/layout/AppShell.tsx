@@ -217,7 +217,7 @@ export function AppShell({ children }: AppShellProps) {
       if ('caches' in window) {
         caches.keys().then((keys) => {
           keys.forEach((key) => {
-            if (key !== 'fr8x-cache-v5.1.0') {
+            if (key !== 'fr8x-cache-v6.0.0') {
               caches.delete(key).catch(() => {});
             }
           });
