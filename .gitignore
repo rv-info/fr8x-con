@@ -59,6 +59,8 @@ scratch/
 .cloudflare/
 .open-next/
 .wrangler/
+.dev.vars
+.dev.vars.*
 
 # Android APK binaries & Native App folder (kept externally, never in web origin)
 *.apk
