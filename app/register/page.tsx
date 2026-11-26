@@ -2235,16 +2235,19 @@ export default function RegisterPage() {
                       setShowTnCModal(true);
                     }}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      color: 'var(--accent-primary, #006B68)',
+                      background: 'var(--surface-primary, #FFFFFF)',
+                      border: '1px solid var(--border-default, #E0E1E3)',
+                      borderRadius: '6px',
+                      padding: '3px 9px',
+                      minHeight: '26px',
+                      color: 'var(--accent-primary, #26313A)',
                       fontWeight: 600,
                       textDecoration: 'none',
                       cursor: 'pointer',
                       fontSize: '11px',
-                      display: 'inline',
-                      marginLeft: '4px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      marginLeft: '6px',
                     }}
                   >
                     [Preview Terms Modal ↗]

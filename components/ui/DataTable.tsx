@@ -128,7 +128,7 @@ export function DataTable<T>({
                       style={{
                         padding: '16px 20px',
                         background: 'var(--surface-card, #F6F6F6)',
-                        borderBottom: '1.5px solid var(--accent-primary, #C95038)',
+                        borderBottom: '1.5px solid var(--accent-primary, #26313A)',
                       }}
                     >
                       <div
@@ -250,10 +250,10 @@ export function Pagination({ page, pageSize, totalItems, onPageChange, onPageSiz
                   fontWeight: p === page ? 600 : 500,
                   border:
                     p === page
-                      ? '1px solid rgba(201, 80, 56, 0.25)'
+                      ? '1px solid var(--accent-primary, #26313A)'
                       : '1px solid var(--border-default, #E0E1E3)',
-                  background: p === page ? 'var(--accent-pale, #F6E8E4)' : 'var(--surface-primary, #FFFFFF)',
-                  color: p === page ? 'var(--accent-primary, #C95038)' : 'var(--text-primary, #20242B)',
+                  background: p === page ? 'var(--accent-primary, #26313A)' : 'var(--surface-primary, #FFFFFF)',
+                  color: p === page ? '#F8FAFC' : 'var(--text-primary, #26313A)',
                 }}
               >
                 {p}

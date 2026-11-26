@@ -1761,8 +1761,8 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>TYPE</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>TT</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>ROUTING</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>REMARKS</th>
-                  <th className="rates-sticky-action-col" style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTIONS</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 14px 8px 6px', fontWeight: 700, whiteSpace: 'nowrap', minWidth: '140px' }}>REMARKS</th>
+                  <th className="rates-sticky-action-col" style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 10px', textAlign: 'center', fontWeight: 700, whiteSpace: 'nowrap', minWidth: '115px' }}>ACTIONS</th>
                 </tr>
                 {/* Per-column search row */}
                 <tr style={{ background: 'var(--surface-secondary, #F9FAFB)', borderBottom: '1px solid var(--fr8x-outline)' }}>

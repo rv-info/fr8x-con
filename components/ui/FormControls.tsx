@@ -169,9 +169,9 @@ export function Checkbox({
           padding: 0,
           borderRadius: '5px',
           border: checked
-            ? '1px solid var(--accent-primary, #C95038)'
+            ? '1px solid var(--accent-primary, #26313A)'
             : '1px solid var(--border-interactive, #D9DBDE)',
-          background: checked ? 'var(--accent-primary, #C95038)' : 'var(--surface-primary, #FFFFFF)',
+          background: checked ? 'var(--accent-primary, #26313A)' : 'var(--surface-primary, #FFFFFF)',
           color: '#FFFFFF',
           display: 'inline-flex',
           alignItems: 'center',
@@ -220,7 +220,7 @@ export function Switch({
           padding: '2px',
           borderRadius: '9999px',
           border: 'none',
-          background: checked ? 'var(--accent-primary, #C95038)' : 'var(--border-strong, #C5C8CD)',
+          background: checked ? 'var(--accent-primary, #26313A)' : 'var(--border-strong, #C5C8CD)',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: checked ? 'flex-end' : 'flex-start',
