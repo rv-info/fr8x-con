@@ -1,0 +1,48 @@
+table:
+  name: chat_presence_sessions
+  schema: public
+object_relationships:
+  - name: typing_conversation
+    using:
+      foreign_key_constraint_on: typing_conversation_id
+insert_permissions:
+  - role: user
+    permission:
+      set:
+        user_id: x-hasura-User-Id
+      check: {}
+      columns:
+        - session_id
+        - status
+        - last_seen_at
+        - typing_conversation_id
+        - typing_expires_at
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - session_id
+        - user_id
+        - status
+        - last_seen_at
+        - typing_conversation_id
+        - typing_expires_at
+      filter: {}
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - status
+        - last_seen_at
+        - typing_conversation_id
+        - typing_expires_at
+      filter:
+        user_id:
+          _eq: X-Hasura-User-Id
+      check: {}
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        user_id:
+          _eq: X-Hasura-User-Id

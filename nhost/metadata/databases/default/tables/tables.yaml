@@ -1,0 +1,4 @@
+- "!include public_chat_conversations.yaml"
+- "!include public_chat_conversation_members.yaml"
+- "!include public_chat_messages.yaml"
+- "!include public_chat_presence_sessions.yaml"

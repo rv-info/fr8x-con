@@ -200,6 +200,15 @@ export const MUTATION_MARK_MESSAGES_READ = /* GraphQL */ `
     ) {
       affected_rows
     }
+    update_chat_conversation_members(
+      where: {
+        conversation_id: { _eq: $conversationId }
+        user_id: { _eq: $recipientId }
+      }
+      _set: { last_read_at: $readAt }
+    ) {
+      affected_rows
+    }
   }
 `;
 
