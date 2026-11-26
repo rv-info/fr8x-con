@@ -747,6 +747,7 @@ export interface RateItem {
 
 export interface ChatMessage {
   id: string;
+  clientMessageId?: string;
   conversationId?: string;
   senderUid: string;
   senderName: string;
@@ -754,7 +755,7 @@ export interface ChatMessage {
   text: string;
   time: string;
   createdAt?: string;
-  status?: 'sent' | 'delivered' | 'read';
+  status?: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
   replyToMessageId?: string;
   relatedRecordId?: string;
 }

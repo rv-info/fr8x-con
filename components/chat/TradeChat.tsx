@@ -6,6 +6,7 @@ import { useChat } from '@/lib/context/ChatContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
+import { OrbLoader } from '@/components/ui/LoadingSystem';
 import {
   MessagesSquare,
   X,
@@ -15,6 +16,7 @@ import {
   Search,
   ExternalLink,
   ShieldCheck,
+  RefreshCw,
 } from 'lucide-react';
 
 function isRawUUIDOrId(val?: string): boolean {
@@ -74,10 +76,23 @@ function SingleChatBox({
   onClose,
   onOpenProfile,
 }: SingleChatBoxProps) {
-  const { getContact, getMessagesFor, sendMessageTo } = useChat();
+  const {
+    getContact,
+    getMessagesFor,
+    sendMessageTo,
+    retryMessage,
+    setTyping,
+    loadingHistoryByContact,
+    typingByContact,
+  } = useChat();
   const [inputText, setInputText] = useState('');
   const [isMaximized, setIsMaximized] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cleanKey = contactId.replace(/^c-/, '').toLowerCase();
+  const isLoadingHistory = Boolean(loadingHistoryByContact[cleanKey]);
+  const isPeerTyping = Boolean(typingByContact[cleanKey]);
 
   const contact = getContact(contactId);
   const messages = getMessagesFor(contactId);
@@ -99,6 +114,8 @@ function SingleChatBox({
 
   const handleSend = () => {
     if (!inputText.trim()) return;
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    setTyping(contactId, false);
     sendMessageTo(contactId, inputText);
     setInputText('');
   };
@@ -286,19 +303,59 @@ function SingleChatBox({
 
       {/* Messages Scroll Area */}
       <div className="chatbody messages" ref={chatBodyRef}>
-        {messages.length === 0 ? (
+        {isLoadingHistory && messages.length === 0 ? (
+          <OrbLoader variant="section" message="Loading conversation history…" delayMs={180} />
+        ) : messages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--text-secondary, #64748B)', fontSize: '11px' }}>
             No messages yet. Send a trade message to start negotiation.
           </div>
         ) : (
-          messages.map((m) => (
-            <div key={m.id} className={`msg ${m.me ? 'me' : ''}`}>
-              <div style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 500 }}>{m.text}</div>
-              <small style={{ color: 'var(--text-secondary, #64748B)' }}>
-                {m.time} {m.me ? (m.status === 'read' ? ' ✓✓' : ' ✓') : ''}
-              </small>
-            </div>
-          ))
+          <>
+            {messages.map((m) => (
+              <div key={m.id} className={`msg ${m.me ? 'me' : ''}`}>
+                <div style={{ color: 'var(--text-primary, #1F2937)', fontWeight: 500 }}>{m.text}</div>
+                <small style={{ color: m.status === 'failed' ? '#B91C1C' : 'var(--text-secondary, #64748B)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <span>
+                    {m.time}{' '}
+                    {m.me
+                      ? m.status === 'read'
+                        ? '✓✓'
+                        : m.status === 'sending'
+                        ? '…'
+                        : m.status === 'failed'
+                        ? 'Failed'
+                        : '✓'
+                      : ''}
+                  </span>
+                  {m.me && m.status === 'failed' && (
+                    <button
+                      type="button"
+                      onClick={() => retryMessage(contactId, m.id)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#B91C1C',
+                        fontWeight: 700,
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      <RefreshCw size={11} /> Retry
+                    </button>
+                  )}
+                </small>
+              </div>
+            ))}
+            {isPeerTyping && (
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', fontStyle: 'italic', padding: '2px 4px' }}>
+                {cleanName} is typing…
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -323,7 +380,14 @@ function SingleChatBox({
         <textarea
           placeholder="Type trade message (Enter to send)…"
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={(e) => {
+            setInputText(e.target.value);
+            if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+            setTyping(contactId, Boolean(e.target.value.trim()));
+            if (e.target.value.trim()) {
+              typingTimerRef.current = setTimeout(() => setTyping(contactId, false), 4000);
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
@@ -347,6 +411,7 @@ export function TradeChat() {
     activeWindows,
     contacts,
     totalUnreadCount,
+    connectionState,
     openChatWith,
     closeChatWindow,
     toggleMinimizeWindow,
@@ -416,7 +481,15 @@ export function TradeChat() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <b style={{ color: 'var(--fr8x-text, #1e293b)', fontSize: '13px', fontWeight: 800 }}>Nexus Direct Chat</b>
               <small style={{ display: 'block', fontSize: '10px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500 }}>
-                Direct verified participant communication
+                {connectionState === 'CONNECTED'
+                  ? 'WebSocket Realtime Connected'
+                  : connectionState === 'CONNECTING'
+                  ? 'Connecting to Realtime…'
+                  : connectionState === 'RECONNECTING'
+                  ? 'Reconnecting Realtime…'
+                  : connectionState === 'AUTHENTICATION_ERROR'
+                  ? 'Chat Auth Pending Configuration'
+                  : 'Direct verified participant communication'}
               </small>
             </div>
             <button
