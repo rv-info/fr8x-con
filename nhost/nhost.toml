@@ -181,12 +181,6 @@ kid = "{{ secrets.NHOST_JWT_KID }}"
 signingKey = "{{ secrets.NHOST_JWT_PRIVATE_KEY }}"
 type = "RS256"
 
-[[hasura.jwtSecrets]]
-type = "HS256"
-key = "{{ secrets.FR8X_CHAT_JWT_SECRET }}"
-issuer = "fr8x-chat-bridge"
-audience = "rqkhnmhhbethgegaowhs"
-claims_namespace = "https://hasura.io/jwt/claims"
 
 [hasura.logs]
 level = "warn"
