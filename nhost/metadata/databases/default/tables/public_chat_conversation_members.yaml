@@ -1,44 +1,47 @@
-table:
+table: 
   name: chat_conversation_members
   schema: public
-object_relationships:
-  - name: conversation
-    using:
+object_relationships: 
+  - name: chat_conversation
+    using: 
       foreign_key_constraint_on: conversation_id
-insert_permissions:
+insert_permissions: 
   - role: user
-    permission:
-      check:
-        _or:
-          - user_id:
+    permission: 
+      check: 
+        _or: 
+          - user_id: 
               _eq: X-Hasura-User-Id
-          - conversation:
-              members:
-                user_id:
+          - chat_conversation: 
+              chat_conversation_members: 
+                user_id: 
                   _eq: X-Hasura-User-Id
-      columns:
+          - _not: 
+              chat_conversation: 
+                chat_conversation_members: {}
+      columns: 
         - conversation_id
         - user_id
         - last_read_at
-select_permissions:
+select_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - conversation_id
         - user_id
         - joined_at
         - last_read_at
-      filter:
-        conversation:
-          members:
-            user_id:
+      filter: 
+        chat_conversation: 
+          chat_conversation_members: 
+            user_id: 
               _eq: X-Hasura-User-Id
-update_permissions:
+update_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - last_read_at
-      filter:
-        user_id:
+      filter: 
+        user_id: 
           _eq: X-Hasura-User-Id
       check: {}

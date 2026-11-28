@@ -1,48 +1,65 @@
-table:
+table: 
   name: chat_presence_sessions
   schema: public
-object_relationships:
-  - name: typing_conversation
-    using:
+object_relationships: 
+  - name: chat_conversation
+    using: 
       foreign_key_constraint_on: typing_conversation_id
-insert_permissions:
+insert_permissions: 
   - role: user
-    permission:
-      set:
-        user_id: x-hasura-User-Id
+    permission: 
       check: {}
-      columns:
+      set: 
+        user_id: x-hasura-User-Id
+      columns: 
         - session_id
         - status
         - last_seen_at
         - typing_conversation_id
         - typing_expires_at
-select_permissions:
+select_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - session_id
         - user_id
         - status
         - last_seen_at
         - typing_conversation_id
         - typing_expires_at
-      filter: {}
-update_permissions:
+      filter: 
+        _or: 
+          - user_id: 
+              _eq: X-Hasura-User-Id
+          - _exists: 
+              _table: 
+                name: chat_conversation_members
+                schema: public
+              _where: 
+                _and: 
+                  - user_id: 
+                      _ceq: 
+                        - $
+                        - user_id
+                  - chat_conversation: 
+                      chat_conversation_members: 
+                        user_id: 
+                          _eq: X-Hasura-User-Id
+update_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - status
         - last_seen_at
         - typing_conversation_id
         - typing_expires_at
-      filter:
-        user_id:
+      filter: 
+        user_id: 
           _eq: X-Hasura-User-Id
       check: {}
-delete_permissions:
+delete_permissions: 
   - role: user
-    permission:
-      filter:
-        user_id:
+    permission: 
+      filter: 
+        user_id: 
           _eq: X-Hasura-User-Id

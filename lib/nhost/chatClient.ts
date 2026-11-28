@@ -19,11 +19,11 @@ export interface NhostChatClientConfig {
 
 const DEFAULT_GRAPHQL_URL =
   process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL ||
-  'https://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1';
+  'https://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1';
 
 const DEFAULT_WS_URL =
   process.env.NEXT_PUBLIC_NHOST_WS_URL ||
-  'wss://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1';
+  'wss://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1';
 
 export class NhostChatRealtimeClient {
   private readonly graphqlUrl: string;
