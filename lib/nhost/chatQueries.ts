@@ -31,7 +31,7 @@ export const SUB_CHAT_CONVERSATIONS = /* GraphQL */ `
       context_id
       context_title
       updated_at
-      members {
+      chat_conversation_members {
         user_id
         last_read_at
       }
@@ -131,7 +131,7 @@ export const MUTATION_UPSERT_CONVERSATION = /* GraphQL */ `
         context_type: $contextType
         context_id: $contextId
         context_title: $contextTitle
-        members: {
+        chat_conversation_members: {
           data: $members
           on_conflict: {
             constraint: chat_conversation_members_pkey

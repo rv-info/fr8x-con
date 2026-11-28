@@ -1,34 +1,41 @@
-table:
+table: 
   name: chat_conversations
   schema: public
-array_relationships:
-  - name: members
-    using:
-      foreign_key_constraint_on:
+array_relationships: 
+  - name: chat_conversation_members
+    using: 
+      foreign_key_constraint_on: 
         column: conversation_id
-        table:
+        table: 
           name: chat_conversation_members
           schema: public
-  - name: messages
-    using:
-      foreign_key_constraint_on:
+  - name: chat_messages
+    using: 
+      foreign_key_constraint_on: 
         column: conversation_id
-        table:
+        table: 
           name: chat_messages
           schema: public
-insert_permissions:
+  - name: chat_presence_sessions
+    using: 
+      foreign_key_constraint_on: 
+        column: typing_conversation_id
+        table: 
+          name: chat_presence_sessions
+          schema: public
+insert_permissions: 
   - role: user
-    permission:
+    permission: 
       check: {}
-      columns:
+      columns: 
         - direct_key
         - context_type
         - context_id
         - context_title
-select_permissions:
+select_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - id
         - direct_key
         - context_type
@@ -36,19 +43,19 @@ select_permissions:
         - context_title
         - created_at
         - updated_at
-      filter:
-        members:
-          user_id:
+      filter: 
+        chat_conversation_members: 
+          user_id: 
             _eq: X-Hasura-User-Id
-update_permissions:
+update_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - context_type
         - context_id
         - context_title
-      filter:
-        members:
-          user_id:
+      filter: 
+        chat_conversation_members: 
+          user_id: 
             _eq: X-Hasura-User-Id
       check: {}

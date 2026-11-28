@@ -32,9 +32,9 @@
     "ZEPTO_MAIL_PASSWORD_FROM": "password@fr8x.in",
     "ZEPTO_MAIL_SUPPORT_FROM": "support@fr8x.in",
     "ZEPTO_MAIL_TECH_FROM": "tech@fr8x.in",
-    "NEXT_PUBLIC_NHOST_SUBDOMAIN": "utweonkbxcuhvsetvxjo",
+    "NEXT_PUBLIC_NHOST_SUBDOMAIN": "rqkhnmhhbethgegaowhs",
     "NEXT_PUBLIC_NHOST_REGION": "ap-south-1",
-    "NEXT_PUBLIC_NHOST_GRAPHQL_URL": "https://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1",
-    "NEXT_PUBLIC_NHOST_WS_URL": "wss://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1"
+    "NEXT_PUBLIC_NHOST_GRAPHQL_URL": "https://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1",
+    "NEXT_PUBLIC_NHOST_WS_URL": "wss://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1"
   }
 }

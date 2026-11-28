@@ -1,13 +1,10 @@
 /**
- * Authenticated Nhost Hasura GraphQL + WebSocket E2E Verification Script
- * Run after:
- *  1) Applying 001_chat_schema.sql & 002_chat_trigger_greatest_and_read_sync.sql
- *  2) Applying nhost/metadata/databases/default/tables/*.yaml in Hasura
- *  3) Setting NHOST_CHAT_JWT_PRIVATE_KEY & NHOST_CHAT_JWT_KID in .env.local
+ * Authenticated Nhost Hasura GraphQL + WebSocket E2E Verification Script (HS256)
  */
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { importPKCS8, SignJWT } from 'jose';
+import { createRequire } from 'node:module';
+import { SignJWT } from 'jose';
 import { createClient } from 'graphql-ws';
 import {
   MUTATION_INSERT_MESSAGE,
@@ -18,8 +15,13 @@ import {
   SUB_CHAT_MESSAGES,
 } from '../lib/nhost/chatQueries';
 
-const GQL_URL = process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL || 'https://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1';
-const WSS_URL = process.env.NEXT_PUBLIC_NHOST_WS_URL || 'wss://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1';
+const require = createRequire(import.meta.url);
+let WebSocketImpl: any = (globalThis as any).WebSocket;
+if (!WebSocketImpl) {
+  try {
+    WebSocketImpl = require('ws');
+  } catch {}
+}
 
 function loadEnvLocal() {
   if (!fs.existsSync('.env.local')) return;
@@ -33,11 +35,12 @@ function loadEnvLocal() {
   }
 }
 
-async function mintUserJwt(userId: string): Promise<string> {
-  const pem = (process.env.NHOST_CHAT_JWT_PRIVATE_KEY || '').replace(/\\n/g, '\n').trim();
-  const kid = (process.env.NHOST_CHAT_JWT_KID || '').trim() || undefined;
-  assert(pem, 'NHOST_CHAT_JWT_PRIVATE_KEY is required in .env.local');
-  const key = await importPKCS8(pem, 'RS256');
+async function mintUserJwt(userId: string, expiresIn = '15m'): Promise<string> {
+  const rawSecret = (process.env.NHOST_CHAT_JWT_SECRET || '').trim();
+  const subdomain = process.env.NEXT_PUBLIC_NHOST_SUBDOMAIN || 'rqkhnmhhbethgegaowhs';
+  assert(rawSecret, 'NHOST_CHAT_JWT_SECRET is required in .env.local');
+  const key = new TextEncoder().encode(rawSecret);
+
   return new SignJWT({
     sub: userId,
     'https://hasura.io/jwt/claims': {
@@ -46,17 +49,17 @@ async function mintUserJwt(userId: string): Promise<string> {
       'x-hasura-user-id': userId,
     },
   })
-    .setProtectedHeader(kid ? { alg: 'RS256', typ: 'JWT', kid } : { alg: 'RS256', typ: 'JWT' })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setSubject(userId)
     .setIssuer('fr8x-chat-bridge')
-    .setAudience('utweonkbxcuhvsetvxjo')
+    .setAudience(subdomain)
     .setIssuedAt()
-    .setExpirationTime('15m')
+    .setExpirationTime(expiresIn)
     .sign(key);
 }
 
-async function gql(token: string, query: string, variables?: Record<string, any>) {
-  const res = await fetch(GQL_URL, {
+async function gql(gqlUrl: string, token: string, query: string, variables?: Record<string, any>) {
+  const res = await fetch(gqlUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ query, variables }),
@@ -66,13 +69,60 @@ async function gql(token: string, query: string, variables?: Record<string, any>
 
 async function main() {
   loadEnvLocal();
+  const gqlUrl =
+    process.env.NEXT_PUBLIC_NHOST_GRAPHQL_URL ||
+    'https://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1';
+  const wssUrl =
+    process.env.NEXT_PUBLIC_NHOST_WS_URL ||
+    'wss://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1';
+
   const userA = 'e2e-user-a';
   const userB = 'e2e-user-b';
   const userC = 'e2e-user-c';
-  const [tokA, tokB, tokC] = await Promise.all([mintUserJwt(userA), mintUserJwt(userB), mintUserJwt(userC)]);
+  const [tokA, tokB, tokC] = await Promise.all([
+    mintUserJwt(userA),
+    mintUserJwt(userB),
+    mintUserJwt(userC),
+  ]);
+
+  // 0. Security negative tests: unauthenticated, invalid signature, expired JWT
+  const unauthRes = await fetch(gqlUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: QUERY_CONVERSATION_MESSAGES, variables: { conversationId: '00000000-0000-0000-0000-000000000000', limit: 1 } }),
+  }).then((r) => r.json());
+  assert(Array.isArray(unauthRes.errors) && unauthRes.errors.length > 0, `Unauthenticated request must be rejected, got: ${JSON.stringify(unauthRes)}`);
+
+  const badSigTok = await new SignJWT({
+    sub: userA,
+    'https://hasura.io/jwt/claims': {
+      'x-hasura-allowed-roles': ['user'],
+      'x-hasura-default-role': 'user',
+      'x-hasura-user-id': userA,
+    },
+  })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setIssuer('fr8x-chat-bridge')
+    .setAudience(process.env.NEXT_PUBLIC_NHOST_SUBDOMAIN || 'rqkhnmhhbethgegaowhs')
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(new TextEncoder().encode('wrong-secret-0000000000000000000000000000000000000000000000000000'));
+  const badSigRes = await gql(gqlUrl, badSigTok, QUERY_CONVERSATION_MESSAGES, {
+    conversationId: '00000000-0000-0000-0000-000000000000',
+    limit: 1,
+  });
+  assert(Array.isArray(badSigRes.errors) && badSigRes.errors.length > 0, `Invalid signature JWT must be rejected, got: ${JSON.stringify(badSigRes)}`);
+
+  const expiredTok = await mintUserJwt(userA, '-10s');
+  const expiredRes = await gql(gqlUrl, expiredTok, QUERY_CONVERSATION_MESSAGES, {
+    conversationId: '00000000-0000-0000-0000-000000000000',
+    limit: 1,
+  });
+  assert(Array.isArray(expiredRes.errors) && expiredRes.errors.length > 0, `Expired JWT must be rejected, got: ${JSON.stringify(expiredRes)}`);
+  console.log('✓ Unauthenticated, invalid-signature, and expired-JWT rejection checks passed');
 
   // 1. Verify User A creates conversation with User B
-  const convRes = await gql(tokA, MUTATION_UPSERT_CONVERSATION, {
+  const convRes = await gql(gqlUrl, tokA, MUTATION_UPSERT_CONVERSATION, {
     directKey: `${userA}:${userB}`,
     contextType: 'e2e',
     contextId: 'test-1',
@@ -84,7 +134,8 @@ async function main() {
 
   // 2. Subscribe as User B over WSS and send message as User A
   const wsClientB = createClient({
-    url: WSS_URL,
+    url: wssUrl,
+    webSocketImpl: WebSocketImpl,
     connectionParams: { headers: { Authorization: `Bearer ${tokB}` } },
   });
 
@@ -108,11 +159,11 @@ async function main() {
   });
 
   const clientMsgId = `e2e_${Date.now()}`;
-  const insRes = await gql(tokA, MUTATION_INSERT_MESSAGE, {
+  const insRes = await gql(gqlUrl, tokA, MUTATION_INSERT_MESSAGE, {
     conversationId: convId,
     recipientId: userB,
     clientMessageId: clientMsgId,
-    content: 'Hello from E2E WebSocket test',
+    content: 'Hello from HS256 E2E WebSocket test',
   });
   assert(insRes.data?.insert_chat_messages_one?.sender_id === userA, 'sender_id derived from X-Hasura-User-Id');
 
@@ -120,11 +171,11 @@ async function main() {
   assert.strictEqual(wsMsg.client_message_id, clientMsgId);
 
   // 3. Verify User C isolation
-  const isoRes = await gql(tokC, QUERY_CONVERSATION_MESSAGES, { conversationId: convId, limit: 10 });
+  const isoRes = await gql(gqlUrl, tokC, QUERY_CONVERSATION_MESSAGES, { conversationId: convId, limit: 10 });
   assert.strictEqual(isoRes.data?.chat_messages?.length ?? 0, 0, 'User C must not read A-B conversation');
 
   // 4. Verify read receipt + presence upsert
-  const readRes = await gql(tokB, MUTATION_MARK_MESSAGES_READ, {
+  const readRes = await gql(gqlUrl, tokB, MUTATION_MARK_MESSAGES_READ, {
     conversationId: convId,
     recipientId: userB,
     readAt: new Date().toISOString(),
@@ -132,7 +183,7 @@ async function main() {
   assert((readRes.data?.update_chat_messages?.affected_rows ?? 0) >= 1, 'read_at updated');
   assert((readRes.data?.update_chat_conversation_members?.affected_rows ?? 0) >= 1, 'last_read_at synced');
 
-  const presRes = await gql(tokA, MUTATION_UPSERT_PRESENCE, {
+  const presRes = await gql(gqlUrl, tokA, MUTATION_UPSERT_PRESENCE, {
     sessionId: `e2e_sess_${Date.now()}`,
     userId: userA,
     status: 'active',
@@ -141,7 +192,7 @@ async function main() {
   assert(presRes.data?.insert_chat_presence_sessions_one?.session_id, 'Presence upsert succeeded');
 
   await wsClientB.dispose();
-  console.log('✓ Full Nhost Hasura GraphQL + WSS E2E suite passed!');
+  console.log('✓ Full Nhost Hasura HS256 GraphQL + WSS E2E suite passed!');
 }
 
 main().catch((err) => {

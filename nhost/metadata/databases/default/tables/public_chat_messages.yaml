@@ -1,48 +1,48 @@
-table:
+table: 
   name: chat_messages
   schema: public
-object_relationships:
+object_relationships: 
   - name: conversation
-    using:
+    using: 
       foreign_key_constraint_on: conversation_id
-insert_permissions:
+insert_permissions: 
   - role: user
-    permission:
-      set:
-        sender_id: x-hasura-User-Id
-      check:
-        _and:
-          - recipient_id:
+    permission: 
+      check: 
+        _and: 
+          - recipient_id: 
               _neq: X-Hasura-User-Id
-          - conversation:
-              members:
-                user_id:
+          - conversation: 
+              chat_conversation_members: 
+                user_id: 
                   _eq: X-Hasura-User-Id
-          - _exists:
-              _table:
-                schema: public
+          - _exists: 
+              _table: 
                 name: chat_conversation_members
-              _where:
-                _and:
-                  - conversation_id:
-                      _ceq:
+                schema: public
+              _where: 
+                _and: 
+                  - conversation_id: 
+                      _ceq: 
                         - $
                         - conversation_id
-                  - user_id:
-                      _ceq:
+                  - user_id: 
+                      _ceq: 
                         - $
                         - recipient_id
-      columns:
+      set: 
+        sender_id: x-hasura-User-Id
+      columns: 
         - conversation_id
         - recipient_id
         - client_message_id
         - content
         - message_type
         - attachments
-select_permissions:
+select_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - id
         - conversation_id
         - sender_id
@@ -55,19 +55,19 @@ select_permissions:
         - read_at
         - edited_at
         - deleted_at
-      filter:
-        conversation:
-          members:
-            user_id:
+      filter: 
+        conversation: 
+          chat_conversation_members: 
+            user_id: 
               _eq: X-Hasura-User-Id
-update_permissions:
+update_permissions: 
   - role: user
-    permission:
-      columns:
+    permission: 
+      columns: 
         - read_at
-      filter:
-        recipient_id:
+      filter: 
+        recipient_id: 
           _eq: X-Hasura-User-Id
-      check:
-        recipient_id:
+      check: 
+        recipient_id: 
           _eq: X-Hasura-User-Id

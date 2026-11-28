@@ -29,6 +29,8 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+.nhost-jwt-secrets.txt
+.nhost-jwt-secrets-singleline.txt
 
 # database dumps, backups, and exports
 *.dump

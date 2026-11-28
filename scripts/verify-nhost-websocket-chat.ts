@@ -1,17 +1,18 @@
 import assert from 'node:assert';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { generateKeyPair, exportPKCS8, importPKCS8, SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 
 const root = process.cwd();
-const NHOST_WSS_URL = 'wss://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run/v1';
+const NHOST_WSS_URL =
+  process.env.NEXT_PUBLIC_NHOST_WS_URL ||
+  'wss://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run/v1';
 
-async function testRs256JwtClaims() {
-  const { publicKey, privateKey } = await generateKeyPair('RS256', { extractable: true });
-  const pkcs8 = await exportPKCS8(privateKey);
-  const imported = await importPKCS8(pkcs8, 'RS256');
-  const kid = 'test-nhost-kid-1';
+async function testHs256JwtClaims() {
+  const secretBytes = new TextEncoder().encode(crypto.randomBytes(64).toString('hex'));
+  const subdomain = process.env.NEXT_PUBLIC_NHOST_SUBDOMAIN || 'rqkhnmhhbethgegaowhs';
 
   const token = await new SignJWT({
     sub: 'user-123',
@@ -21,21 +22,21 @@ async function testRs256JwtClaims() {
       'x-hasura-user-id': 'user-123',
     },
   })
-    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuer('fr8x-chat-bridge')
-    .setAudience('utweonkbxcuhvsetvxjo')
+    .setAudience(subdomain)
     .setIssuedAt()
     .setExpirationTime('15m')
-    .sign(imported);
+    .sign(secretBytes);
 
-  const verified = await jwtVerify(token, publicKey, {
+  const verified = await jwtVerify(token, secretBytes, {
     issuer: 'fr8x-chat-bridge',
-    audience: 'utweonkbxcuhvsetvxjo',
+    audience: subdomain,
   });
-  assert.strictEqual(verified.protectedHeader.alg, 'RS256');
-  assert.strictEqual(verified.protectedHeader.kid, kid);
+  assert.strictEqual(verified.protectedHeader.alg, 'HS256');
+  assert.strictEqual(verified.protectedHeader.kid, undefined);
   assert.strictEqual((verified.payload as any)['https://hasura.io/jwt/claims']['x-hasura-user-id'], 'user-123');
-  console.log('✓ RS256 JWT signing & Hasura claims verification passed');
+  console.log('✓ HS256 JWT signing & Hasura claims verification passed');
 }
 
 async function testLiveNhostWssHandshake() {
@@ -84,13 +85,13 @@ function testSourceContracts() {
   assert(chatCtx.includes('SUB_CHAT_PRESENCE'), 'ChatContext subscribes to batched presence via WebSocket');
   assert(chatCtx.includes('QUERY_MISSED_MESSAGES'), 'ChatContext reconciles missed messages on reconnect');
   assert(chatClient.includes("'CONNECTING'") && chatClient.includes("'AUTHENTICATION_ERROR'"), 'Connection states implemented');
-  assert(nextConfig.includes('wss://utweonkbxcuhvsetvxjo.graphql.ap-south-1.nhost.run'), 'CSP allows Nhost WSS');
+  assert(nextConfig.includes('wss://rqkhnmhhbethgegaowhs.graphql.ap-south-1.nhost.run'), 'CSP allows Nhost WSS');
   console.log('✓ WebSocket-first architecture & CSP source contracts passed');
 }
 
 async function main() {
   testSourceContracts();
-  await testRs256JwtClaims();
+  await testHs256JwtClaims();
   await testLiveNhostWssHandshake();
 }
 
