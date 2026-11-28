@@ -1,0 +1,45 @@
+name: Nhost Config Validation
+
+on:
+  push:
+    branches: ['chore/**', 'main']
+    paths:
+      - 'nhost/nhost.toml'
+      - '.github/workflows/nhost-config-validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'nhost/nhost.toml'
+      - '.github/workflows/nhost-config-validate.yml'
+
+jobs:
+  validate-nhost-config:
+    name: Validate nhost/nhost.toml (Nhost CLI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Official Nhost CLI (Linux amd64)
+        run: |
+          curl -sSL -o /tmp/nhost-cli.tar.gz https://github.com/nhost/cli/releases/download/v1.31.3/cli-v1.31.3-linux-amd64.tar.gz
+          tar -xzf /tmp/nhost-cli.tar.gz -C /tmp
+          sudo mv /tmp/cli /usr/local/bin/nhost || sudo mv /tmp/nhost /usr/local/bin/nhost
+          chmod +x /usr/local/bin/nhost
+          nhost --version
+
+      - name: Validate Nhost Configuration
+        run: |
+          cat <<'EOF' > .secrets
+          HASURA_GRAPHQL_ADMIN_SECRET=ci-placeholder-admin-secret
+          NHOST_WEBHOOK_SECRET=ci-placeholder-webhook-secret
+          NHOST_JWT_PUBLIC_KEY=ci-placeholder-public-key
+          NHOST_JWT_PRIVATE_KEY=ci-placeholder-private-key
+          NHOST_JWT_KID=ci-placeholder-kid
+          FR8X_CHAT_JWT_SECRET=ci-placeholder-fr8x-chat-jwt-secret-64-bytes-minimum-placeholder
+          GRAFANA_ADMIN_PASSWORD=ci-placeholder-grafana-password
+          EOF
+          nhost config validate
+          rm -f .secrets
