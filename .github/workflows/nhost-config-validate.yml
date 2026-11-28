@@ -31,15 +31,20 @@ jobs:
           nhost --version
 
       - name: Validate Nhost Configuration
+        shell: bash
         run: |
-          cat <<'EOF' > .secrets
-          HASURA_GRAPHQL_ADMIN_SECRET=ci-placeholder-admin-secret
-          NHOST_WEBHOOK_SECRET=ci-placeholder-webhook-secret
-          NHOST_JWT_PUBLIC_KEY=ci-placeholder-public-key
-          NHOST_JWT_PRIVATE_KEY=ci-placeholder-private-key
-          NHOST_JWT_KID=ci-placeholder-kid
-          FR8X_CHAT_JWT_SECRET=ci-placeholder-fr8x-chat-jwt-secret-64-bytes-minimum-placeholder
-          GRAFANA_ADMIN_PASSWORD=ci-placeholder-grafana-password
+          set -euo pipefail
+
+          trap 'rm -f .secrets' EXIT
+
+          cat > .secrets <<'EOF'
+          HASURA_GRAPHQL_ADMIN_SECRET="ci-placeholder-admin-secret"
+          NHOST_WEBHOOK_SECRET="ci-placeholder-webhook-secret"
+          NHOST_JWT_PUBLIC_KEY="ci-placeholder-public-key"
+          NHOST_JWT_PRIVATE_KEY="ci-placeholder-private-key"
+          NHOST_JWT_KID="ci-placeholder-kid"
+          FR8X_CHAT_JWT_SECRET="ci-placeholder-fr8x-chat-jwt-secret-64-bytes-minimum-placeholder"
+          GRAFANA_ADMIN_PASSWORD="ci-placeholder-grafana-password"
           EOF
+
           nhost config validate
-          rm -f .secrets
